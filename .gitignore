@@ -1,0 +1,7 @@
+/target
+tmp
+.vscode
+logs/*
+!logs/.gitkeep
+myapp
+.cache
