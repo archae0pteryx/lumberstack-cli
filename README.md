@@ -32,6 +32,10 @@ Development:
   - `curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh`
 
 ```shell
+# OSX enable running non-codesigned bins (warning!)
+spctl developer-mode enable-terminal
+# security & privacy > privacy > developer tools > iterm > "allow app to run..."
+
 # build & run
 cargo run -- myapp # name 'myapp' is ignored in git
 
@@ -55,4 +59,8 @@ git push origin --tag <semver>
 
 # OSX Code signing
 codesign -s "<developer_id>" target/release/lumberstack
+
+# Homebrew
+brew uninstall --force lumberstack-cli
+brew untap archae0pteryx/lumberstack-cli
 ```
