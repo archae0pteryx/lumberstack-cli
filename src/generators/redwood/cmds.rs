@@ -46,9 +46,3 @@ pub(super) fn run_unit_tests(progress_bar: &AppProgress, package: &str) -> Resul
     ))?;
     Ok(())
 }
-
-pub(super) fn run_lint(progress_bar: &AppProgress) -> Result<(), AppError> {
-    progress_bar.update("👕 Linting app");
-    // Shell::exec(format!("cd {}; yarn lint", AppPaths::root(None)))?;
-    Ok(())
-}

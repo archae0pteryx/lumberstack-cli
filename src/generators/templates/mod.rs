@@ -1,7 +1,7 @@
 use self::{env::*, github::*, markdown::*, scripts::*};
 use crate::{
     cli::{
-        arguments::{is_enabled, CliOptions, has_only_enabled},
+        arguments::{has_only_enabled, is_enabled, CliOptions},
         progress::*,
     },
     system::{error::AppError, utils::*},
@@ -31,7 +31,7 @@ impl Templates {
             Docker::copy_compose(progress_bar)?;
             Markdown::copy_templates()?;
             Scripts::copy_template()?;
-            GithubActions::copy_template()?;
+            GithubActions::copy_template();
         }
         Ok(())
     }

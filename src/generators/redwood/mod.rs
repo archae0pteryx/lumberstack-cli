@@ -1,17 +1,14 @@
-use clap::Parser;
-
+use self::{cmds::*, templates::*};
+use super::{docker::Docker, playwright::Playwright};
 use crate::{
     cli::{
         arguments::{has_only_enabled, is_enabled, CliArgs, CliOptions},
-        logger::Logger,
         progress::AppProgress,
     },
     system::error::AppError,
 };
-
-use self::{cmds::*, templates::*};
-
-use super::{docker::Docker, playwright::Playwright};
+use clap::Parser;
+use log::info;
 
 mod cmds;
 mod templates;
@@ -21,7 +18,7 @@ impl Redwood {
     pub fn init(progress_bar: &AppProgress) -> Result<(), AppError> {
         let args = CliArgs::parse();
         if args.not_redwood {
-            Logger::loud_info(String::from("Skipping Redwood creation"));
+            info!("Skipping Redwood creation");
             return Ok(());
         }
 
@@ -34,10 +31,15 @@ impl Redwood {
     }
 
     fn copy_templates(progress_bar: &AppProgress) -> Result<(), AppError> {
-        copy_components(progress_bar)?;
-        copy_home_page()?;
-        copy_layouts()?;
-        copy_auth_unit_test()?;
+        if is_enabled(&CliOptions::Redwood)
+            || is_enabled(&CliOptions::Templates)
+            || !has_only_enabled()
+        {
+            copy_components(progress_bar)?;
+            copy_home_page()?;
+            copy_layouts()?;
+            copy_auth_unit_test()?;
+        }
         Ok(())
     }
 
@@ -52,14 +54,13 @@ impl Redwood {
         if !has_only_enabled() {
             run_unit_tests(progress_bar, "web")?;
             run_unit_tests(progress_bar, "api")?;
-            run_lint(progress_bar)?;
             Playwright::test(progress_bar)?;
         }
         Ok(())
     }
 
     pub fn cleanup(progress_bar: &AppProgress) -> Result<(), AppError> {
-        progress_bar.update("🧹 Cleaning up lumberstack");
+        progress_bar.update("🧹 Cleaning up installation");
         Docker::cleanup(&progress_bar)?;
         Ok(())
     }

@@ -1,6 +1,5 @@
 #
 
-
 ```shell
 # lumberstack --help
 
@@ -61,6 +60,10 @@ git push origin --tag <semver>
 codesign -s "<developer_id>" target/release/lumberstack
 
 # Homebrew
+brew tap archae0pteryx/lumberstack-cli
+brew install lumberstack-cli
+
+# cleanup brew
 brew uninstall --force lumberstack-cli
 brew untap archae0pteryx/lumberstack-cli
 ```

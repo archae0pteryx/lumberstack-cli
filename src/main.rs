@@ -1,14 +1,17 @@
-// #![allow(unused)]
+#![allow(unused)]
 extern crate log;
+extern crate colored;
 mod cli;
+mod configuration;
 mod generators;
 mod system;
 
-use cli::{logger::*, progress::*};
+use cli::{progress::*, logger::Logger};
+use configuration::TemplateConfigFile;
 use generators::{
     heroku::*, playwright::*, prisma::*, redwood::*, tailwind::Tailwind, templates::*,
 };
-use system::{error::AppError, *};
+use system::{error::AppError, utils::HandlebarBuilder, *};
 
 fn main() -> Result<(), AppError> {
     Logger::init();

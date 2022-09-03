@@ -154,6 +154,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "colored"
+version = "2.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b3616f750b84d8f0de8a58bda93e08e2a81ad3f523089b05f1dffecab48c6cbd"
+dependencies = [
+ "atty",
+ "lazy_static",
+ "winapi",
+]
+
+[[package]]
 name = "console"
 version = "0.15.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -239,6 +250,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "fs_extra"
+version = "1.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2022715d62ab30faffd124d40b76f4134a550a87792276512b18d63272333394"
+
+[[package]]
 name = "generic-array"
 version = "0.14.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -315,6 +332,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "include_dir"
+version = "0.7.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "482a2e29200b7eed25d7fdbd14423326760b7f6658d21a4cf12d55a50713c69f"
+dependencies = [
+ "include_dir_macros",
+]
+
+[[package]]
+name = "include_dir_macros"
+version = "0.7.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5e074c19deab2501407c91ba1860fa3d6820bfde307db6d8cb851b55a10be89b"
+dependencies = [
+ "proc-macro2",
+ "quote",
+]
+
+[[package]]
 name = "indexmap"
 version = "1.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -379,18 +415,19 @@ dependencies = [
  "clap",
  "clap-verbosity-flag",
  "cmd_lib",
+ "colored",
  "env_logger",
  "exitcode",
+ "fs_extra",
  "handlebars",
+ "include_dir",
  "indicatif",
  "log",
- "question",
  "rand",
  "serde",
  "serde_json",
  "strum",
  "termcolor",
- "walkdir",
 ]
 
 [[package]]
@@ -530,12 +567,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "question"
-version = "0.2.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "acbb3ede7a8f9a8ab89e714637f2cf40001b58f21340d4242b2f11533e65fa8d"
-
-[[package]]
 name = "quote"
 version = "1.0.21"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -602,15 +633,6 @@ name = "ryu"
 version = "1.0.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4501abdff3ae82a1c1b477a17252eb69cee9e66eb915c1abaa4f44d873df9f09"
-
-[[package]]
-name = "same-file"
-version = "1.0.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "93fc1dc3aaa9bfed95e02e6eadabb4baf7e3078b0bd1b4d7b6b0b68378900502"
-dependencies = [
- "winapi-util",
-]
 
 [[package]]
 name = "serde"
@@ -778,17 +800,6 @@ name = "version_check"
 version = "0.9.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "49874b5167b65d7193b8aba1567f5c7d93d001cafc34600cee003eda787e483f"
-
-[[package]]
-name = "walkdir"
-version = "2.3.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "808cf2735cd4b6866113f648b791c6adc5714537bc222d9347bb203386ffda56"
-dependencies = [
- "same-file",
- "winapi",
- "winapi-util",
-]
 
 [[package]]
 name = "wasi"

@@ -1,6 +1,6 @@
 use crate::{
     cli::app_paths::AppPaths,
-    system::{utils::{load_json, merge_json}, error::AppError},
+    system::{utils::{load_external_json, merge_json}, error::AppError},
 };
 
 use serde_json::Value;
@@ -11,7 +11,7 @@ pub struct Scripts;
 impl Scripts {
     pub fn copy_template() -> Result<(), AppError> {
         let destination = AppPaths::root(Some("package.json"));
-        let mut package_json = load_json(&destination).unwrap();
+        let mut package_json = load_external_json(&destination).unwrap();
         let script = Self::custom_template();
         merge_json(&mut package_json, &script);
         let new_package = File::create(&destination)?;

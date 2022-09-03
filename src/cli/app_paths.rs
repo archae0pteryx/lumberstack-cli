@@ -1,7 +1,7 @@
 use super::arguments::CliArgs;
 use clap::Parser;
 
-const ROOT_TEMPLATE_DIR: &str = "templates";
+pub static ROOT_TEMPLATE_DIR: &str= "templates";
 
 pub struct AppPaths;
 

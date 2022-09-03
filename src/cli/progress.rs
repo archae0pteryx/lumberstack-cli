@@ -1,8 +1,6 @@
 use indicatif::{ProgressBar, ProgressStyle};
-use log::log_enabled;
+use log::{log_enabled, debug};
 use std::time::Duration;
-
-use super::logger::Logger;
 
 pub struct AppProgress {
     _spinner: ProgressBar,
@@ -31,19 +29,19 @@ impl AppProgress {
             spinner.set_message(String::from("🚀 Launching Lumberstack Lovingly"));
             spinner.enable_steady_tick(Duration::from_millis(120));
         }
-        Logger::loud_info(String::from("🪵 Logging enabled!"));
+        debug!("🪵 Logging enabled!");
         AppProgress { _spinner: spinner }
     }
 
     pub fn update(&self, message: &str) {
-        Logger::loud_info(String::from(message));
+        debug!("{}", message);
         if !log_enabled!(log::Level::Warn) {
             self._spinner.set_message(String::from(message));
         }
     }
 
     pub fn finish(&self, message: &str) {
-        Logger::loud_info(String::from(message));
+        debug!("{}", message);
         if !log_enabled!(log::Level::Warn) {
             self._spinner.finish_with_message(String::from(message));
         }

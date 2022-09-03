@@ -1,4 +1,7 @@
-use std::{fmt, io};
+use std::{fmt, io, string::FromUtf8Error};
+extern crate colored;
+
+use colored::*;
 
 #[derive(Debug)]
 pub struct AppError {
@@ -7,7 +10,7 @@ pub struct AppError {
 
 impl fmt::Display for AppError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        writeln!(f, "\u{0020}💣 App Error: {}", self.message)
+        f.write_fmt(format!("{}", self.message))
     }
 }
 
@@ -20,6 +23,13 @@ impl From<io::Error> for AppError {
 }
 impl From<serde_json::Error> for AppError {
     fn from(error: serde_json::Error) -> Self {
+        AppError {
+            message: error.to_string(),
+        }
+    }
+}
+impl From<FromUtf8Error> for AppError {
+    fn from(error: FromUtf8Error) -> Self {
         AppError {
             message: error.to_string(),
         }

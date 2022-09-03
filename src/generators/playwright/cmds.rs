@@ -5,7 +5,7 @@ use crate::{
 
 pub(super) fn install_playwright(progress_bar: &AppProgress) -> Result<(), AppError> {
     progress_bar.update("🏠 Initializing Playwright");
-    Shell::exec(format!(
+    Shell::exec_quiet(format!(
         "cd {}; yarn create playwright --quiet --lang=ts",
         AppPaths::web(None)
     ))
