@@ -1,5 +1,5 @@
 use indicatif::{ProgressBar, ProgressStyle};
-use log::{log_enabled, debug};
+use log::{debug, log_enabled};
 use std::time::Duration;
 
 pub struct AppProgress {
@@ -9,7 +9,7 @@ pub struct AppProgress {
 impl AppProgress {
     pub fn new() -> AppProgress {
         let spinner = ProgressBar::new_spinner();
-        if !log_enabled!(log::Level::Warn) {
+        if !log_enabled!(log::Level::Info) {
             spinner.set_style(
                 ProgressStyle::with_template(
                     "[{elapsed_precise}] \u{0020} {spinner:.yellow} {wide_msg:.bright} ",
@@ -35,14 +35,14 @@ impl AppProgress {
 
     pub fn update(&self, message: &str) {
         debug!("{}", message);
-        if !log_enabled!(log::Level::Warn) {
+        if !log_enabled!(log::Level::Info) {
             self._spinner.set_message(String::from(message));
         }
     }
 
     pub fn finish(&self, message: &str) {
         debug!("{}", message);
-        if !log_enabled!(log::Level::Warn) {
+        if !log_enabled!(log::Level::Info) {
             self._spinner.finish_with_message(String::from(message));
         }
     }

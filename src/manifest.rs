@@ -1,9 +1,12 @@
 use clap::Parser;
-use log::error;
+use handlebars::Handlebars;
 use serde::{Deserialize, Serialize};
 use std::{collections::BTreeMap, fs};
 
 use crate::cli_args::CliArgs;
+
+static DEFAULT_APP_NAME: &'static str = "myapp";
+static DEFAULT_MANIFEST_FILE: &'static str = "lumberstack.json";
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ManifestJson {
@@ -35,18 +38,49 @@ pub struct CommandStep {
     pub context: Option<String>,
 }
 
-pub fn load_manifest() -> ManifestJson {
-    let args = CliArgs::parse();
-    let config_to_load = args.config.unwrap_or("default_config.json".to_string());
+pub struct Manifest {
+    pub app_name: String,
+    pub json: ManifestJson,
+}
 
-    println!("loading config {}", &config_to_load);
+impl Manifest {
+    pub fn new() -> Manifest {
+        let manifest_str = Self::read_manifest();
+        let handlebars = Handlebars::new();
+        let manifest: ManifestJson =
+            serde_json::from_str(&manifest_str).expect("Error reading json");
+        let out = handlebars
+            .render_template(&manifest_str, &manifest)
+            .expect("Error rendering template");
 
-    let rdr = fs::File::open(&config_to_load)
-        .map_err(|_| error!("💣 Error opening config: {}", &config_to_load))
-        .unwrap();
+        let processesed_manifest: ManifestJson =
+            serde_json::from_str(&out).expect("Error loading JSON");
 
-    let config_obj: ManifestJson = serde_json::from_reader(rdr)
-        .map_err(|_| error!("💣 Error loading config as json: {}", &config_to_load))
-        .unwrap();
-    config_obj
+        Manifest {
+            app_name: Self::app_name(&manifest),
+            json: processesed_manifest,
+        }
+    }
+
+    fn read_manifest() -> String {
+        let args = CliArgs::parse();
+        let config = args.config.unwrap_or(DEFAULT_MANIFEST_FILE.to_string());
+        fs::read_to_string(config).expect("Cant load manifest config")
+    }
+
+    // Prefer name from args
+    pub fn app_name(config: &ManifestJson) -> String {
+        let args = CliArgs::parse();
+        match &args.name {
+            Some(name) => {
+                return name.to_owned();
+            }
+            None => match &config.app_name {
+                Some(name) => {
+                    return String::from(name);
+                }
+                None => return String::from(DEFAULT_APP_NAME),
+            },
+        }
+    }
 }

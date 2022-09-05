@@ -6,7 +6,7 @@
       "feedback": "Creating Redwood App",
       "commands": [
         {
-          "command": "yarn create redwood-app {{app_name}} --overwrite --typescript",
+          "command": "yarn create redwood-app {{app_name}} --typescript --overwrite",
           "context": null
         }
       ]
@@ -43,11 +43,10 @@
     {
       "tag": "tailwind",
       "feedback": "Setting up tailwind",
-      "context": "web",
       "commands": [
         {
           "command": "yarn rw setup ui tailwind",
-          "context": "web"
+          "context": "{{app_name}}/web"
         }
       ]
     }

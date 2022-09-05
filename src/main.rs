@@ -7,8 +7,9 @@ mod cli_args;
 mod lumberstack;
 mod sys_checks;
 mod progress;
-mod exec_command;
+mod commands;
 mod manifest;
+mod templates;
 
 use logger::Logger;
 use lumberstack::Lumberstack;
