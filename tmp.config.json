@@ -1,0 +1,41 @@
+{
+  "app_name": "myapp",
+  "builder": [
+    {
+      "name": "create-redwood-app",
+      "feedback": "Creating Redwood App",
+      "commands": [
+        "yarn create redwood-app {{app_name}} --overwrite --typescript"
+      ]
+    },
+    {
+      "name": "copy-redwood-templates",
+      "feedback": "Copying redwood templates",
+      "templates": [
+        {
+          "source": "templates/redwood/.env.template",
+          "dest": "{{app_name}}/.env",
+          "replace_map": {
+            "database_url": "{{app_name}}/imadburl.com",
+            "test_database_url": "test_{{app_name}}/imadburl.com"
+          }
+        },
+        {
+          "source": "templates/redwood/docker-compose.template",
+          "dest": "{{app_name}}/docker-compose.yml",
+          "replace_map": {
+            "app_name": "{{app_name}}"
+          }
+        },
+        {
+          "source": "templates/redwood/.gitignore.template",
+          "dest": "{{app_name}}/.gitignore"
+        },
+        {
+          "source": "templates/redwood/.prettierignore.template",
+          "dest": "{{app_name}}/.prettierignore"
+        }
+      ]
+    }
+  ]
+}

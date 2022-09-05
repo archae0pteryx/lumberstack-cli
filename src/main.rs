@@ -1,30 +1,21 @@
-#![allow(unused)]
-extern crate log;
+// #![allow(unused)]
 extern crate colored;
-mod cli;
-mod configuration;
-mod generators;
-mod system;
+extern crate log;
 
-use cli::{progress::*, logger::Logger};
-use configuration::TemplateConfigFile;
-use generators::{
-    heroku::*, playwright::*, prisma::*, redwood::*, tailwind::Tailwind, templates::*,
-};
-use system::{error::AppError, utils::HandlebarBuilder, *};
+mod logger;
+mod cli_args;
+mod lumberstack;
+mod sys_checks;
+mod progress;
+mod exec_command;
+mod manifest;
 
-fn main() -> Result<(), AppError> {
+use logger::Logger;
+use lumberstack::Lumberstack;
+use sys_checks::System;
+
+fn main() {
     Logger::init();
-    let progress_bar = AppProgress::new();
-    System::init(&progress_bar)?;
-    Redwood::init(&progress_bar)?;
-    Templates::init(&progress_bar)?;
-    Tailwind::init(&progress_bar)?;
-    Prisma::init(&progress_bar)?;
-    Playwright::init(&progress_bar)?;
-    Heroku::init(&progress_bar)?;
-    Redwood::verify(&progress_bar)?;
-    Redwood::cleanup(&progress_bar)?;
-    progress_bar.finish("🚀 Setup finished");
-    Ok(())
+    System::check_prerequsites();
+    Lumberstack::run();
 }
