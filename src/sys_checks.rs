@@ -1,6 +1,7 @@
 use std::process::exit;
 
 use clap::Parser;
+use indicatif::ProgressBar;
 use log::error;
 
 use crate::cli_args::CliArgs;
@@ -8,9 +9,11 @@ use crate::cli_args::CliArgs;
 pub struct System;
 
 impl System {
-    pub fn check_prerequsites() {
+    pub fn check_prerequsites(spinner: &ProgressBar) {
         let args = CliArgs::parse();
         if !args.disable_checks {
+            spinner.set_prefix("🚀");
+            spinner.set_message("Checking system requirements");
             Self::os_ok();
             Self::check_app_installed("yarn");
             Self::check_docker();

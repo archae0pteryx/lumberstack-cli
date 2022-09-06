@@ -2,21 +2,23 @@
 extern crate colored;
 extern crate log;
 
-mod logger;
 mod cli_args;
-mod lumberstack;
-mod sys_checks;
-mod progress;
 mod commands;
+mod logger;
+mod lumberstack;
 mod manifest;
+mod sys_checks;
 mod templates;
+mod spinner;
 
 use logger::Logger;
 use lumberstack::Lumberstack;
 use sys_checks::System;
+use spinner::create_spinner;
 
 fn main() {
     Logger::init();
-    System::check_prerequsites();
-    Lumberstack::run();
+    let spinner = create_spinner();
+    System::check_prerequsites(&spinner);
+    Lumberstack::run(&spinner);
 }

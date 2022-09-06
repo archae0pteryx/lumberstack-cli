@@ -30,14 +30,14 @@
     },
     {
       "tag": "prisma",
-      "feedback": "Setting up database",
+      "feedback": "Setting up prisma",
       "templates": [
         {
           "source": "templates/redwood/.env.template",
           "dest": "{{app_name}}/.env",
           "replace_map": {
-            "database_url": "{{app_name}}/imadburl.com",
-            "test_database_url": "test_{{app_name}}/imadburl.com"
+            "database_url": "postgresql://postgres:development@localhost:5432/{{app_name}}_dev",
+            "test_database_url": "postgresql://postgres:test@localhost:5432/{{app_name}}_test"
           }
         },
         {
@@ -59,10 +59,10 @@
       "commands": [
         {
           "feedback": "Starting db",
-          "command": "docker compose -f {{app_name}}/docker-compose.yml stop db -d"
+          "command": "docker compose -f docker-compose.yml stop db"
         },
         {
-          "command": "docker compose -f {{app_name}}/docker-compose.yml up db -d"
+          "command": "docker compose -f docker-compose.yml up db -d"
         },
         {
           "feedback": "Migrating prisma",

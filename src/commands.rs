@@ -1,5 +1,7 @@
 use crate::manifest::CommandStep;
+use indicatif::ProgressBar;
 use log::{debug, error, info, warn};
+use std::process::exit;
 use std::thread;
 use std::{
     io::{BufRead, BufReader},
@@ -9,14 +11,21 @@ use std::{
 pub struct Commands;
 
 impl Commands {
-    pub fn process(app_name: &String, commands: &Vec<CommandStep>) {
+    pub fn process(app_name: &String, commands: Vec<CommandStep>, progress_bar: &ProgressBar) {
         for command_step in commands.iter() {
+            let feedback = command_step.feedback.to_owned();
+
+            if let Some(feedback) = feedback {
+                progress_bar.set_message(feedback);
+            }
+
             Self::exec(app_name, &command_step);
         }
+        progress_bar.set_message("Finished processing commands!")
     }
 
     pub fn exec(app_name: &String, command_step: &CommandStep) {
-        let context = Self::get_context(app_name, &command_step.context);
+        let context = Self::cmd_context(app_name, &command_step.context);
         let command = &command_step.command;
 
         debug!("👀 Running command: [{}] in [{}]", &command, &context);
@@ -36,14 +45,7 @@ impl Commands {
         let err = BufReader::new(child.stderr.take().unwrap());
 
         let thread = thread::spawn(move || {
-            err.lines().for_each(|line| {
-                let l = line.unwrap();
-                if l.contains("warning") {
-                    warn!("{}", l)
-                } else {
-                    error!("{}", l)
-                }
-            });
+            err.lines().for_each(|line| warn!("{}", line.unwrap()));
         });
 
         out.lines().for_each(|line| info!("{}", line.unwrap()));
@@ -51,10 +53,14 @@ impl Commands {
         thread.join().unwrap();
 
         let status = child.wait().unwrap();
-        info!("Command exited with status: {}", status);
+
+        if !status.success() {
+            error!("Error running {}. Failing hard", command);
+            exit(exitcode::IOERR);
+        }
     }
 
-    fn get_context(app_name: &String, context: &Option<String>) -> String {
+    fn cmd_context(app_name: &String, context: &Option<String>) -> String {
         match context {
             Some(c) => {
                 if c.eq(".") {
@@ -62,8 +68,8 @@ impl Commands {
                 } else {
                     format!("{}/{}", app_name, c)
                 }
-            },
-            None => app_name.to_owned()
+            }
+            None => app_name.to_owned(),
         }
     }
 }

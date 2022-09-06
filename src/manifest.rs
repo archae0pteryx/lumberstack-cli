@@ -8,13 +8,13 @@ use crate::cli_args::CliArgs;
 static DEFAULT_APP_NAME: &'static str = "myapp";
 static DEFAULT_MANIFEST_FILE: &'static str = "lumberstack.json";
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ManifestJson {
     pub app_name: Option<String>,
     pub builder: Vec<BuildItem>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct BuildItem {
     pub tag: String,
     pub feedback: String,
@@ -37,6 +37,7 @@ pub struct CommandStep {
     pub command: String,
     pub context: Option<String>,
 }
+#[derive(Debug, Clone)]
 
 pub struct Manifest {
     pub app_name: String,

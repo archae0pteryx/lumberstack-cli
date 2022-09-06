@@ -3,34 +3,34 @@ use crate::manifest::Manifest;
 use crate::templates::Templates;
 
 use super::cli_args::CliArgs;
-use super::progress::AppProgress;
 use clap::Parser;
+use indicatif::ProgressBar;
 
 pub struct Lumberstack;
 
 impl Lumberstack {
-    pub fn run() {
-        let progress_bar = AppProgress::new();
+    pub fn run(spinner: &ProgressBar) {
         let manifest = Manifest::new();
-        let manifest_json = manifest.json;
+        let manifest_json = &manifest.json;
+        let builder_items = &manifest_json.builder;
         let app_name = manifest.app_name;
+
         let only_run_these = Self::only_run();
 
-        for build_item in manifest_json.builder.iter() {
+        for build_item in builder_items.iter() {
             if only_run_these.len().eq(&0) || only_run_these.contains(&build_item.tag) {
-                progress_bar.update(&build_item.feedback);
+                spinner.set_message(build_item.feedback.to_owned());
 
                 if let Some(templates) = &build_item.templates {
-                    Templates::process(templates)
+                    Templates::process(templates.to_owned(), &spinner)
                 }
 
                 if let Some(commands) = &build_item.commands {
-                    Commands::process(&app_name, commands);
+                    Commands::process(&app_name, commands.to_owned(), &spinner);
                 }
+                spinner.inc(1);
             }
         }
-
-        progress_bar.finish("All done!");
     }
 
     fn only_run() -> Vec<String> {
