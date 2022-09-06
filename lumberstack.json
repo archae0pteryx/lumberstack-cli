@@ -7,13 +7,30 @@
       "commands": [
         {
           "command": "yarn create redwood-app {{app_name}} --typescript --overwrite",
-          "context": null
+          "context": "."
+        },
+        {
+          "command": "yarn rw generate page home /"
         }
       ]
     },
     {
       "tag": "templates",
       "feedback": "Copying redwood templates",
+      "templates": [
+        {
+          "source": "templates/redwood/.gitignore.template",
+          "dest": "{{app_name}}/.gitignore"
+        },
+        {
+          "source": "templates/redwood/.prettierignore.template",
+          "dest": "{{app_name}}/.prettierignore"
+        }
+      ]
+    },
+    {
+      "tag": "prisma",
+      "feedback": "Setting up database",
       "templates": [
         {
           "source": "templates/redwood/.env.template",
@@ -31,12 +48,37 @@
           }
         },
         {
-          "source": "templates/redwood/.gitignore.template",
-          "dest": "{{app_name}}/.gitignore"
+          "source": "templates/prisma/schema.prisma.template",
+          "dest": "{{app_name}}/api/db/schema.prisma"
         },
         {
-          "source": "templates/redwood/.prettierignore.template",
-          "dest": "{{app_name}}/.prettierignore"
+          "source": "templates/prisma/seed.ts.template",
+          "dest": "{{app_name}}/api/db/seed.ts"
+        }
+      ],
+      "commands": [
+        {
+          "feedback": "Starting db",
+          "command": "docker compose -f {{app_name}}/docker-compose.yml stop db -d"
+        },
+        {
+          "command": "docker compose -f {{app_name}}/docker-compose.yml up db -d"
+        },
+        {
+          "feedback": "Migrating prisma",
+          "command": "yarn rw prisma migrate dev --name init"
+        }
+      ]
+    },
+    {
+      "tag": "auth",
+      "feedback": "Setting up redwood auth",
+      "commands": [
+        {
+          "command": "yarn rw setup auth dbAuth --force"
+        },
+        {
+          "command": "yarn rw generate dbAuth --force"
         }
       ]
     },
@@ -46,7 +88,7 @@
       "commands": [
         {
           "command": "yarn rw setup ui tailwind",
-          "context": "{{app_name}}/web"
+          "context": "web"
         }
       ]
     }

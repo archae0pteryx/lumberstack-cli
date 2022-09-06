@@ -13,6 +13,7 @@ impl Lumberstack {
         let progress_bar = AppProgress::new();
         let manifest = Manifest::new();
         let manifest_json = manifest.json;
+        let app_name = manifest.app_name;
         let only_run_these = Self::only_run();
 
         for build_item in manifest_json.builder.iter() {
@@ -24,7 +25,7 @@ impl Lumberstack {
                 }
 
                 if let Some(commands) = &build_item.commands {
-                    Commands::process(commands);
+                    Commands::process(&app_name, commands);
                 }
             }
         }
