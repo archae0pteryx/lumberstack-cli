@@ -22,15 +22,18 @@ impl Lumberstack {
                 spinner.set_message(build_item.feedback.to_owned());
 
                 if let Some(templates) = &build_item.templates {
+                    spinner.set_prefix("📄");
                     Templates::process(templates.to_owned(), &spinner)
                 }
 
                 if let Some(commands) = &build_item.commands {
+                    spinner.set_prefix("👟");
                     Commands::process(&app_name, commands.to_owned(), &spinner);
                 }
-                spinner.inc(1);
             }
         }
+        spinner.set_prefix("✅");
+        spinner.finish_with_message("Finished!")
     }
 
     fn only_run() -> Vec<String> {

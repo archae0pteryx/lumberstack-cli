@@ -1,4 +1,4 @@
-use std::process::exit;
+use std::process::{exit, Command};
 
 use clap::Parser;
 use indicatif::ProgressBar;
@@ -34,25 +34,29 @@ impl System {
         let output = Self::check_app_installed("node");
         if !output.contains("v14") {
             error!("❌ node v14 required but found: {}", output);
-            exit(exitcode::OSFILE);
+            exit(exitcode::SOFTWARE);
         }
     }
 
     fn check_app_installed(bin_name: &str) -> String {
-        let app_check = cmd_lib::run_fun!($bin_name -v);
-        if app_check.is_err() {
+        let output = Command::new(bin_name).arg("-v").output();
+        if output.is_err() {
             error!("❌ {} not found but required", bin_name);
-            exit(exitcode::OSFILE);
+            exit(exitcode::SOFTWARE);
         }
 
-        return app_check.unwrap_or(String::new());
+        return String::from_utf8(output.unwrap().stdout).unwrap();
     }
 
+    // FIXME
     fn check_docker() {
-        let check = cmd_lib::run_fun!(docker ps);
-        if check.is_err() || check.unwrap().contains("Cannot connect") {
-            error!("❌ Docker is not installed or not running");
-            exit(exitcode::OSFILE);
+        Self::check_app_installed("docker");
+        let output = Command::new("docker").arg("ps").output().expect("error running docker check");
+        let stdout = &output.stdout;
+        let connected = String::from_utf8(stdout.to_owned()).unwrap();
+        if connected.contains("Cannot connect") {
+            error!("❌ Docker not running");
+            exit(exitcode::SOFTWARE);
         }
     }
 }

@@ -1,7 +1,6 @@
 use crate::manifest::CommandStep;
 use indicatif::ProgressBar;
-use log::{debug, error, info, warn};
-use std::process::exit;
+use log::{debug, info, warn};
 use std::thread;
 use std::{
     io::{BufRead, BufReader},
@@ -35,6 +34,7 @@ impl Commands {
 
         let mut child = Command::new(program[0])
             .args(args)
+            .stdin(Stdio::inherit())
             .stderr(Stdio::piped())
             .stdout(Stdio::piped())
             .current_dir(&context)
@@ -53,21 +53,13 @@ impl Commands {
         thread.join().unwrap();
 
         let status = child.wait().unwrap();
-
-        if !status.success() {
-            error!("Error running {}. Failing hard", command);
-            exit(exitcode::IOERR);
-        }
+        debug!("exited {}", status);
     }
 
     fn cmd_context(app_name: &String, context: &Option<String>) -> String {
         match context {
             Some(c) => {
-                if c.eq(".") {
-                    String::from(c)
-                } else {
-                    format!("{}/{}", app_name, c)
-                }
+                return c.to_owned();
             }
             None => app_name.to_owned(),
         }

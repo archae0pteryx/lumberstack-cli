@@ -1,6 +1,6 @@
 // #![allow(unused)]
-extern crate colored;
 extern crate log;
+extern crate fs_extra;
 
 mod cli_args;
 mod commands;

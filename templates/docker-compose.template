@@ -1,7 +1,6 @@
 version: '3.8'
 
 name: {{app_name}}
-
 services:
   db:
     image: postgres:14.1
