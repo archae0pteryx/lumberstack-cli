@@ -48,13 +48,14 @@ impl System {
         return String::from_utf8(output.unwrap().stdout).unwrap();
     }
 
-    // FIXME
     fn check_docker() {
         Self::check_app_installed("docker");
-        let output = Command::new("docker").arg("ps").output().expect("error running docker check");
-        let stdout = &output.stdout;
-        let connected = String::from_utf8(stdout.to_owned()).unwrap();
-        if connected.contains("Cannot connect") {
+        let output = Command::new("docker").arg("ps").output().unwrap();
+
+        // let out = String::from_utf8(output.stdout).unwrap();
+        let err = String::from_utf8(output.stderr).unwrap();
+
+        if err.contains("Error response") || err.contains("Cannot connect") {
             error!("❌ Docker not running");
             exit(exitcode::SOFTWARE);
         }

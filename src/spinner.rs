@@ -6,7 +6,7 @@ pub fn create_spinner() -> ProgressBar {
     let spinner = ProgressBar::new_spinner();
     spinner.set_style(
         ProgressStyle::with_template(
-            "{spinner:.yellow} {prefix} {wide_msg:.bright} {elapsed_precise:.blue}\n",
+            "{prefix} {elapsed_precise:.cyan} {spinner:.yellow} {msg:.bright}",
         )
         .unwrap()
         .tick_strings(&[

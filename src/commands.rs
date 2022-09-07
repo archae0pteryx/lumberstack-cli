@@ -1,12 +1,7 @@
 use crate::manifest::CommandStep;
 use indicatif::ProgressBar;
-use log::{debug, error, info, warn};
-use std::process::exit;
-use std::thread;
-use std::{
-    io::{BufRead, BufReader},
-    process::{Command, Stdio},
-};
+use log::debug;
+use std::process::{Command, Stdio};
 
 pub struct Commands;
 
@@ -21,37 +16,36 @@ impl Commands {
 
             Self::exec(&command_step);
         }
-        progress_bar.set_message("Finished processing commands!")
     }
 
     pub fn exec(command_step: &CommandStep) {
         let command = &command_step.command;
         let context = &command_step.context.clone().unwrap_or(".".to_string());
+
         debug!("👀 Running command: [{}]", &command);
 
         let cmd_vec: Vec<&str> = command.split(" ").collect();
         let (program, args) = cmd_vec.split_at(1);
 
-        let mut child = Command::new(program[0])
+        let std_err = Self::should_inherit_stdio();
+        let std_out = Self::should_inherit_stdio();
+
+        let child = Command::new(program[0])
             .args(args)
             .stdin(Stdio::inherit())
-            .stderr(Stdio::inherit())
-            .stdout(Stdio::inherit())
+            .stderr(std_err)
+            .stdout(std_out)
             .current_dir(context)
             .spawn()
             .expect("error running command");
 
-        // let out = BufReader::new(child.stdout.take().unwrap());
-        // let err = BufReader::new(child.stderr.take().unwrap());
-
-        // let thread = thread::spawn(move || {
-        //     err.lines().for_each(|line| warn!("{}", line.unwrap()));
-        // });
-
-        // out.lines().for_each(|line| info!("{}", line.unwrap()));
-
-        // thread.join().unwrap();
-
         child.wait_with_output().unwrap();
+    }
+
+    fn should_inherit_stdio() -> Stdio {
+        if log::log_enabled!(log::Level::Info) {
+            return Stdio::inherit();
+        }
+        return Stdio::piped();
     }
 }

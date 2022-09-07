@@ -1,10 +1,14 @@
-use std::{fs, io::Write};
-
-use indicatif::ProgressBar;
-use log::{debug, error, info};
-use fs_extra::{self, dir::CopyOptions};
 use crate::manifest::TemplateItem;
-use std::fs::metadata;
+use indicatif::ProgressBar;
+use log::{debug, error, warn};
+use std::error::Error;
+use std::{
+    fs,
+    io::ErrorKind,
+    path::{Path, PathBuf},
+    process::exit,
+};
+use walkdir::WalkDir;
 
 pub struct Templates;
 
@@ -12,54 +16,91 @@ impl Templates {
     pub fn process(app_name: &String, template_items: Vec<TemplateItem>, spinner: &ProgressBar) {
         for template_item in template_items.iter() {
             let feedback = template_item.feedback.to_owned();
+
             if let Some(feedback) = feedback {
                 spinner.set_message(feedback);
             }
-            let source = &template_item.source;
-            let dest = &template_item.dest;
 
+            let source = PathBuf::from(&template_item.source);
+            let dest = PathBuf::from(&template_item.dest);
 
-            let meta = metadata(source).expect("Cant find source to check if dir");
+            let source_exists = Path::new(&source).exists();
 
-            if meta.is_dir() {
-                Self::copy_dir(&source, &dest);
-                continue;
+            if !source_exists {
+                error!("File / Folder {} does not exist", source.to_string_lossy());
+                exit(exitcode::OSFILE);
             }
 
-            debug!("Copying template: {} to {}", source, dest);
-
-
-            let mut dest_file =
-                fs::File::create(&dest).expect("💣 Error creating dest template file");
-
-            let processed_template = Self::handle_template(&app_name, &template_item);
-
-            let result = dest_file.write_all(processed_template.as_bytes());
-
-            match result {
-                Ok(_) => {
-                    info!("Wrote template: {}", dest);
-                }
-                Err(_) => {
-                    error!("Error writing template: {}. Continuing...", dest)
-                }
-            }
+            Self::copy_all_templates(&app_name, &source, &dest)
+                .expect("Error copying all templates");
         }
     }
 
-    fn handle_template(app_name: &String, template_item: &TemplateItem) -> String {
-        let template_file = fs::read_to_string(&template_item.source)
-        .expect(format!("Error loading template {}", &template_item.source).as_str());
-        return template_file.replace("{{app_name}}", &app_name);
+    fn copy_all_templates(
+        app_name: &String,
+        in_dir: &PathBuf,
+        out_dir: &PathBuf,
+    ) -> Result<(), Box<dyn Error>> {
+        for entry in WalkDir::new(&in_dir) {
+            let entry = entry?;
+
+            let from = entry.path();
+            let to = out_dir.join(from.strip_prefix(&in_dir)?);
+
+            debug!("Copying {} to {}", from.display(), to.display());
+
+            // create directories
+            if entry.file_type().is_dir() {
+                if let Err(e) = fs::create_dir(to) {
+                    match e.kind() {
+                        ErrorKind::AlreadyExists => {}
+                        _ => return Err(e.into()),
+                    }
+                }
+            } else if entry.file_type().is_file() {
+                let from = from.to_path_buf();
+                Self::copy_template(&app_name, &from, &to)?;
+            } else {
+                warn!("copy: ignored symlink {}", from.display());
+            }
+        }
+        Ok(())
     }
 
-    pub fn copy_dir(source: &String, dest: &String) {
-        debug!("Copying dir {} to {}", source, dest);
-        let err_message = format!("Error copying {} to {}", source, dest);
-        let mut options = CopyOptions::new();
-        options.overwrite = true;
-        options.copy_inside = true;
+    fn copy_template(
+        app_name: &String,
+        from: &PathBuf,
+        to: &PathBuf,
+    ) -> Result<(), Box<dyn Error>> {
+        let mut to = to.clone();
+        let file_str = fs::read_to_string(from);
 
-        fs_extra::dir::copy(source, dest, &options).expect(&err_message);
+        match &file_str {
+            Ok(str) => {
+                if !to
+                    .extension()
+                    .unwrap()
+                    .to_string_lossy()
+                    .eq(&String::from("template"))
+                {
+                    warn!(
+                        "Found non template: {} in template dir. Skipping.",
+                        to.to_string_lossy()
+                    );
+                    return Ok(());
+                }
+
+                let replaced = str.replace("{{app_name}}", &app_name);
+
+                to.set_extension("".to_string());
+                fs::write(to, replaced)?;
+
+                Ok(())
+            }
+            Err(_) => {
+                warn!("Error interpolating file [{:?}]. Skipping...", &file_str);
+                Ok(())
+            }
+        }
     }
 }

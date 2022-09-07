@@ -5,7 +5,11 @@ use clap_verbosity_flag::Verbosity;
 #[derive(Parser, Debug)]
 #[clap(version, about, long_about = None)]
 pub struct CliArgs {
-    /// Project name and path. Overrides manifest value (if present)
+    /// Create default config file
+    #[clap(long, short, action)]
+    pub init: bool,
+
+    /// Project name and path.
     #[clap(value_parser)]
     pub name: Option<String>,
 

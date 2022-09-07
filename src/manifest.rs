@@ -2,10 +2,7 @@ use clap::Parser;
 use serde::{Deserialize, Serialize};
 use std::{collections::BTreeMap, fs};
 
-use crate::{cli_args::CliArgs, default_config::generate_default_config};
-
-static DEFAULT_APP_NAME: &'static str = "myapp";
-static DEFAULT_MANIFEST_FILE: &'static str = "lumberstack.json";
+use crate::{cli_args::CliArgs, default_config::generate_default_config, DEFAULT_APP_NAME, DEFAULT_MANIFEST_FILE};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ManifestJson {

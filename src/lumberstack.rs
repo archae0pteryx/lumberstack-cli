@@ -9,11 +9,10 @@ use indicatif::ProgressBar;
 pub struct Lumberstack;
 
 impl Lumberstack {
-    pub fn run(spinner: &ProgressBar) {
-        let manifest = Manifest::new();
+    pub fn run(manifest: &Manifest, spinner: &ProgressBar) {
         let manifest_json = &manifest.json;
         let builder_items = &manifest_json.builder;
-        let app_name = manifest.app_name;
+        let app_name = &manifest.app_name;
 
         let only_run_these = Self::only_run();
 

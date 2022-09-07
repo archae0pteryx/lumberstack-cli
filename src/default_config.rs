@@ -1,6 +1,5 @@
 pub fn generate_default_config() -> &'static str {
-    return r#"
-{
+    return r#"{
   "app_name": "myapp",
   "builder": [
     {
@@ -19,82 +18,26 @@ pub fn generate_default_config() -> &'static str {
     },
     {
       "tag": "templates",
-      "feedback": "Copying redwood templates",
+      "feedback": "Copying default templates",
       "templates": [
         {
-          "source": "templates/.gitignore.template",
-          "dest": "{{app_name}}/.gitignore"
-        },
-        {
-          "source": "templates/.prettierignore.template",
-          "dest": "{{app_name}}/.prettierignore"
-        },
-        {
-          "source": "templates/web/src/pages/HomePage",
-          "dest": "{{app_name}}/web/src/pages/"
-        },
-        {
-          "source": "templates/web/src/layouts",
-          "dest": "{{app_name}}/web/src/"
-        },
-        {
-          "source": "templates/web/src/components",
-          "dest": "{{app_name}}/web/src/"
-        },
-        {
-          "source": "templates/.github",
-          "dest": "{{app_name}}/"
-        },
-        {
-          "source": "templates/CONTRIBUTING.md.template",
-          "dest": "{{app_name}}/CONTRIBUTING.md"
-        },
-        {
-          "source": "templates/LICENSE.md.template",
-          "dest": "{{app_name}}/LICENSE.md"
-        },
-        {
-          "source": "templates/README.md.template",
-          "dest": "{{app_name}}/README.md"
-        },
-        {
-          "source": "templates/web/src/scaffold.css.template",
-          "dest": "{{app_name}}/web/src/scaffold.css"
-        },
-        {
-          "source": "templates/heroku",
-          "dest": "{{app_name}}/"
+          "source": "templates",
+          "dest": "{{app_name}}"
         }
       ]
     },
     {
       "tag": "prisma",
       "feedback": "Setting up prisma",
-      "templates": [
-        {
-          "source": "templates/.env.template",
-          "dest": "{{app_name}}/.env"
-        },
-        {
-          "source": "templates/docker-compose.template",
-          "dest": "{{app_name}}/docker-compose.yml"
-        },
-        {
-          "source": "templates/api/db/schema.prisma.template",
-          "dest": "{{app_name}}/api/db/schema.prisma"
-        },
-        {
-          "source": "templates/api/db/seed.ts.template",
-          "dest": "{{app_name}}/api/db/seed.ts"
-        }
-      ],
       "commands": [
         {
-          "command": "docker compose -f {{app_name}}/docker-compose.yml stop db"
+          "command": "docker compose -f docker-compose.yml stop db",
+          "context": "{{app_name}}"
         },
         {
           "feedback": "Starting docker postgres",
-          "command": "docker compose -f {{app_name}}/docker-compose.yml up db -d"
+          "command": "docker compose -f docker-compose.yml up db -d",
+          "context": "{{app_name}}"
         },
         {
           "feedback": "Creating migration",
@@ -140,6 +83,19 @@ pub fn generate_default_config() -> &'static str {
         {
           "command": "yarn create playwright --quiet --lang=ts",
           "context": "{{app_name}}/web/"
+        }
+      ]
+    },
+    {
+      "tag": "heroku",
+      "feedback": "Setting up heroku",
+      "commands": [
+        {
+          "command": "yarn add pm2",
+          "context": "{{app_name}}"
+        },
+        {
+          "command": "echo 'TODO Setup Heroku!'"
         }
       ]
     }
