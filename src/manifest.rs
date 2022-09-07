@@ -1,9 +1,8 @@
 use clap::Parser;
-use handlebars::Handlebars;
 use serde::{Deserialize, Serialize};
 use std::{collections::BTreeMap, fs};
 
-use crate::cli_args::CliArgs;
+use crate::{cli_args::CliArgs, default_config::generate_default_config};
 
 static DEFAULT_APP_NAME: &'static str = "myapp";
 static DEFAULT_MANIFEST_FILE: &'static str = "lumberstack.json";
@@ -46,42 +45,47 @@ pub struct Manifest {
 
 impl Manifest {
     pub fn new() -> Manifest {
+        let tmp_app_name = Self::tmp_app_name();
         let manifest_str = Self::read_manifest();
-        let handlebars = Handlebars::new();
-        let manifest: ManifestJson =
-            serde_json::from_str(&manifest_str).expect("Error reading json");
-        let out = handlebars
-            .render_template(&manifest_str, &manifest)
-            .expect("Error rendering template");
 
-        let processesed_manifest: ManifestJson =
-            serde_json::from_str(&out).expect("Error loading JSON");
+        let processed_manifest = manifest_str.replace("{{app_name}}", &tmp_app_name);
+
+        let manifest: ManifestJson =
+        serde_json::from_str(&processed_manifest).expect("Error reading json");
+
+        let app_name = manifest.app_name.clone().unwrap_or(DEFAULT_APP_NAME.to_string());
 
         Manifest {
-            app_name: Self::app_name(&manifest),
-            json: processesed_manifest,
+            app_name,
+            json: manifest,
         }
     }
 
     fn read_manifest() -> String {
         let args = CliArgs::parse();
-        let config = args.config.unwrap_or(DEFAULT_MANIFEST_FILE.to_string());
-        fs::read_to_string(config).expect("Cant load manifest config")
+        match &args.config {
+            Some(conf) => {
+                let config = fs::read_to_string(conf).expect("Error reading users manifest");
+
+                return config;
+            }
+            None => {
+                if fs::metadata(DEFAULT_MANIFEST_FILE).is_ok() {
+                    return fs::read_to_string(DEFAULT_MANIFEST_FILE)
+                        .expect("Error reading default manifest");
+                }
+                return generate_default_config().to_string();
+            }
+        }
     }
 
-    // Prefer name from args
-    pub fn app_name(config: &ManifestJson) -> String {
+    pub fn tmp_app_name() -> String {
         let args = CliArgs::parse();
         match &args.name {
             Some(name) => {
                 return name.to_owned();
             }
-            None => match &config.app_name {
-                Some(name) => {
-                    return String::from(name);
-                }
-                None => return String::from(DEFAULT_APP_NAME),
-            },
+            None => String::from(DEFAULT_APP_NAME),
         }
     }
 }

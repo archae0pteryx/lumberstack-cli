@@ -23,12 +23,12 @@ impl Lumberstack {
 
                 if let Some(templates) = &build_item.templates {
                     spinner.set_prefix("📄");
-                    Templates::process(templates.to_owned(), &spinner)
+                    Templates::process(&app_name, templates.to_owned(), &spinner)
                 }
 
                 if let Some(commands) = &build_item.commands {
                     spinner.set_prefix("👟");
-                    Commands::process(&app_name, commands.to_owned(), &spinner);
+                    Commands::process(commands.to_owned(), &spinner);
                 }
             }
         }

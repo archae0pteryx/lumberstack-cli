@@ -26,7 +26,7 @@ impl System {
     fn os_ok() {
         if cfg!(windows) {
             error!("❌ Windows is not supported at this time");
-            exit(exitcode::OK);
+            exit(exitcode::SOFTWARE);
         }
     }
 

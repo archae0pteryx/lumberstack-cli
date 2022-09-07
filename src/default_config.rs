@@ -1,3 +1,5 @@
+pub fn generate_default_config() -> &'static str {
+    return r#"
 {
   "app_name": "myapp",
   "builder": [
@@ -142,4 +144,6 @@
       ]
     }
   ]
+}
+"#;
 }

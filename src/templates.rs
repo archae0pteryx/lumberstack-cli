@@ -1,6 +1,5 @@
 use std::{fs, io::Write};
 
-use handlebars::Handlebars;
 use indicatif::ProgressBar;
 use log::{debug, error, info};
 use fs_extra::{self, dir::CopyOptions};
@@ -10,7 +9,7 @@ use std::fs::metadata;
 pub struct Templates;
 
 impl Templates {
-    pub fn process(template_items: Vec<TemplateItem>, spinner: &ProgressBar) {
+    pub fn process(app_name: &String, template_items: Vec<TemplateItem>, spinner: &ProgressBar) {
         for template_item in template_items.iter() {
             let feedback = template_item.feedback.to_owned();
             if let Some(feedback) = feedback {
@@ -33,7 +32,7 @@ impl Templates {
             let mut dest_file =
                 fs::File::create(&dest).expect("💣 Error creating dest template file");
 
-            let processed_template = Self::handle_template(&template_item);
+            let processed_template = Self::handle_template(&app_name, &template_item);
 
             let result = dest_file.write_all(processed_template.as_bytes());
 
@@ -48,15 +47,10 @@ impl Templates {
         }
     }
 
-    fn handle_template(template_item: &TemplateItem) -> String {
-        let handlebars = Handlebars::new();
+    fn handle_template(app_name: &String, template_item: &TemplateItem) -> String {
         let template_file = fs::read_to_string(&template_item.source)
-            .expect(format!("Error loading template {}", &template_item.source).as_str());
-
-        let out = handlebars
-            .render_template(&template_file, &template_item.replace_map)
-            .expect("Error processing template.");
-        return out;
+        .expect(format!("Error loading template {}", &template_item.source).as_str());
+        return template_file.replace("{{app_name}}", &app_name);
     }
 
     pub fn copy_dir(source: &String, dest: &String) {

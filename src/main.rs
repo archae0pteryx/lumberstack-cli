@@ -10,6 +10,7 @@ mod manifest;
 mod sys_checks;
 mod templates;
 mod spinner;
+mod default_config;
 
 use logger::Logger;
 use lumberstack::Lumberstack;
