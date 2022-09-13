@@ -25,7 +25,11 @@ pub struct CliArgs {
     #[clap(short, long, action)]
     pub disable_checks: bool,
 
+    /// Cleanup dev dirs
+    #[clap(long, action)]
+    pub clean: bool,
+
     /// Load config from file
     #[clap(short, long, value_parser)]
-    pub config: Option<String>
+    pub config: Option<String>,
 }

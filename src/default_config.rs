@@ -1,7 +1,31 @@
+use log::info;
+
 pub fn generate_default_config() -> &'static str {
+    info!("⚙️ Using default configuration");
     return r#"{
   "app_name": "myapp",
+  "keep_templates": false,
   "builder": [
+    {
+      "tag": "download",
+      "feedback": "fetching templates",
+      "commands": [
+        {
+          "command": "curl -L https://github.com/codingzeal/lumberstack-templates/archive/main.tar.gz -o /tmp/lumberstack-templates.tar.gz"
+        },
+        {
+          "command": "tar -C /tmp -xzf /tmp/lumberstack-templates.tar.gz",
+          "feedback": "Extracting templates"
+        },
+        {
+          "command": "mv /tmp/lumberstack-templates-main/templates ./templates"
+        },
+        {
+          "command": "rm -rf /tmp/lumberstack-templates-main && rm -f /tmp/lumberstack-templates.tar.gz",
+          "feedback": "Cleaning up"
+        }
+      ]
+    },
     {
       "tag": "redwood",
       "feedback": "Creating Redwood App",

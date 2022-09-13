@@ -5,6 +5,7 @@ extern crate log;
 mod cli_args;
 mod commands;
 mod default_config;
+mod init;
 mod logger;
 mod lumberstack;
 mod manifest;
@@ -12,11 +13,6 @@ mod spinner;
 mod sys_checks;
 mod templates;
 
-use std::{fs, process::exit};
-
-use clap::Parser;
-use cli_args::CliArgs;
-use logger::Logger;
 use lumberstack::Lumberstack;
 use manifest::Manifest;
 use spinner::create_spinner;
@@ -27,7 +23,7 @@ pub static DEFAULT_APP_NAME: &'static str = "myapp";
 pub static DEFAULT_MANIFEST_FILE: &'static str = "lumberstack.json";
 
 fn main() {
-    initialize();
+    init::initialize();
 
     let spinner = create_spinner();
     System::check_prerequsites(&spinner);
@@ -37,14 +33,4 @@ fn main() {
 
     spinner.set_prefix("✅");
     spinner.finish_with_message("Lumberstack Complete!");
-}
-
-fn initialize() {
-    let args = CliArgs::parse();
-    if args.init {
-        fs::write(DEFAULT_MANIFEST_FILE, default_config::generate_default_config()).expect("Error creating init config");
-        exit(exitcode::OK);
-    }
-
-    Logger::init();
 }

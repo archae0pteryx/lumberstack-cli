@@ -1,4 +1,5 @@
 use clap::Parser;
+use log::info;
 use serde::{Deserialize, Serialize};
 use std::{collections::BTreeMap, fs};
 
@@ -15,7 +16,7 @@ pub struct BuildItem {
     pub tag: String,
     pub feedback: String,
     pub context: Option<String>,
-    pub commands: Option<Vec<CommandStep>>,
+    pub commands: Option<Vec<CommandItem>>,
     pub templates: Option<Vec<TemplateItem>>,
 }
 
@@ -28,7 +29,7 @@ pub struct TemplateItem {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct CommandStep {
+pub struct CommandItem {
     pub feedback: Option<String>,
     pub command: String,
     pub context: Option<String>,
@@ -68,6 +69,7 @@ impl Manifest {
             }
             None => {
                 if fs::metadata(DEFAULT_MANIFEST_FILE).is_ok() {
+                    info!("⚙️ Found a default manifest!");
                     return fs::read_to_string(DEFAULT_MANIFEST_FILE)
                         .expect("Error reading default manifest");
                 }

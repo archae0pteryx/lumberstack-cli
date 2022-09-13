@@ -1,4 +1,5 @@
 use crate::manifest::TemplateItem;
+use image;
 use indicatif::ProgressBar;
 use log::{debug, error, warn};
 use std::error::Error;
@@ -14,6 +15,7 @@ pub struct Templates;
 
 impl Templates {
     pub fn process(app_name: &String, template_items: Vec<TemplateItem>, spinner: &ProgressBar) {
+        spinner.set_prefix("📄");
         for template_item in template_items.iter() {
             let feedback = template_item.feedback.to_owned();
 
@@ -27,12 +29,16 @@ impl Templates {
             let source_exists = Path::new(&source).exists();
 
             if !source_exists {
-                error!("File / Folder {} does not exist", source.to_string_lossy());
+                error!("File or Folder {} does not exist", source.to_string_lossy());
                 exit(exitcode::OSFILE);
             }
 
-            Self::copy_all_templates(&app_name, &source, &dest)
-                .expect("Error copying all templates");
+            let result = Self::copy_all_templates(&app_name, &source, &dest);
+
+            if let Err(e) = result {
+                error!("Error copying templates: {}", e);
+                exit(exitcode::OSFILE);
+            }
         }
     }
 
@@ -47,19 +53,14 @@ impl Templates {
             let from = entry.path();
             let to = out_dir.join(from.strip_prefix(&in_dir)?);
 
-            debug!("Copying {} to {}", from.display(), to.display());
+            let file_type = entry.file_type();
 
             // create directories
-            if entry.file_type().is_dir() {
-                if let Err(e) = fs::create_dir(to) {
-                    match e.kind() {
-                        ErrorKind::AlreadyExists => {}
-                        _ => return Err(e.into()),
-                    }
-                }
-            } else if entry.file_type().is_file() {
+            if file_type.is_dir() {
+                Self::create_dir(&to);
+            } else if file_type.is_file() {
                 let from = from.to_path_buf();
-                Self::copy_template(&app_name, &from, &to)?;
+                Self::copy_template(&app_name, &from, to)?;
             } else {
                 warn!("copy: ignored symlink {}", from.display());
             }
@@ -70,37 +71,73 @@ impl Templates {
     fn copy_template(
         app_name: &String,
         from: &PathBuf,
-        to: &PathBuf,
+        to: PathBuf,
     ) -> Result<(), Box<dyn Error>> {
-        let mut to = to.clone();
+        if Self::is_image_file(from) {
+            Self::write_image(from, &to);
+            return Ok(());
+        }
+
+        debug!("copying template: {} to {}", from.display(), to.display());
+
+        let to = to.clone();
         let file_str = fs::read_to_string(from);
 
         match &file_str {
             Ok(str) => {
-                if !to
-                    .extension()
-                    .unwrap()
-                    .to_string_lossy()
-                    .eq(&String::from("template"))
-                {
-                    warn!(
-                        "Found non template: {} in template dir. Skipping.",
-                        to.to_string_lossy()
-                    );
-                    return Ok(());
-                }
-
-                let replaced = str.replace("{{app_name}}", &app_name);
-
-                to.set_extension("".to_string());
-                fs::write(to, replaced)?;
-
+                Self::write_file(&to, str, app_name);
                 Ok(())
             }
             Err(_) => {
-                warn!("Error interpolating file [{:?}]. Skipping...", &file_str);
+                error!("Error interpolating file [{:?}]. Skipping...", &file_str);
                 Ok(())
             }
         }
+    }
+
+    fn create_dir(to: &PathBuf) {
+        debug!("creating dir: {}", to.to_string_lossy());
+        if let Err(e) = fs::create_dir(to) {
+            match e.kind() {
+                ErrorKind::AlreadyExists => {
+                    debug!("already exists!");
+                }
+                _ => {
+                    error!("Error creating destination dir! {}", e);
+                    exit(1);
+                }
+            }
+        }
+    }
+
+    fn write_file(to: &PathBuf, str: &String, app_name: &String) {
+        let replaced = str.replace("{{app_name}}", &app_name);
+        if let Err(e) = fs::write(to, replaced) {
+            error!("error writing {} - {}", to.display(), e);
+        }
+    }
+
+    fn write_image(from: &PathBuf, to: &PathBuf) {
+        debug!("writing image {} to {}", from.display(), to.display());
+        match image::open(from) {
+            Ok(img) => {
+                if let Err(e) = img.save(to) {
+                    error!("Error writing image: {} - {}", to.display(), e);
+                }
+            }
+            Err(e) => {
+                error!("Error opening image: {} - {}", from.display(), e);
+                exit(exitcode::OSFILE);
+            }
+        }
+    }
+
+    fn is_image_file(from: &PathBuf) -> bool {
+        let has_png = from.to_string_lossy().contains(".png");
+        let has_jpg = from.to_string_lossy().contains(".jpg");
+        let has_jpeg = from.to_string_lossy().contains(".jpeg");
+        let is_image = has_png | has_jpg | has_jpeg;
+        debug!("{} is an image: {}", from.display(), is_image);
+        return is_image;
     }
 }

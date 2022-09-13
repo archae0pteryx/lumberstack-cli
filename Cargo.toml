@@ -21,3 +21,4 @@ log = "0.4.17"
 serde = { version = "1.0.144", features = ["derive"] }
 fs_extra = "1.2.0"
 walkdir = "2.3.2"
+image = "0.24.3"
