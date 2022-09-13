@@ -75,7 +75,7 @@ pub fn generate_default_config() -> &'static str {
       "feedback": "Setting up redwood auth",
       "templates": [
         {
-          "source": "templates/api/src/directives/requireAuth/requireAuth.test.ts.template",
+          "source": "templates/api/src/directives/requireAuth/requireAuth.test.ts",
           "dest": "{{app_name}}/api/src/directives/requireAuth/requireAuth.test.ts"
         }
       ],

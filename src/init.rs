@@ -1,4 +1,4 @@
-use std::{fs, process::exit};
+use std::{fs, path::Path, process::exit};
 
 use clap::Parser;
 use log::{debug, error, info};
@@ -9,6 +9,7 @@ use crate::{
 };
 
 pub fn initialize() {
+    Logger::init();
     let args = CliArgs::parse();
     if args.init {
         if let Err(_) = fs::write(
@@ -23,8 +24,10 @@ pub fn initialize() {
     }
     if args.clean {
         info!("Cleaning...");
-        debug!("Removing template dir");
-        fs::remove_dir_all(DEFAULT_TEMPLATE_DIR).map_err(|e| debug!("{}", e)).expect("No dir template dir found");
+        if Path::new(DEFAULT_TEMPLATE_DIR).exists() {
+            debug!("Removing template dir");
+            fs::remove_dir_all(DEFAULT_TEMPLATE_DIR).expect("Dir remove err");
+        }
         debug!("Removing docker volumes");
         Commands::exec_raw(
             DEFAULT_APP_NAME,
@@ -32,8 +35,9 @@ pub fn initialize() {
             &["compose", "down", "-v"],
             false,
         );
-        debug!("Removing default app dir");
-        fs::remove_dir_all(DEFAULT_APP_NAME).map_err(|e| debug!("{}", e)).expect("No app dir found");
+        if Path::new(DEFAULT_APP_NAME).exists() {
+            debug!("Removing default app dir");
+            fs::remove_dir_all(DEFAULT_APP_NAME).expect("Dir remove err");
+        }
     }
-    Logger::init();
 }
