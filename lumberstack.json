@@ -1,6 +1,5 @@
 {
   "app_name": "myapp",
-  "keep_templates": false,
   "builder": [
     {
       "tag": "download",

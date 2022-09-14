@@ -1,5 +1,56 @@
 # Lumberstack CLI
 
+Generate a full featured, fully customizable redwoodjs app in ~5min!
+
+---
+
+
+## Requirements
+
+- Node 14
+- Yarn
+- Docker
+
+## Quick Usage
+
+- Download the latest release for your system
+- Execute the binary `./lumberstack <app-name>`
+
+Important note:
+Lumberstack is not codesigned by apple. The following instructions should get to around their forces.
+
+```shell
+# OSX enable running non-codesigned bins (warning!)
+# Run in terminal to disable for session
+spctl developer-mode enable-terminal
+# Then goto
+# security & privacy > privacy > developer tools > iterm > "allow app to run..."
+# Run again.
+```
+
+## Basic Usage
+
+- The Template files are kept separate and can be versioned. See [template repo](https://github.com/codingzeal/lumberstack-templates) for more deets.
+- Lumberstack uses a configuration manifest (json) that is completely customizable.
+- Generate default manifest with `./lumberstack --init`
+
+Manifest Syntax
+
+```json
+# Top level key - value pairs are interpolated with variables in template files.
+{
+    app_name: string,
+    my_var2: string, # all vars coerced into strings at this time
+    builder: [BuildStep]
+    ...
+}
+
+# TODO: Document all types (see default manifest for examples)
+
+```
+
+Avail options run help
+
 ```shell
 # lumberstack --help
 lumberstack 0.1.0-beta.1
@@ -21,17 +72,11 @@ OPTIONS:
     -V, --version            Print version information
 ```
 
-Development:
+## Development with Rust
 
-- Node v14 & Yarn
-- Install Rust
-  - `curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh`
+- `curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh`
 
 ```shell
-# OSX enable running non-codesigned bins (warning!)
-spctl developer-mode enable-terminal
-# security & privacy > privacy > developer tools > iterm > "allow app to run..."
-
 # build & run
 cargo run -- myapp # name 'myapp' is ignored in git
 
