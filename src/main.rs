@@ -1,30 +1,36 @@
-#![allow(unused)]
+// #![allow(unused)]
+extern crate fs_extra;
 extern crate log;
-extern crate colored;
-mod cli;
-mod configuration;
-mod generators;
-mod system;
 
-use cli::{progress::*, logger::Logger};
-use configuration::TemplateConfigFile;
-use generators::{
-    heroku::*, playwright::*, prisma::*, redwood::*, tailwind::Tailwind, templates::*,
-};
-use system::{error::AppError, utils::HandlebarBuilder, *};
+mod cli_args;
+mod commands;
+mod default_config;
+mod init;
+mod logger;
+mod lumberstack;
+mod manifest;
+mod spinner;
+mod sys_checks;
+mod templates;
 
-fn main() -> Result<(), AppError> {
-    Logger::init();
-    let progress_bar = AppProgress::new();
-    System::init(&progress_bar)?;
-    Redwood::init(&progress_bar)?;
-    Templates::init(&progress_bar)?;
-    Tailwind::init(&progress_bar)?;
-    Prisma::init(&progress_bar)?;
-    Playwright::init(&progress_bar)?;
-    Heroku::init(&progress_bar)?;
-    Redwood::verify(&progress_bar)?;
-    Redwood::cleanup(&progress_bar)?;
-    progress_bar.finish("🚀 Setup finished");
-    Ok(())
+use lumberstack::Lumberstack;
+use manifest::Manifest;
+use spinner::create_spinner;
+use sys_checks::System;
+
+pub static DEFAULT_TEMPLATE_DIR: &'static str = "templates";
+pub static DEFAULT_APP_NAME: &'static str = "myapp";
+pub static DEFAULT_MANIFEST_FILE: &'static str = "lumberstack.json";
+
+fn main() {
+    init::initialize();
+
+    let spinner = create_spinner();
+    System::check_prerequsites(&spinner);
+
+    let manifest = Manifest::new();
+    Lumberstack::run(&manifest, &spinner);
+
+    spinner.set_prefix("✅");
+    spinner.finish_with_message("Lumberstack Complete!");
 }

@@ -1,27 +1,24 @@
-#
+# Lumberstack CLI
 
 ```shell
 # lumberstack --help
-
+lumberstack 0.1.0-beta.1
 Opinionated typescript project generator with a RedwoodJS core
 
 USAGE:
-    lumberstack [OPTIONS] [NAME] [SUBCOMMAND]
+    lumberstack [OPTIONS] [NAME]
 
 ARGS:
-    <NAME>    Project name and path
+    <NAME>    Project name and path. Overrides manifest value (if present)
 
 OPTIONS:
-        --clean          Remove project directory first
-    -h, --help           Print help information
-    -n, --not-redwood    Skip creating new redwood app
-    -q, --quiet          Less output per occurrence
-    -v, --verbose        More output per occurrence
-    -V, --version        Print version information
-
-SUBCOMMANDS:
-    help    Print this message or the help of the given subcommand(s)
-    only    Run single generators
+    -c, --config <CONFIG>    Load config from file
+    -d, --disable-checks     Disable system checks
+    -h, --help               Print help information
+    -o, --only <ONLY>        Run tag(s) (comma separated)
+    -q, --quiet              Less output per occurrence
+    -v, --verbose            More output per occurrence
+    -V, --version            Print version information
 ```
 
 Development:
