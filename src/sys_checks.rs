@@ -17,7 +17,6 @@ impl System {
             Self::os_ok();
             Self::check_app_installed("yarn");
             Self::check_docker();
-            Self::check_app_installed("heroku");
             Self::check_app_installed("node");
             Self::check_node_version();
         }
