@@ -4,7 +4,6 @@ Generate a full featured, fully customizable redwoodjs app in ~5min!
 
 ---
 
-
 ## Requirements
 
 - Node 14
