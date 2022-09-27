@@ -1,0 +1,16 @@
+---
+- hosts: localhost
+  connection: local
+
+  tasks:
+    - name: Register template dir
+      stat:
+        path: "/tmp/redwood-template-app"
+      register: template_dir
+
+    - name: Git checkout
+      git:
+        repo: 'https://github.com/codingzeal/redwood-template-app'
+        dest: /tmp/redwood-template-app
+        version: v0.0.1
+      when: not template_dir.stat.exists

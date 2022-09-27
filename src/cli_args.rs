@@ -32,4 +32,8 @@ pub struct CliArgs {
     /// Load config from file
     #[clap(short, long, value_parser)]
     pub config: Option<String>,
+
+    // Playbook
+    #[clap(short, long, value_parser)]
+    pub playbook: Option<String>,
 }

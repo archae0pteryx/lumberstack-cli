@@ -1,4 +1,4 @@
-// #![allow(unused)]
+#![allow(unused)]
 extern crate fs_extra;
 extern crate log;
 
@@ -12,7 +12,11 @@ mod manifest;
 mod spinner;
 mod sys_checks;
 mod templates;
+mod ansible;
+mod playbook;
 
+use ansible::Ansible;
+use logger::Logger;
 use lumberstack::Lumberstack;
 use manifest::Manifest;
 use spinner::create_spinner;
@@ -23,14 +27,16 @@ pub static DEFAULT_APP_NAME: &'static str = "myapp";
 pub static DEFAULT_MANIFEST_FILE: &'static str = "lumberstack.json";
 
 fn main() {
-    init::initialize();
+    Logger::init();
+    Ansible::run();
+    // init::initialize();
 
-    let spinner = create_spinner();
-    System::check_prerequsites(&spinner);
+    // let spinner = create_spinner();
+    // System::check_prerequsites(&spinner);
 
-    let manifest = Manifest::new();
-    Lumberstack::run(&manifest, &spinner);
+    // let manifest = Manifest::new();
+    // Lumberstack::run(&manifest, &spinner);
 
-    spinner.set_prefix("✅");
-    spinner.finish_with_message("Lumberstack Complete!");
+    // spinner.set_prefix("✅");
+    // spinner.finish_with_message("Lumberstack Complete!");
 }
