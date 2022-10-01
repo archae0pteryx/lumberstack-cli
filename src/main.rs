@@ -1,42 +1,41 @@
-#![allow(unused)]
+// #![allow(unused)]
 extern crate fs_extra;
 extern crate log;
 
+mod ansible;
 mod cli_args;
 mod commands;
-mod default_config;
-mod init;
 mod logger;
 mod lumberstack;
 mod manifest;
 mod spinner;
-mod sys_checks;
-mod templates;
-mod ansible;
-mod playbook;
+mod system;
 
-use ansible::Ansible;
 use logger::Logger;
 use lumberstack::Lumberstack;
 use manifest::Manifest;
 use spinner::create_spinner;
-use sys_checks::System;
+use system::System;
 
-pub static DEFAULT_TEMPLATE_DIR: &'static str = "templates";
+pub static DEFAULT_TEMPLATE_VERSION: &str = "v0.0.3";
+pub static DEFAULT_TEMPLATE_REPO: &str = "https://github.com/codingzeal/redwood-template-app";
+
+pub static DEFAULT_WORKDIR: &'static str = "/tmp/lumberstack";
 pub static DEFAULT_APP_NAME: &'static str = "myapp";
+pub static DEFAULT_TEMPLATE_DIR: &'static str = "redwood-template-app";
 pub static DEFAULT_MANIFEST_FILE: &'static str = "lumberstack.json";
+pub static DEFAULT_LOG_FILE: &'static str = "lumberstack.out";
+pub static DEFAULT_TEMPLATE_MAP: &'static str = "template_map.txt";
 
 fn main() {
     Logger::init();
-    Ansible::run();
-    // init::initialize();
+    let spinner = create_spinner();
+    let manifest = Manifest::load();
 
-    // let spinner = create_spinner();
-    // System::check_prerequsites(&spinner);
+    System::init(&manifest, &spinner);
 
-    // let manifest = Manifest::new();
-    // Lumberstack::run(&manifest, &spinner);
+    Lumberstack::start(&manifest,  &spinner);
 
-    // spinner.set_prefix("✅");
-    // spinner.finish_with_message("Lumberstack Complete!");
+    spinner.set_prefix("✅");
+    spinner.finish_with_message("Lumberstack Complete!");
 }

@@ -1,18 +1,15 @@
-use std::{
-    fmt::Error,
-    process::{exit, Command, Output},
-};
+use std::process::{exit, Command, Output};
 
 use clap::Parser;
 use indicatif::ProgressBar;
-use log::error;
+use log::{error};
 
-use crate::cli_args::CliArgs;
+use crate::{cli_args::CliArgs, manifest::Manifest};
 
 pub struct System;
 
 impl System {
-    pub fn check_prerequsites(spinner: &ProgressBar) {
+    pub fn init(manifest: &Manifest, spinner: &ProgressBar) {
         let args = CliArgs::parse();
         if !args.disable_checks {
             spinner.set_prefix("🚀");
@@ -23,6 +20,8 @@ impl System {
             Self::has_required_bin("node");
             Self::check_node_version();
         }
+
+        Self::create_working_dir(manifest);
     }
 
     fn os_ok() {
@@ -37,13 +36,6 @@ impl System {
         if !output.contains("v14") {
             error!("❌ node v14 required but found: {}", output);
             exit(exitcode::SOFTWARE);
-        }
-    }
-
-    pub fn has_bin(bin: &str) -> bool {
-        match Self::check_app_version(bin) {
-            Ok(_) => true,
-            Err(e) => false
         }
     }
 
@@ -72,5 +64,10 @@ impl System {
             error!("❌ Docker not running");
             exit(exitcode::SOFTWARE);
         }
+    }
+
+    fn create_working_dir(manifest: &Manifest) {
+        fs_extra::dir::create(&manifest.workdir, true)
+            .expect("Error creating / cleaning working dir");
     }
 }

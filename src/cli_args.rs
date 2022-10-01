@@ -2,13 +2,9 @@ use clap::Parser;
 use clap_verbosity_flag::Verbosity;
 
 /// Opinionated typescript project generator with a RedwoodJS core
-#[derive(Parser, Debug)]
+#[derive(Parser, Debug, Clone)]
 #[clap(version, about, long_about = None)]
 pub struct CliArgs {
-    /// Create default config file
-    #[clap(long, short, action)]
-    pub init: bool,
-
     /// Project name and path.
     #[clap(value_parser)]
     pub name: Option<String>,
@@ -25,7 +21,7 @@ pub struct CliArgs {
     #[clap(short, long, action)]
     pub disable_checks: bool,
 
-    /// Cleanup dev dirs
+    /// Cleanup all cli created files/folders
     #[clap(long, action)]
     pub clean: bool,
 
@@ -33,7 +29,7 @@ pub struct CliArgs {
     #[clap(short, long, value_parser)]
     pub config: Option<String>,
 
-    // Playbook
+    // Specify a template version to use
     #[clap(short, long, value_parser)]
-    pub playbook: Option<String>,
+    pub template_version: Option<String>,
 }

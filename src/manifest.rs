@@ -1,90 +1,57 @@
 use clap::Parser;
-use log::info;
-use serde::{Deserialize, Serialize};
-use std::{collections::BTreeMap, fs};
+use serde_json::Value;
+use std::{collections::HashMap, fs};
 
-use crate::{cli_args::CliArgs, default_config::generate_default_config, DEFAULT_APP_NAME, DEFAULT_MANIFEST_FILE};
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct ManifestJson {
-    pub app_name: Option<String>,
-    pub builder: Vec<BuildItem>,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct BuildItem {
-    pub tag: String,
-    pub feedback: String,
-    pub context: Option<String>,
-    pub commands: Option<Vec<CommandItem>>,
-    pub templates: Option<Vec<TemplateItem>>,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct TemplateItem {
-    pub feedback: Option<String>,
-    pub source: String,
-    pub dest: String,
-    pub replace_map: Option<BTreeMap<String, String>>,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct CommandItem {
-    pub feedback: Option<String>,
-    pub command: String,
-    pub context: Option<String>,
-}
-#[derive(Debug, Clone)]
+use crate::{
+    cli_args::CliArgs, DEFAULT_APP_NAME, DEFAULT_LOG_FILE, DEFAULT_TEMPLATE_DIR,
+    DEFAULT_TEMPLATE_MAP, DEFAULT_TEMPLATE_REPO, DEFAULT_TEMPLATE_VERSION, DEFAULT_WORKDIR
+};
 
 pub struct Manifest {
     pub app_name: String,
-    pub json: ManifestJson,
+    pub template_version: String,
+    pub config_file: HashMap<String, Value>,
+    pub workdir: String,
+    pub clean: bool,
+    pub template_repo: String,
+    pub template_dir: String,
+    pub template_map: String,
+    pub log_file: String,
 }
 
 impl Manifest {
-    pub fn new() -> Manifest {
-        let tmp_app_name = Self::tmp_app_name();
-        let manifest_str = Self::read_manifest();
-
-        let processed_manifest = manifest_str.replace("{{app_name}}", &tmp_app_name);
-
-        let manifest: ManifestJson =
-        serde_json::from_str(&processed_manifest).expect("Error reading json");
-
-        let app_name = manifest.app_name.clone().unwrap_or(DEFAULT_APP_NAME.to_string());
-
+    pub fn load() -> Manifest {
+        let args = CliArgs::parse();
+        let template_version = args
+            .clone()
+            .template_version
+            .unwrap_or(DEFAULT_TEMPLATE_VERSION.to_string());
+        let app_name = args.clone().name.unwrap_or(DEFAULT_APP_NAME.to_string());
         Manifest {
             app_name,
-            json: manifest,
+            template_version,
+            config_file: Self::config_file(&args),
+            template_repo: DEFAULT_TEMPLATE_REPO.to_string(),
+            workdir: DEFAULT_WORKDIR.to_string(),
+            template_dir: format!("{}/{}", DEFAULT_WORKDIR, DEFAULT_TEMPLATE_DIR),
+            template_map: format!("{}/{}", DEFAULT_WORKDIR, DEFAULT_TEMPLATE_MAP),
+            log_file: format!("{}/{}", DEFAULT_WORKDIR, DEFAULT_LOG_FILE),
+            clean: args.clean
         }
     }
 
-    fn read_manifest() -> String {
-        let args = CliArgs::parse();
-        match &args.config {
-            Some(conf) => {
-                let config = fs::read_to_string(conf).expect("Error reading users manifest");
-
-                return config;
-            }
-            None => {
-                if fs::metadata(DEFAULT_MANIFEST_FILE).is_ok() {
-                    info!("⚙️ Found a default manifest!");
-                    return fs::read_to_string(DEFAULT_MANIFEST_FILE)
-                        .expect("Error reading default manifest");
-                }
-                return generate_default_config().to_string();
-            }
+    fn config_file(args: &CliArgs) -> HashMap<String, Value> {
+        if let Some(config_path) = &args.config {
+            return Self::load_config_file(config_path);
         }
+        HashMap::new()
     }
 
-    pub fn tmp_app_name() -> String {
-        let args = CliArgs::parse();
-        match &args.name {
-            Some(name) => {
-                return name.to_owned();
-            }
-            None => String::from(DEFAULT_APP_NAME),
-        }
+    fn load_config_file(config_path: &String) -> HashMap<String, Value> {
+        let err_msg = format!("Couldnt load config from {}", config_path);
+        let loaded = fs::read_to_string(config_path).expect(&err_msg);
+        let raw_config_json: HashMap<String, Value> =
+            serde_json::from_str(&loaded).expect(&err_msg);
+        return raw_config_json;
     }
 }
