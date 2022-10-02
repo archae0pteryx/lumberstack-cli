@@ -32,9 +32,9 @@ fn main() -> anyhow::Result<()> {
     let spinner = create_spinner();
     let manifest = Manifest::load()?;
 
-    System::init(&manifest, &spinner);
+    System::init(manifest.clone(), &spinner);
 
-    Lumberstack::start(&manifest,  &spinner);
+    Lumberstack::start(manifest,  &spinner);
 
     spinner.set_prefix("✅");
     spinner.finish_with_message("Lumberstack Complete!");

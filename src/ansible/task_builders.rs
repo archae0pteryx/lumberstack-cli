@@ -8,14 +8,14 @@ use super::playbook::yaml::{
 pub struct AnsibleTasks;
 
 impl AnsibleTasks {
-    pub(crate) fn register_template_dir(manifest: &Manifest) -> TaskType {
+    pub(crate) fn register_template_dir(manifest: Manifest) -> TaskType {
         RegisterTask::new("Register template dir")
             .register("tmp_templates")
             .stat_path(&manifest.clone().template_dir.unwrap_or_default())
             .build()
     }
 
-    pub(crate) fn clone_template_repo(manifest: &Manifest) -> TaskType {
+    pub(crate) fn clone_template_repo(manifest: Manifest) -> TaskType {
         GitTask::new("Clone template repo")
             .repo(&manifest.clone().template_repo.unwrap_or_default())
             .dest(&manifest.clone().template_dir.unwrap_or_default())
@@ -24,7 +24,7 @@ impl AnsibleTasks {
             .build()
     }
 
-    pub(crate) fn exclude_dirs_from_search(manifest: &Manifest) -> TaskType {
+    pub(crate) fn exclude_dirs_from_search(manifest: Manifest) -> TaskType {
         FindTask::new("Exclude dirs from search")
             .paths(&manifest.clone().workdir.unwrap_or_default())
             .recurse("no")
@@ -64,7 +64,7 @@ impl AnsibleTasks {
         .build()
     }
 
-    pub(crate) fn write_template_paths_to_file(manifest: &Manifest) -> TaskType {
+    pub(crate) fn write_template_paths_to_file(manifest: Manifest) -> TaskType {
         CopyTask::new("Write template map")
             .content("{{ template_paths  }}")
             .dest(format!("{}/template_map.txt", &manifest.clone().workdir.unwrap_or_default()).as_str())

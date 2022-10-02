@@ -13,10 +13,6 @@ pub struct CliArgs {
     #[clap(flatten)]
     pub verbose: Verbosity,
 
-    /// Run tag(s) (comma separated)
-    #[clap(short, long)]
-    pub only: Option<Vec<String>>,
-
     /// Skip system checks
     #[clap(short, long, action)]
     pub skip_checks: bool,
@@ -29,7 +25,11 @@ pub struct CliArgs {
     #[clap(short, long, value_parser)]
     pub config: Option<String>,
 
-    // Specify a template version to use
-    #[clap(short, long, value_parser)]
+    /// Specify a template version to use
+    #[clap(long, value_parser)]
     pub template_version: Option<String>,
+
+    /// Specific tags to run
+    #[clap(short, long, value_parser)]
+    pub tags: Option<Vec<String>>,
 }

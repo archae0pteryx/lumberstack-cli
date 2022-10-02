@@ -1,4 +1,6 @@
-use anyhow::{Context, Result};
+use std::env;
+
+use anyhow::{Context, Error, Result};
 use clap::Parser;
 use serde::{Deserialize, Serialize};
 
@@ -19,7 +21,25 @@ pub struct Manifest {
     pub log_file: Option<String>,
     pub tags: Option<Vec<String>>,
 }
+trait Empty<T> {
+    fn empty() -> T;
+}
 
+impl Empty<Manifest> for Manifest {
+    fn empty() -> Manifest {
+        Manifest {
+            app_name: None,
+            template_version: None,
+            workdir: None,
+            clean: None,
+            template_repo: None,
+            template_dir: None,
+            template_paths_file: None,
+            log_file: None,
+            tags: None,
+        }
+    }
+}
 impl Default for Manifest {
     fn default() -> Self {
         Manifest {
@@ -39,25 +59,77 @@ impl Default for Manifest {
 impl Manifest {
     pub fn load() -> Result<Manifest> {
         let args = CliArgs::parse();
-        if let Some(config_path) = args.config {
-            let manifest = Self::load_manifest_file(&config_path).with_context(|| {
-                format!("Tried loading manifest from: {}. Did not.", config_path)
-            })?;
-            let merged: Manifest = serde_merge::tmerge(manifest, Manifest::default())?;
-            return Ok(merged);
+        let config_manifest = Self::config_manifest(args.config)?;
+
+        let arg_manifest = Self::args_manifest();
+        dbg!(&arg_manifest);
+
+        let user_item_manifest: Manifest = serde_merge::omerge(config_manifest, arg_manifest)?;
+
+        let merged_manifest: Manifest =
+            serde_merge::omerge(user_item_manifest, Manifest::default())?;
+
+        Self::set_env(&merged_manifest);
+        return Ok(merged_manifest);
+    }
+
+    fn config_manifest(path: Option<String>) -> Result<Manifest> {
+        if let Some(p) = path {
+            let loaded_config = Self::load_file(&p)?;
+            let config: Manifest = Self::deserialize_config(loaded_config)?;
+            return Ok(config);
+        }
+        Ok(Manifest::empty())
+    }
+
+    fn deserialize_config(loaded_config: String) -> Result<Manifest> {
+        let from_yml: Result<Manifest, Error> = serde_yaml::from_str(&loaded_config)
+            .with_context(|| "Error deserializing loaded manifest yaml".to_string());
+        if let Ok(m) = from_yml {
+            return Ok(m);
+        }
+
+        let from_json: Result<Manifest, Error> = serde_json::from_str(&loaded_config)
+            .with_context(|| "Error deserializing loaded manifest json".to_string());
+
+        if let Ok(m) = from_json {
+            return Ok(m);
         }
 
         return Ok(Manifest::default());
     }
 
-    fn load_manifest_file(path: &String) -> anyhow::Result<Manifest> {
-        let loaded_config = Self::load_file(path)?;
-        let config: Manifest = serde_yaml::from_str(&loaded_config)?;
-        return Ok(config);
+    fn load_file(path: &String) -> Result<String> {
+        let file = fs_extra::file::read_to_string(&path)
+            .with_context(|| format!("Tried to load: {} but could not", path))?;
+        Ok(file)
     }
 
-    fn load_file(path: &String) -> anyhow::Result<String> {
-        let file = fs_extra::file::read_to_string(&path)?;
-        Ok(file)
+    fn args_manifest() -> Manifest {
+        let args = CliArgs::parse();
+        let app_name = args.name;
+        let template_version = args
+            .template_version
+            .unwrap_or(DEFAULT_TEMPLATE_VERSION.to_string());
+        let tags = args.tags.unwrap_or(Vec::new());
+
+        Manifest {
+            app_name,
+            template_version: Some(template_version),
+            tags: Some(tags),
+            ..Manifest::empty()
+        }
+    }
+
+    fn set_env(manifest: &Manifest) {
+        env::set_var("ANSIBLE_NOCOWS", "True");
+        env::set_var("ANSIBLE_ANY_ERRORS_FATAL", "True");
+        let lp = format!(
+            "{}/{}",
+            DEFAULT_WORKDIR,
+            manifest.log_file.clone().unwrap_or_default()
+        );
+        env::set_var("ANSIBLE_LOG_PATH", lp);
+        env::set_var("ANSIBLE_LOCALHOST_WARNING", "False");
     }
 }

@@ -9,7 +9,7 @@ use crate::{cli_args::CliArgs, manifest::Manifest};
 pub struct System;
 
 impl System {
-    pub fn init(manifest: &Manifest, spinner: &ProgressBar) {
+    pub fn init(manifest: Manifest, spinner: &ProgressBar) {
         let args = CliArgs::parse();
         if !args.skip_checks {
             spinner.set_prefix("🚀");
@@ -66,7 +66,7 @@ impl System {
         }
     }
 
-    fn create_working_dir(manifest: &Manifest) {
+    fn create_working_dir(manifest: Manifest) {
         fs_extra::dir::create_all(&manifest.clone().workdir.unwrap_or_default(), true)
             .expect("Error creating / cleaning working dir");
     }
