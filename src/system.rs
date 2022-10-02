@@ -11,7 +11,7 @@ pub struct System;
 impl System {
     pub fn init(manifest: &Manifest, spinner: &ProgressBar) {
         let args = CliArgs::parse();
-        if !args.disable_checks {
+        if !args.skip_checks {
             spinner.set_prefix("🚀");
             spinner.set_message("Checking system requirements");
             Self::os_ok();
@@ -67,7 +67,7 @@ impl System {
     }
 
     fn create_working_dir(manifest: &Manifest) {
-        fs_extra::dir::create(&manifest.workdir, true)
+        fs_extra::dir::create_all(&manifest.clone().workdir.unwrap_or_default(), true)
             .expect("Error creating / cleaning working dir");
     }
 }

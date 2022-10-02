@@ -46,6 +46,8 @@ use std::env;
 
 use super::{playbook::playbook_builder::Playbook, task_builders::AnsibleTasks};
 
+
+
 pub struct Ansible;
 
 impl Ansible {
@@ -55,7 +57,7 @@ impl Ansible {
 
         env::set_var("ANSIBLE_NOCOWS", "True");
         env::set_var("ANSIBLE_ANY_ERRORS_FATAL", "True");
-        env::set_var("ANSIBLE_LOG_PATH", &manifest.log_file);
+        env::set_var("ANSIBLE_LOG_PATH", &manifest.clone().log_file.unwrap_or_default());
         env::set_var("ANSIBLE_LOCALHOST_WARNING", "False");
 
         Playbook::new()

@@ -11,22 +11,22 @@ impl AnsibleTasks {
     pub(crate) fn register_template_dir(manifest: &Manifest) -> TaskType {
         RegisterTask::new("Register template dir")
             .register("tmp_templates")
-            .stat_path(&manifest.template_dir)
+            .stat_path(&manifest.clone().template_dir.unwrap_or_default())
             .build()
     }
 
     pub(crate) fn clone_template_repo(manifest: &Manifest) -> TaskType {
         GitTask::new("Clone template repo")
-            .repo(&manifest.template_repo)
-            .dest(&manifest.template_dir)
-            .version(&manifest.template_version)
+            .repo(&manifest.clone().template_repo.unwrap_or_default())
+            .dest(&manifest.clone().template_dir.unwrap_or_default())
+            .version(&manifest.clone().template_version.unwrap_or_default())
             .when("not tmp_templates.stat.exists")
             .build()
     }
 
     pub(crate) fn exclude_dirs_from_search(manifest: &Manifest) -> TaskType {
         FindTask::new("Exclude dirs from search")
-            .paths(&manifest.workdir)
+            .paths(&manifest.clone().workdir.unwrap_or_default())
             .recurse("no")
             .file_type("directory")
             .exclude(".git")
@@ -67,7 +67,7 @@ impl AnsibleTasks {
     pub(crate) fn write_template_paths_to_file(manifest: &Manifest) -> TaskType {
         CopyTask::new("Write template map")
             .content("{{ template_paths  }}")
-            .dest(format!("{}/template_map.txt", &manifest.workdir).as_str())
+            .dest(format!("{}/template_map.txt", &manifest.clone().workdir.unwrap_or_default()).as_str())
             .build()
     }
 }

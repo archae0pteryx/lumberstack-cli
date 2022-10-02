@@ -17,9 +17,9 @@ pub struct CliArgs {
     #[clap(short, long)]
     pub only: Option<Vec<String>>,
 
-    /// Disable system checks
+    /// Skip system checks
     #[clap(short, long, action)]
-    pub disable_checks: bool,
+    pub skip_checks: bool,
 
     /// Cleanup all cli created files/folders
     #[clap(long, action)]

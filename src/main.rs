@@ -25,12 +25,12 @@ pub static DEFAULT_APP_NAME: &'static str = "myapp";
 pub static DEFAULT_TEMPLATE_DIR: &'static str = "redwood-template-app";
 pub static DEFAULT_MANIFEST_FILE: &'static str = "lumberstack.json";
 pub static DEFAULT_LOG_FILE: &'static str = "lumberstack.out";
-pub static DEFAULT_TEMPLATE_MAP: &'static str = "template_map.txt";
+pub static DEFAULT_TEMPLATE_PATHS_FILE: &'static str = "template_map.txt";
 
-fn main() {
+fn main() -> anyhow::Result<()> {
     Logger::init();
     let spinner = create_spinner();
-    let manifest = Manifest::load();
+    let manifest = Manifest::load()?;
 
     System::init(&manifest, &spinner);
 
@@ -38,4 +38,5 @@ fn main() {
 
     spinner.set_prefix("✅");
     spinner.finish_with_message("Lumberstack Complete!");
+    Ok(())
 }
