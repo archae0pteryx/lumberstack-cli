@@ -7,7 +7,8 @@ use super::yaml::task_type::TaskType;
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Playbook {
     pub hosts: String,
-    pub connection: String,
+    pub r#become: String,
+    pub become_user: String,
     pub gather_facts: bool,
     pub tasks: Vec<TaskType>,
 }
@@ -15,8 +16,9 @@ pub struct Playbook {
 impl Playbook {
     pub(crate) fn new() -> Playbook {
         Playbook {
-            hosts: "127.0.0.1".to_string(),
-            connection: "local".to_string(),
+            hosts: "localhost".to_string(),
+            r#become: "yes".to_string(),
+            become_user: r#"{{ lookup("env","USER") }}"#.to_string(),
             gather_facts: true,
             tasks: Vec::new(),
         }
@@ -38,10 +40,9 @@ impl Playbook {
     pub(crate) fn run(self: &Self) {
         let as_vec = vec![self.clone()];
         let yaml = serde_yaml::to_string(&as_vec).expect("Tried to create playbook as yaml");
-        let path = format!("{}/{}", DEFAULT_WORKDIR, DEFAULT_PLAYBOOK_FILE);
-        fs_extra::file::write_all(&path, yaml.as_str())
+        fs_extra::file::write_all(DEFAULT_PLAYBOOK_FILE, yaml.as_str())
             .expect("Tried to write playbook yaml to file. Could not");
-        Commands::exec_raw("./", "ansible-playbook", &[path.as_str()], true);
+        Commands::exec_raw("./", "ansible-playbook", &[DEFAULT_PLAYBOOK_FILE], true);
         Self::remove_playbook();
     }
 

@@ -57,7 +57,6 @@ impl System {
         Self::has_required_bin("docker");
         let output = Command::new("docker").arg("ps").output().unwrap();
 
-        // let out = String::from_utf8(output.stdout).unwrap();
         let err = String::from_utf8(output.stderr).unwrap();
 
         if err.contains("Error response") || err.contains("Cannot connect") {
@@ -67,7 +66,8 @@ impl System {
     }
 
     fn create_working_dir(manifest: Manifest) {
-        fs_extra::dir::create_all(&manifest.clone().workdir.unwrap_or_default(), true)
+        let workdir = &manifest.workdir.unwrap_or_default();
+        fs_extra::dir::create_all(workdir, false)
             .expect("Error creating / cleaning working dir");
     }
 }

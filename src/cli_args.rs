@@ -14,7 +14,7 @@ pub struct CliArgs {
     pub verbose: Verbosity,
 
     /// Skip system checks
-    #[clap(short, long, action)]
+    #[clap(long, action)]
     pub skip_checks: bool,
 
     /// Cleanup all cli created files/folders
@@ -32,4 +32,12 @@ pub struct CliArgs {
     /// Specific tags to run
     #[clap(short, long, value_parser, multiple(true))]
     pub tags: Option<Vec<String>>,
+
+    /// Log ansible output to file
+    #[clap(short, long, value_parser)]
+    pub log: Option<String>,
+
+    /// Skip tags
+    #[clap(short, long, value_parser, multiple(true))]
+    pub skip_tags: Option<Vec<String>>
 }

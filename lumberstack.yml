@@ -1,0 +1,10 @@
+name: myapp
+# replace:
+#   foo: bar
+
+# tags:
+#   - docker
+
+# skip_tags:
+#   - init
+#   - create

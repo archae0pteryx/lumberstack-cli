@@ -1,25 +1,29 @@
-use std::env;
+use std::{collections::HashMap, env};
 
 use anyhow::{Context, Error, Result};
 use clap::Parser;
 use serde::{Deserialize, Serialize};
+use serde_yaml::Value;
 
 use crate::{
-    cli_args::CliArgs, DEFAULT_APP_NAME, DEFAULT_TEMPLATE_DIR, DEFAULT_TEMPLATE_PATHS_FILE,
-    DEFAULT_TEMPLATE_REPO, DEFAULT_TEMPLATE_VERSION, DEFAULT_WORKDIR,
+    cli_args::CliArgs, DEFAULT_APP_NAME, DEFAULT_LOG_FILE, DEFAULT_MANIFEST_FILE,
+    DEFAULT_TEMPLATE_DIR, DEFAULT_TEMPLATE_PATHS_FILE, DEFAULT_TEMPLATE_REPO,
+    DEFAULT_TEMPLATE_VERSION, DEFAULT_WORKDIR,
 };
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Manifest {
     pub app_name: Option<String>,
     pub template_version: Option<String>,
-    pub workdir: Option<String>,
     pub clean: Option<bool>,
+    pub workdir: Option<String>,
     pub template_repo: Option<String>,
     pub template_dir: Option<String>,
     pub template_paths_file: Option<String>,
     pub log_file: Option<String>,
     pub tags: Option<Vec<String>>,
+    pub skip_tags: Option<Vec<String>>,
+    pub replace: Option<HashMap<String, String>>,
 }
 trait Empty<T> {
     fn empty() -> T;
@@ -37,6 +41,8 @@ impl Empty<Manifest> for Manifest {
             template_paths_file: None,
             log_file: None,
             tags: None,
+            skip_tags: None,
+            replace: None,
         }
     }
 }
@@ -45,13 +51,15 @@ impl Default for Manifest {
         Manifest {
             app_name: Some(DEFAULT_APP_NAME.to_string()),
             template_version: Some(DEFAULT_TEMPLATE_VERSION.to_string()),
-            workdir: Some(DEFAULT_WORKDIR.to_string()),
             clean: Some(true),
+            workdir: Some(DEFAULT_WORKDIR.to_string()),
             template_repo: Some(DEFAULT_TEMPLATE_REPO.to_string()),
             template_dir: Some(DEFAULT_TEMPLATE_DIR.to_string()),
             template_paths_file: Some(DEFAULT_TEMPLATE_PATHS_FILE.to_string()),
             log_file: None,
             tags: None,
+            skip_tags: None,
+            replace: None,
         }
     }
 }
@@ -68,7 +76,7 @@ impl Manifest {
         let merged_manifest: Manifest =
             serde_merge::omerge(Manifest::default(), user_item_manifest)?;
 
-        // dbg!(&merged_manifest);
+        dbg!(&merged_manifest);
 
         Self::set_env(&merged_manifest);
         return Ok(merged_manifest);
@@ -78,6 +86,10 @@ impl Manifest {
         if let Some(p) = path {
             let loaded_config = Self::load_file(&p)?;
             let config: Manifest = Self::deserialize_config(loaded_config)?;
+            return Ok(config);
+        }
+        if let Ok(c) = Self::load_file(&DEFAULT_MANIFEST_FILE.to_string()) {
+            let config: Manifest = Self::deserialize_config(c)?;
             return Ok(config);
         }
         Ok(Manifest::empty())
@@ -113,6 +125,8 @@ impl Manifest {
             app_name: args.name,
             template_version: args.template_version,
             tags: args.tags,
+            skip_tags: args.skip_tags,
+            log_file: args.log,
             ..Manifest::empty()
         }
     }
@@ -126,8 +140,7 @@ impl Manifest {
 
     fn set_logger(manifest: &Manifest) {
         if let Some(log_path) = &manifest.log_file {
-            let lp = format!("{}/{}", DEFAULT_WORKDIR, log_path);
-            env::set_var("ANSIBLE_LOG_PATH", lp);
+            env::set_var("ANSIBLE_LOG_PATH", log_path);
         }
     }
 }
