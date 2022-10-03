@@ -30,6 +30,6 @@ pub struct CliArgs {
     pub template_version: Option<String>,
 
     /// Specific tags to run
-    #[clap(short, long, value_parser)]
+    #[clap(short, long, value_parser, multiple(true))]
     pub tags: Option<Vec<String>>,
 }

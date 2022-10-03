@@ -16,4 +16,5 @@ pub enum TaskType {
     Find(FindTask),
     Git(GitTask),
     Register(RegisterTask),
+    None(),
 }

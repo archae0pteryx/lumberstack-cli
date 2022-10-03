@@ -24,8 +24,16 @@ impl Playbook {
 
     pub(crate) fn add_task(self: &Self, task: TaskType) -> Playbook {
         let mut new_playbook = self.clone();
-        new_playbook.tasks.push(task);
-        return new_playbook;
+        match task {
+            TaskType::None() => {
+                return new_playbook;
+            },
+            _ => {
+                new_playbook.tasks.push(task);
+                return new_playbook;
+            }
+        }
+
     }
 
     pub(crate) fn run(self: &Self) {

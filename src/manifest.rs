@@ -5,8 +5,8 @@ use clap::Parser;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    cli_args::CliArgs, DEFAULT_APP_NAME, DEFAULT_LOG_FILE, DEFAULT_TEMPLATE_DIR,
-    DEFAULT_TEMPLATE_PATHS_FILE, DEFAULT_TEMPLATE_REPO, DEFAULT_TEMPLATE_VERSION, DEFAULT_WORKDIR,
+    cli_args::CliArgs, DEFAULT_APP_NAME, DEFAULT_TEMPLATE_DIR, DEFAULT_TEMPLATE_PATHS_FILE,
+    DEFAULT_TEMPLATE_REPO, DEFAULT_TEMPLATE_VERSION, DEFAULT_WORKDIR,
 };
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -50,8 +50,8 @@ impl Default for Manifest {
             template_repo: Some(DEFAULT_TEMPLATE_REPO.to_string()),
             template_dir: Some(DEFAULT_TEMPLATE_DIR.to_string()),
             template_paths_file: Some(DEFAULT_TEMPLATE_PATHS_FILE.to_string()),
-            log_file: Some(DEFAULT_LOG_FILE.to_string()),
-            tags: Some(Vec::new()),
+            log_file: None,
+            tags: None,
         }
     }
 }
@@ -62,12 +62,13 @@ impl Manifest {
         let config_manifest = Self::config_manifest(args.config)?;
 
         let arg_manifest = Self::args_manifest();
-        dbg!(&arg_manifest);
 
         let user_item_manifest: Manifest = serde_merge::omerge(config_manifest, arg_manifest)?;
 
         let merged_manifest: Manifest =
-            serde_merge::omerge(user_item_manifest, Manifest::default())?;
+            serde_merge::omerge(Manifest::default(), user_item_manifest)?;
+
+        // dbg!(&merged_manifest);
 
         Self::set_env(&merged_manifest);
         return Ok(merged_manifest);
@@ -107,16 +108,11 @@ impl Manifest {
 
     fn args_manifest() -> Manifest {
         let args = CliArgs::parse();
-        let app_name = args.name;
-        let template_version = args
-            .template_version
-            .unwrap_or(DEFAULT_TEMPLATE_VERSION.to_string());
-        let tags = args.tags.unwrap_or(Vec::new());
 
         Manifest {
-            app_name,
-            template_version: Some(template_version),
-            tags: Some(tags),
+            app_name: args.name,
+            template_version: args.template_version,
+            tags: args.tags,
             ..Manifest::empty()
         }
     }
@@ -124,12 +120,14 @@ impl Manifest {
     fn set_env(manifest: &Manifest) {
         env::set_var("ANSIBLE_NOCOWS", "True");
         env::set_var("ANSIBLE_ANY_ERRORS_FATAL", "True");
-        let lp = format!(
-            "{}/{}",
-            DEFAULT_WORKDIR,
-            manifest.log_file.clone().unwrap_or_default()
-        );
-        env::set_var("ANSIBLE_LOG_PATH", lp);
         env::set_var("ANSIBLE_LOCALHOST_WARNING", "False");
+        Self::set_logger(manifest);
+    }
+
+    fn set_logger(manifest: &Manifest) {
+        if let Some(log_path) = &manifest.log_file {
+            let lp = format!("{}/{}", DEFAULT_WORKDIR, log_path);
+            env::set_var("ANSIBLE_LOG_PATH", lp);
+        }
     }
 }
