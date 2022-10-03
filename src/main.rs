@@ -20,12 +20,13 @@ use system::System;
 pub static DEFAULT_TEMPLATE_VERSION: &str = "v0.0.3";
 pub static DEFAULT_TEMPLATE_REPO: &str = "https://github.com/codingzeal/redwood-template-app";
 
-pub static DEFAULT_WORKDIR: &'static str = "/tmp/lumberstack";
+pub static DEFAULT_WORKDIR: &'static str = "tmp/lumberstack";
 pub static DEFAULT_APP_NAME: &'static str = "myapp";
 pub static DEFAULT_TEMPLATE_DIR: &'static str = "redwood-template-app";
 pub static DEFAULT_MANIFEST_FILE: &'static str = "lumberstack.json";
 pub static DEFAULT_LOG_FILE: &'static str = "lumberstack.out";
 pub static DEFAULT_TEMPLATE_PATHS_FILE: &'static str = "template_map.txt";
+pub static DEFAULT_PLAYBOOK_FILE: &'static str = "playbook.yml";
 
 fn main() -> anyhow::Result<()> {
     Logger::init();

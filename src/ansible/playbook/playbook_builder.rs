@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::{commands::Commands, DEFAULT_WORKDIR};
+use crate::{commands::Commands, DEFAULT_PLAYBOOK_FILE, DEFAULT_WORKDIR};
 
 use super::yaml::task_type::TaskType;
 
@@ -27,20 +27,25 @@ impl Playbook {
         match task {
             TaskType::None() => {
                 return new_playbook;
-            },
+            }
             _ => {
                 new_playbook.tasks.push(task);
                 return new_playbook;
             }
         }
-
     }
 
     pub(crate) fn run(self: &Self) {
         let as_vec = vec![self.clone()];
-        let yaml = serde_yaml::to_string(&as_vec).expect("Error converting cor playbook yaml");
-        let path = format!("{}/playbook.yml", DEFAULT_WORKDIR);
-        fs_extra::file::write_all(&path, yaml.as_str()).expect("Cannot write playbook yaml");
-        Commands::exec_raw("./", "ansible-playbook", &[path.as_str()], true)
+        let yaml = serde_yaml::to_string(&as_vec).expect("Tried to create playbook as yaml");
+        let path = format!("{}/{}", DEFAULT_WORKDIR, DEFAULT_PLAYBOOK_FILE);
+        fs_extra::file::write_all(&path, yaml.as_str())
+            .expect("Tried to write playbook yaml to file. Could not");
+        Commands::exec_raw("./", "ansible-playbook", &[path.as_str()], true);
+        Self::remove_playbook();
+    }
+
+    fn remove_playbook() {
+        fs_extra::file::remove(DEFAULT_PLAYBOOK_FILE).expect("Tried to remove playbook. Could not");
     }
 }

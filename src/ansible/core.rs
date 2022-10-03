@@ -1,8 +1,11 @@
 use indicatif::ProgressBar;
 
-use crate::manifest::Manifest;
+use crate::{manifest::Manifest};
 
-use super::{playbook::playbook_builder::Playbook, task_builders::AnsibleTasks};
+use super::{
+    playbook::{playbook_builder::Playbook},
+    task_builders::AnsibleTasks,
+};
 
 pub struct Ansible;
 
@@ -13,11 +16,7 @@ impl Ansible {
         spinner.set_prefix("🚀");
         spinner.set_message("Lumberstack launching...");
 
-        let in_tags = manifest
-            .clone()
-            .tags
-            .unwrap_or(Vec::new())
-            .contains(&this_tag.to_string());
+        let in_tags = Self::in_tags(this_tag, &manifest);
 
         if in_tags || manifest.tags.is_none() {
             Playbook::new()
@@ -30,7 +29,28 @@ impl Ansible {
                 .add_task(AnsibleTasks::write_template_paths_to_file(manifest.clone()))
                 .run();
         }
-        spinner.set_message("Initialized templates!");
 
+        spinner.set_message("Initialized templates!");
+    }
+
+    pub fn create_redwood_app(manifest: Manifest, spinner: &ProgressBar) {
+        let this_tag = "create";
+        let in_tags = Self::in_tags(this_tag, &manifest);
+
+        if in_tags || manifest.tags.is_none() {
+            spinner.set_prefix("🚀");
+            spinner.set_message("Creating redwood app");
+
+            Playbook::new().add_task(AnsibleTasks::create_redwood_app(manifest)).run();
+            spinner.set_message("Redwood created");
+        }
+    }
+
+    fn in_tags(tag: &str, manifest: &Manifest) -> bool {
+         return manifest
+            .clone()
+            .tags
+            .unwrap_or(Vec::new())
+            .contains(&tag.to_string());
     }
 }

@@ -1,8 +1,8 @@
 use crate::manifest::Manifest;
 
 use super::playbook::yaml::{
-    fact_task::FactTask, find_task::FindTask, git_task::GitTask,
-    register_task::RegisterTask, task_type::TaskType, copy_task::CopyTask,
+    command_task::CommandTask, copy_task::CopyTask, fact_task::FactTask, find_task::FindTask,
+    git_task::GitTask, register_task::RegisterTask, task_type::TaskType,
 };
 
 pub struct AnsibleTasks;
@@ -67,7 +67,29 @@ impl AnsibleTasks {
     pub(crate) fn write_template_paths_to_file(manifest: Manifest) -> TaskType {
         CopyTask::new("Write template map")
             .content("{{ template_paths  }}")
-            .dest(format!("{}/template_map.txt", &manifest.clone().workdir.unwrap_or_default()).as_str())
+            .dest(
+                format!(
+                    "{}/template_map.txt",
+                    &manifest.clone().workdir.unwrap_or_default()
+                )
+                .as_str(),
+            )
+            .build()
+    }
+
+    pub(crate) fn create_redwood_app(manifest: Manifest) -> TaskType {
+        let app_name = manifest.app_name.unwrap_or_default();
+        dbg!(&app_name);
+        CommandTask::new("Create redwood app")
+            .command(
+                format!(
+                "yarn create redwood-app {} --typescript --overwrite > stdout.log 2> stderr.log",
+                app_name
+            )
+                .as_str(),
+            )
+            .creates(app_name.as_str())
+            .register("create_command")
             .build()
     }
 }
