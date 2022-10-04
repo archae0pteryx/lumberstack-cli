@@ -10,6 +10,7 @@ mod lumberstack;
 mod manifest;
 mod spinner;
 mod system;
+mod templates;
 
 use logger::Logger;
 use lumberstack::Lumberstack;

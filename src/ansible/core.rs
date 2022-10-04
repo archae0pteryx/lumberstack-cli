@@ -113,21 +113,17 @@ impl Ansible {
     }
 
     pub(crate) fn collect_templates(manifest: Manifest, spinner: &&ProgressBar) {
+        spinner.set_message("Collecting templates.");
         let paths_vec = Self::load_paths_vec(manifest.clone());
-        // let app_name = manifest.app_name.unwrap_or_default();
-        // let workdir = manifest.workdir.unwrap_or_default();
-        // let template_dir = manifest.template_dir.unwrap_or_default();
-        // let mut template_dest_paths: Vec<PathBuf> = Vec::new();
-
         for path in paths_vec {
-            let loaded_file = fs_extra::file::read_to_string(&path).expect("Error loading template");
+            let mut loaded_file = fs_extra::file::read_to_string(&path).expect("Error loading template");
             // replace vars
-            // if let Some(replace_map) = &manifest.replace {
-            //     for (k, v) in replace_map {
-            //         let format_var = format!("{{{}}}", k);
-            //         loaded_file.replace(&format_var, v);
-            //     }
-            // }
+            if let Some(replace_map) = &manifest.replace {
+                for (k, v) in replace_map {
+                    let format_var = format!("{{{}}}", k);
+                    loaded_file = loaded_file.replace(&format_var, v);
+                }
+            }
             // src path
             let src_path = Path::new(&path);
 
