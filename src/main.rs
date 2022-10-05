@@ -1,6 +1,7 @@
 #![allow(unused)]
 extern crate fs_extra;
 extern crate log;
+extern crate question;
 
 mod ansible;
 mod cli_args;
