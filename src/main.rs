@@ -29,7 +29,9 @@ pub static DEFAULT_MANIFEST_FILE: &'static str = "lumberstack.yml";
 pub static DEFAULT_LOG_FILE: &'static str = "lumberstack.out";
 pub static DEFAULT_TEMPLATE_PATHS_FILE: &'static str = "template_map.txt";
 pub static DEFAULT_PLAYBOOK_FILE: &'static str = "playbook.yml";
-pub static TEMPLATE_TOKEN_REGEX: &'static str = r#".*template\[.*\]"#;
+pub static TEMPLATE_TOKEN_REGEX: &'static str = r#"(//\*|//|#|<!--)\stemplate\[([^\]]+)\]"#;
+// pub static TEMPLATE_TOKEN_REGEX: &'static str = r#".*template\[.*\]"#;
+pub static TEMPLATE_SANITIZE_REGEX: &'static str = "(# |// |<!--)";
 fn main() -> anyhow::Result<()> {
     Logger::init();
     let spinner = create_spinner();
