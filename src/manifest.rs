@@ -1,19 +1,14 @@
-#![crate_name = "doc"]
-
 use std::{collections::HashMap, env};
 
 use anyhow::{Context, Error, Result};
 use clap::Parser;
 use serde::{Deserialize, Serialize};
-use serde_yaml::Value;
 
 use crate::{
-    cli_args::CliArgs, DEFAULT_APP_NAME, DEFAULT_LOG_FILE, DEFAULT_MANIFEST_FILE,
-    DEFAULT_TEMPLATE_DIR, DEFAULT_TEMPLATE_PATHS_FILE, DEFAULT_TEMPLATE_REPO,
-    DEFAULT_TEMPLATE_VERSION, DEFAULT_WORKDIR,
+    cli_args::CliArgs, DEFAULT_APP_NAME, DEFAULT_MANIFEST_FILE, DEFAULT_TEMPLATE_DIR,
+    DEFAULT_TEMPLATE_PATHS_FILE, DEFAULT_TEMPLATE_REPO, DEFAULT_TEMPLATE_VERSION, DEFAULT_WORKDIR,
 };
 
-/// The main configuration for lumberstack
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Manifest {
     pub app_name: Option<String>,

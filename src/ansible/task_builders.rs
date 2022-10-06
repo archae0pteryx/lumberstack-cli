@@ -1,6 +1,5 @@
-use crate::{
-    manifest::Manifest, DEFAULT_TEMPLATE_DIR, DEFAULT_TEMPLATE_PATHS_FILE, TEMPLATE_TOKEN_REGEX,
-};
+#![allow(unused)]
+use crate::{manifest::Manifest, TEMPLATE_TOKEN_REGEX};
 
 use super::playbook::yaml::{
     command_task::CommandTask, copy_task::CopyTask, fact_task::FactTask, find_task::FindTask,
@@ -105,11 +104,6 @@ impl AnsibleTasks {
 
     pub(crate) fn setup_db_auth(manifest: Manifest) -> TaskType {
         let app_name = manifest.app_name.unwrap_or_default();
-        let workdir = manifest.workdir.unwrap_or_default();
-        // let command = format!(
-        //     "yarn rw setup auth dbAuth --force > {}/setupauth.stdout.log 2> {}/setupauth.stderr.log",
-        //     workdir, workdir
-        // );
         CommandTask::new("Setup redwood auth")
             .command("yarn rw setup auth dbAuth --force")
             .chdir(app_name.as_str())

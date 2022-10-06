@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::{commands::Commands, DEFAULT_PLAYBOOK_FILE, DEFAULT_WORKDIR};
+use crate::{commands::Commands, DEFAULT_PLAYBOOK_FILE};
 
 use super::yaml::task_type::TaskType;
 
@@ -43,7 +43,7 @@ impl Playbook {
         fs_extra::file::write_all(DEFAULT_PLAYBOOK_FILE, yaml.as_str())
             .expect("Tried to write playbook yaml to file. Could not");
         Commands::exec_raw("./", "ansible-playbook", &[DEFAULT_PLAYBOOK_FILE], true);
-        // Self::remove_playbook();
+        Self::remove_playbook();
     }
 
     fn remove_playbook() {

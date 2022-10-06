@@ -1,7 +1,7 @@
-#![allow(unused)]
+// #![allow(unused)]
 extern crate fs_extra;
 extern crate log;
-extern crate question;
+// extern crate question;
 
 mod ansible;
 mod cli_args;
@@ -29,9 +29,8 @@ pub static DEFAULT_MANIFEST_FILE: &'static str = "lumberstack.yml";
 pub static DEFAULT_LOG_FILE: &'static str = "lumberstack.out";
 pub static DEFAULT_TEMPLATE_PATHS_FILE: &'static str = "template_map.txt";
 pub static DEFAULT_PLAYBOOK_FILE: &'static str = "playbook.yml";
-pub static TEMPLATE_TOKEN_REGEX: &'static str = r#"(//\*|//|#|<!--)\stemplate\[([^\]]+)\]"#;
-// pub static TEMPLATE_TOKEN_REGEX: &'static str = r#".*template\[.*\]"#;
-pub static TEMPLATE_SANITIZE_REGEX: &'static str = "(# |// |<!--)";
+pub static TEMPLATE_TOKEN_REGEX: &'static str =
+    r#"(//\*|//|#|<!--)\stemplate\[((?P<method>[^\]]+))\]"#;
 fn main() -> anyhow::Result<()> {
     Logger::init();
     let spinner = create_spinner();
@@ -41,7 +40,7 @@ fn main() -> anyhow::Result<()> {
 
     System::init(manifest.clone(), &spinner);
 
-    Lumberstack::start(manifest,  &spinner);
+    Lumberstack::start(manifest, &spinner);
 
     spinner.set_prefix("✅");
     spinner.finish_with_message("Lumberstack Complete!");
