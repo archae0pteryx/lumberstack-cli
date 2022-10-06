@@ -1,3 +1,5 @@
+#![crate_name = "doc"]
+
 use std::{collections::HashMap, env};
 
 use anyhow::{Context, Error, Result};
@@ -11,6 +13,7 @@ use crate::{
     DEFAULT_TEMPLATE_VERSION, DEFAULT_WORKDIR,
 };
 
+/// The main configuration for lumberstack
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Manifest {
     pub app_name: Option<String>,
@@ -76,7 +79,7 @@ impl Manifest {
         let merged_manifest: Manifest =
             serde_merge::omerge(Manifest::default(), user_item_manifest)?;
 
-        dbg!(&merged_manifest);
+        // dbg!(&merged_manifest);
 
         Self::set_env(&merged_manifest);
         return Ok(merged_manifest);

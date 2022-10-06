@@ -1,4 +1,6 @@
-use crate::{manifest::Manifest, DEFAULT_TEMPLATE_DIR, DEFAULT_TEMPLATE_PATHS_FILE};
+use crate::{
+    manifest::Manifest, DEFAULT_TEMPLATE_DIR, DEFAULT_TEMPLATE_PATHS_FILE, TEMPLATE_TOKEN_REGEX,
+};
 
 use super::playbook::yaml::{
     command_task::CommandTask, copy_task::CopyTask, fact_task::FactTask, find_task::FindTask,
@@ -36,8 +38,9 @@ impl AnsibleTasks {
     pub(crate) fn exclude_dirs_from_search(manifest: Manifest) -> TaskType {
         let workdir = &manifest.workdir.unwrap_or_default();
         FindTask::new("Exclude dirs from search")
-            .paths(workdir.as_str())
-            .recurse("no")
+            .paths(&workdir.as_str())
+            .recurse("yes")
+            .hidden("yes")
             .file_type("directory")
             .exclude(".git")
             .exclude("node_modules")
@@ -57,10 +60,10 @@ impl AnsibleTasks {
     pub(crate) fn gather_template_paths() -> TaskType {
         FindTask::new("Gather all template paths")
             .paths("{{ dirs }}")
-            .recurse("yes")
+            .recurse("no")
             .file_type("file")
             .hidden("true")
-            .contains(r#"(\/\*|#|\<!--) template!?.*"#)
+            .contains(TEMPLATE_TOKEN_REGEX)
             .register("found_templates")
             .file_type("file")
             .build()

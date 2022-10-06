@@ -118,12 +118,12 @@ impl Ansible {
         for path in paths_vec {
             let mut loaded_file = fs_extra::file::read_to_string(&path).expect("Error loading template");
             // replace vars
-            if let Some(replace_map) = &manifest.replace {
-                for (k, v) in replace_map {
-                    let format_var = format!("{{{}}}", k);
-                    loaded_file = loaded_file.replace(&format_var, v);
-                }
-            }
+            // if let Some(replace_map) = &manifest.replace {
+            //     for (k, v) in replace_map {
+            //         let format_var = format!("{{{}}}", k);
+            //         loaded_file = loaded_file.replace(&format_var, v);
+            //     }
+            // }
             // src path
             let src_path = Path::new(&path);
 

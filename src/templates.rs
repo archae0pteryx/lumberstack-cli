@@ -1,4 +1,5 @@
 use crate::manifest::Manifest;
+use crate::TEMPLATE_TOKEN_REGEX;
 use indicatif::ProgressBar;
 use lazy_static::lazy_static;
 use regex::bytes::Regex;
@@ -8,77 +9,60 @@ use std::io::{self, BufRead, BufReader};
 use std::path::Path;
 use std::path::PathBuf;
 
-enum Tag {
-    Init,
-    Create,
-    Docker,
+pub struct TemplateToken {
+    pub line_number: usize,
+    pub src_path: String,
+    pub dest_path: String,
+    tags: Vec<String>,
+
 }
 
 pub struct Templates;
 
-/// Templates::new(manifest).process(tag)
-
 impl Templates {
     pub fn collect_templates(manifest: Manifest, spinner: &ProgressBar) -> Vec<String> {
-        // let paths = Self::load_paths_vec(manifest);
-        // let out: Vec<String> = Self::load_paths_vec(manifest)
-        //     .iter()
-        //     .map(|path| {
+        let paths = Self::load_paths_vec(manifest);
+        // dbg!(&paths);
+        // let path = "tmp/templates/docker-compose.yml".to_string();
+        for path in paths {
+            let file_buffer = BufReader::new(File::open(path).expect("cannot open file"));
+            let tokens = Self::extract_template_tokens(file_buffer);
+            dbg!(&tokens);
+        }
 
-        //         return String::new();
-        //     })
-        //     .collect();
-        let out = Self::extract_tags(&"tmp/templates/docker-compose.yml".to_string());
-        dbg!(&out);
         return vec![String::new()];
     }
-    // use regex::Regex;
 
-    // fn main() {
-    //     let re = Regex::new(r"// template").unwrap();
-    //     let input = vec![
-    //     "// template![foo,bar]",
-    //     "i am anothjer line",
-    //     "another",
-    //     "// template[redwood:foo]"
-    //     ];
-    //     let result = input
-    //         .iter()
-    //         .enumerate()
-    //         .filter(|(i, &s)| re.is_match(&s))
-    //         .collect::<Vec<_>>();
+    fn load_paths_vec(manifest: Manifest) -> Vec<String> {
+        let paths_file = manifest.template_paths_file.unwrap_or_default();
+        let workdir = manifest.workdir.unwrap_or_default();
+        let template_file_path = format!("{}/{}", workdir, paths_file);
+        let paths_as_str = fs_extra::file::read_to_string(template_file_path).unwrap();
+        let paths_vec: Vec<String> = serde_json::from_str(&paths_as_str).unwrap();
+        return paths_vec;
+    }
 
-    //     dbg!(result);
-    // }
-    pub fn extract_tags(path: &String) -> Vec<String> {
+    fn extract_template_tokens(file_buffer: BufReader<File>) -> Vec<(usize, String)> {
         lazy_static! {
-            static ref TEMPLATE_REGEX: RegexSet =
-                RegexSetBuilder::new(&["// template.*", "# template.*", "<!-- template.*"])
-                    .case_insensitive(true)
-                    .build()
-                    .unwrap();
+            static ref TEMPLATE_REGEX: RegexSet = RegexSetBuilder::new(&[TEMPLATE_TOKEN_REGEX])
+                .case_insensitive(true)
+                .build()
+                .unwrap();
         }
-        let buffered = BufReader::new(File::open(path).expect("cannot open file"));
-        let result = buffered
+
+        let result = file_buffer
             .lines()
             .filter_map(|line| line.ok())
             .enumerate()
             .filter(|(i, line)| TEMPLATE_REGEX.is_match(line.as_str()))
-            // .map(|(i, line)| {
-            //     let trimmed = line.trim();
-            //     return (i, trimmed.to_string())
-            // })
-            .map(Self::strip_comment)
+            .map(|(i, line)| {
+                let sanitized_line = line.trim().replace("# ", "");
+                return (i, sanitized_line);
+            })
             .collect::<Vec<(usize, String)>>();
-        dbg!(result);
 
-        return vec![String::new()];
-    }
-
-    fn strip_comment<(I, L): (AsRef<usize>, AsRef<String>)>((idx, line): (I, L)) -> (usize, String) {
-        let i = idx.as_ref();
-        let s = line.as_ref().trim().replace("# ", "");
-        return (*i, s);
+        dbg!(&result);
+        return result;
     }
 
     // pub fn new(manifest: Manifest) -> Templates {
@@ -96,15 +80,6 @@ impl Templates {
     //     return (Vec::new(), String::new());
     // }
 
-    // pub fn load_paths_vec(manifest: Manifest) -> Vec<String> {
-    //     let paths_file = manifest.template_paths_file.unwrap_or_default();
-    //     let workdir = manifest.workdir.unwrap_or_default();
-    //     let template_file_path = format!("{}/{}", workdir, paths_file);
-    //     let paths_as_str = fs_extra::file::read_to_string(template_file_path).unwrap();
-    //     let paths_vec: Vec<String> = serde_json::from_str(&paths_as_str).unwrap();
-    //     return paths_vec;
-    // }
-
     // pub fn run(self: &Self) {}
 
     // fn process_src_templates(src_paths: Vec<String>) {
@@ -116,7 +91,6 @@ impl Templates {
     //     }
     // }
 }
-
 
 // pub(crate) fn collect_templates(manifest: Manifest, spinner: &&ProgressBar) {
 //         spinner.set_message("Collecting templates.");
