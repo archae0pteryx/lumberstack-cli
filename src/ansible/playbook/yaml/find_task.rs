@@ -55,9 +55,9 @@ impl FindTask {
         return new_task;
     }
 
-    pub fn recurse(self: &Self, recurse: &str) -> FindTask {
+    pub fn recurse(self: &Self, recurse: &Option<String>) -> FindTask {
         let mut new_task = self.clone();
-        new_task.find.recurse = recurse.to_string();
+        new_task.find.recurse = recurse.unwrap_or("no".to_string());
         return new_task;
     }
 
@@ -95,7 +95,7 @@ mod tests {
             .register("bar")
             .file_type("baz")
             .paths(&Some("boing".to_string()))
-            .recurse("snap")
+            .recurse(&Some("snap".to_string()))
             .exclude("crackle")
             .hidden("mitch")
             .contains("pop");

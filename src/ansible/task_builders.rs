@@ -38,7 +38,7 @@ impl AnsibleTasks {
         let workdir = &manifest.workdir;
         FindTask::new("Exclude dirs from search")
             .paths(workdir)
-            .recurse("yes")
+            .recurse(&Some("yes".to_string()))
             .hidden("yes")
             .file_type("directory")
             .exclude(".git")
@@ -59,7 +59,7 @@ impl AnsibleTasks {
     pub(crate) fn gather_template_paths() -> TaskType {
         FindTask::new("Gather all template paths")
             .paths(&Some("{{ dirs }}".to_string()))
-            .recurse("no")
+            .recurse(&Some("no".to_string()))
             .file_type("file")
             .hidden("true")
             .contains(TEMPLATE_TOKEN_REGEX)
