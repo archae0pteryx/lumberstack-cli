@@ -32,9 +32,9 @@ impl RegisterTask {
     }
 
     #[allow(dead_code)]
-    pub fn stat_path(self: &Self, path: &str) -> RegisterTask {
+    pub fn stat_path(self: &Self, path: &Option<String>) -> RegisterTask {
         let mut new_task = self.clone();
-        new_task.stat.path = path.to_string();
+        new_task.stat.path = path.clone().unwrap_or_default();
         return new_task;
     }
 
@@ -49,7 +49,9 @@ mod tests {
 
     #[test]
     fn it_builds_register_task() {
-        let actual = RegisterTask::new("foo").register("bar").stat_path("baz");
+        let actual = RegisterTask::new("foo")
+            .register("bar")
+            .stat_path(&Some("baz".to_string()));
 
         assert_eq!(actual.name, "foo");
         assert_eq!(actual.register, "bar");

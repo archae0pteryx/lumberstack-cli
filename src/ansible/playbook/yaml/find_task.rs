@@ -49,9 +49,9 @@ impl FindTask {
         return new_task;
     }
 
-    pub fn paths(self: &Self, paths: &str) -> FindTask {
+    pub fn paths(self: &Self, paths: &Option<String>) -> FindTask {
         let mut new_task = self.clone();
-        new_task.find.paths = paths.to_string();
+        new_task.find.paths = paths.clone().unwrap_or_default();
         return new_task;
     }
 
@@ -94,7 +94,7 @@ mod tests {
         let actual = FindTask::new("foo")
             .register("bar")
             .file_type("baz")
-            .paths("boing")
+            .paths(&Some("boing".to_string()))
             .recurse("snap")
             .exclude("crackle")
             .hidden("mitch")

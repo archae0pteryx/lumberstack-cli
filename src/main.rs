@@ -1,4 +1,4 @@
-// #![allow(unused)]
+#![allow(unused)]
 extern crate fs_extra;
 extern crate log;
 // extern crate question;
@@ -12,6 +12,7 @@ mod manifest;
 mod spinner;
 mod system;
 mod templates;
+mod tags;
 
 use logger::Logger;
 use lumberstack::Lumberstack;
@@ -21,7 +22,6 @@ use system::System;
 
 pub static DEFAULT_TEMPLATE_VERSION: &str = "v0.0.4-1";
 pub static DEFAULT_TEMPLATE_REPO: &str = "https://github.com/codingzeal/redwood-template-app";
-
 pub static DEFAULT_WORKDIR: &'static str = "tmp";
 pub static DEFAULT_APP_NAME: &'static str = "myapp";
 pub static DEFAULT_TEMPLATE_DIR: &'static str = "templates";
@@ -31,6 +31,7 @@ pub static DEFAULT_TEMPLATE_PATHS_FILE: &'static str = "template_map.txt";
 pub static DEFAULT_PLAYBOOK_FILE: &'static str = "playbook.yml";
 pub static TEMPLATE_TOKEN_REGEX: &'static str =
     r#"(//\*|//|#|<!--)\stemplate\[((?P<method>[^\]]+))\]"#;
+
 fn main() -> anyhow::Result<()> {
     Logger::init();
     let spinner = create_spinner();

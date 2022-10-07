@@ -33,21 +33,21 @@ impl GitTask {
         return new_task;
     }
 
-    pub fn repo(self: &Self, repo: &str) -> GitTask {
+    pub fn repo(self: &Self, repo: &Option<String>) -> GitTask {
         let mut new_task = self.clone();
-        new_task.git.repo = repo.to_string();
+        new_task.git.repo = repo.clone().unwrap_or_default();
         return new_task;
     }
 
-    pub fn dest(self: &Self, dest: &str) -> GitTask {
+    pub fn dest(self: &Self, dest: &Option<String>) -> GitTask {
         let mut new_task = self.clone();
-        new_task.git.dest = dest.to_string();
+        new_task.git.dest = dest.clone().unwrap_or_default();
         return new_task;
     }
 
-    pub fn version(self: &Self, version: &str) -> GitTask {
+    pub fn version(self: &Self, version: &Option<String>) -> GitTask {
         let mut new_task = self.clone();
-        new_task.git.version = version.to_string();
+        new_task.git.version = version.clone().unwrap_or_default();
         return new_task;
     }
 
@@ -62,7 +62,7 @@ mod tests {
 
     #[test]
     fn it_builds_git_task() {
-        let actual = GitTask::new("foo").when("bar").repo("baz").version("boing");
+        let actual = GitTask::new("foo").when("bar").repo(&Some("baz".to_string())).version(&Some("boing".to_string()));
         assert_eq!(actual.when, "bar");
         assert_eq!(actual.git.repo, "baz");
         assert_eq!(actual.git.version, "boing");

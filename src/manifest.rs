@@ -9,18 +9,35 @@ use crate::{
     DEFAULT_TEMPLATE_PATHS_FILE, DEFAULT_TEMPLATE_REPO, DEFAULT_TEMPLATE_VERSION, DEFAULT_WORKDIR,
 };
 
+/// The core config file for the CLI
+/// It is created by both CLI arguments as well as a config file
+/// Arguments always take precidence over the file
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Manifest {
+    /// The project name and destination
     pub app_name: Option<String>,
-    pub template_version: Option<String>,
-    pub clean: Option<bool>,
-    pub workdir: Option<String>,
+    /// The repository for the template app to use
     pub template_repo: Option<String>,
+    /// Which github release to pull
+    pub template_version: Option<String>,
+    /// Remove all artifacts from previous builds
+    pub clean: Option<bool>,
+    /// The root dir for work to occur
+    pub workdir: Option<String>,
+    /// The directory name to clone templates into
     pub template_dir: Option<String>,
+    /// The combined workdir and template_dir
+    pub full_template_path: Option<String>,
+    /// The file to save a list of templates to do work with
     pub template_paths_file: Option<String>,
+    /// Extra logging (ansible throughput)
     pub log_file: Option<String>,
+    /// The tags to run individual tasks
     pub tags: Option<Vec<String>>,
+    /// Tags to skip (the reverse of tags)
     pub skip_tags: Option<Vec<String>>,
+    /// A map of key values to replace in the templates
+    /// Rules for replacement are defined in the templates themselves
     pub replace: Option<HashMap<String, String>>,
 }
 trait Empty<T> {
@@ -36,6 +53,7 @@ impl Empty<Manifest> for Manifest {
             clean: None,
             template_repo: None,
             template_dir: None,
+            full_template_path: None,
             template_paths_file: None,
             log_file: None,
             tags: None,
@@ -53,6 +71,7 @@ impl Default for Manifest {
             workdir: Some(DEFAULT_WORKDIR.to_string()),
             template_repo: Some(DEFAULT_TEMPLATE_REPO.to_string()),
             template_dir: Some(DEFAULT_TEMPLATE_DIR.to_string()),
+            full_template_path: Some(format!("{}/{}", DEFAULT_WORKDIR.to_string(), DEFAULT_TEMPLATE_DIR.to_string())),
             template_paths_file: Some(DEFAULT_TEMPLATE_PATHS_FILE.to_string()),
             log_file: None,
             tags: None,
@@ -77,7 +96,7 @@ impl Manifest {
         // dbg!(&merged_manifest);
 
         Self::set_env(&merged_manifest);
-        return Ok(merged_manifest);
+        return Ok(merged_manifest.clone());
     }
 
     fn config_manifest(path: Option<String>) -> Result<Manifest> {

@@ -1,3 +1,3 @@
 pub mod core;
-mod playbook;
+pub mod playbook;
 mod task_builders;

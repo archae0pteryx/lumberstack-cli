@@ -1,0 +1,4 @@
+app_name: fooapp
+skip_tags:
+  - init
+  - create

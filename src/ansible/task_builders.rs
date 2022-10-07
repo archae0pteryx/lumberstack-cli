@@ -12,32 +12,32 @@ impl AnsibleTasks {
     pub(crate) fn register_template_dir(manifest: Manifest) -> TaskType {
         let workdir = &manifest.workdir.unwrap_or_default();
         let template_dir = &manifest.template_dir.unwrap_or_default();
-        let template_path = format!("{}/{}", workdir, template_dir);
+        let template_path = &manifest.full_template_path;
         RegisterTask::new("Register template dir")
             .register("tmp_templates")
-            .stat_path(template_path.as_str())
+            .stat_path(template_path)
             .build()
     }
 
     pub(crate) fn clone_template_repo(manifest: Manifest) -> TaskType {
         let workdir = &manifest.workdir.unwrap_or_default();
         let template_dir = &manifest.template_dir.unwrap_or_default();
-        let template_path = format!("{}/{}", workdir, template_dir);
-        let repo = &manifest.template_repo.unwrap_or_default();
-        let ver = &manifest.template_version.unwrap_or_default();
+        let template_path = &manifest.full_template_path;
+        let repo = &manifest.template_repo;
+        let ver = &manifest.template_version;
 
         GitTask::new("Clone template repo")
             .repo(repo)
-            .dest(&template_path)
+            .dest(template_path)
             .version(ver)
             .when("not tmp_templates.stat.exists")
             .build()
     }
 
     pub(crate) fn exclude_dirs_from_search(manifest: Manifest) -> TaskType {
-        let workdir = &manifest.workdir.unwrap_or_default();
+        let workdir = &manifest.workdir;
         FindTask::new("Exclude dirs from search")
-            .paths(&workdir.as_str())
+            .paths(workdir)
             .recurse("yes")
             .hidden("yes")
             .file_type("directory")
@@ -58,7 +58,7 @@ impl AnsibleTasks {
 
     pub(crate) fn gather_template_paths() -> TaskType {
         FindTask::new("Gather all template paths")
-            .paths("{{ dirs }}")
+            .paths(&Some("{{ dirs }}".to_string()))
             .recurse("no")
             .file_type("file")
             .hidden("true")
