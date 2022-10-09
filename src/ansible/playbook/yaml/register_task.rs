@@ -1,12 +1,7 @@
 use serde::{Deserialize, Serialize};
 
-use super::task_type::TaskType;
+use super::task_type::PlaybookYamlTaskType;
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Default)]
-pub struct StatPath {
-    #[serde(skip_serializing_if = "String::is_empty")]
-    pub path: String,
-}
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Default)]
 pub struct RegisterTask {
@@ -14,32 +9,47 @@ pub struct RegisterTask {
     pub stat: StatPath,
     #[serde(skip_serializing_if = "String::is_empty")]
     pub register: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    tags: Option<Vec<String>>
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Default)]
+pub struct StatPath {
+    #[serde(skip_serializing_if = "String::is_empty")]
+    pub path: String,
 }
 
 impl RegisterTask {
-    pub fn new(name: &str) -> RegisterTask {
+    pub fn new<S: AsRef<str>>(name: S) -> RegisterTask {
         RegisterTask {
-            name: name.to_string(),
+            name: name.as_ref().to_string(),
             stat: StatPath::default(),
             register: String::new(),
+            tags: None
         }
     }
 
-    pub fn register(self: &Self, register: &str) -> RegisterTask {
+    pub fn register<S: AsRef<str>>(&self, register: S) -> RegisterTask {
         let mut new_task = self.clone();
-        new_task.register = register.to_string();
+        new_task.register = register.as_ref().to_string();
         return new_task;
     }
 
-    #[allow(dead_code)]
-    pub fn stat_path(self: &Self, path: &Option<String>) -> RegisterTask {
+    pub fn stat_path<S: AsRef<str>>(&self, path: S) -> RegisterTask {
         let mut new_task = self.clone();
-        new_task.stat.path = path.clone().unwrap_or_default();
+        new_task.stat.path = path.as_ref().to_string();
         return new_task;
     }
 
-    pub fn build(self: &Self) -> TaskType {
-        TaskType::Register(self.clone())
+    pub fn tags(&self, tags: Option<Vec<String>>) -> RegisterTask {
+        let mut new_task = self.clone();
+        new_task.tags = tags;
+        return new_task;
+
+    }
+    pub fn build(&self) -> PlaybookYamlTaskType {
+        PlaybookYamlTaskType::Register(self.clone())
+
     }
 }
 
@@ -51,13 +61,13 @@ mod tests {
     fn it_builds_register_task() {
         let actual = RegisterTask::new("foo")
             .register("bar")
-            .stat_path(&Some("baz".to_string()));
+            .stat_path("baz");
 
         assert_eq!(actual.name, "foo");
         assert_eq!(actual.register, "bar");
         assert_eq!(actual.stat.path, "baz");
 
         let built = actual.build();
-        assert!(matches!(built, TaskType::Register { .. }));
+        assert!(matches!(built, PlaybookYamlTaskType::Register { .. }));
     }
 }

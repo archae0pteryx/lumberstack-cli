@@ -1,11 +1,14 @@
 use serde::{Deserialize, Serialize};
 
-use super::task_type::TaskType;
+use super::task_type::PlaybookYamlTaskType;
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default, PartialEq)]
 pub struct CopyTask {
     pub name: String,
     pub copy: CopyArgs,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub tags: Option<Vec<String>>
+
 }
 #[derive(Serialize, Deserialize, Debug, Clone, Default, PartialEq)]
 pub struct CopyArgs {
@@ -18,34 +21,41 @@ pub struct CopyArgs {
 }
 
 impl CopyTask {
-    pub fn new(name: &str) -> CopyTask {
+    pub fn new<S: AsRef<str>>(name: S) -> CopyTask {
         CopyTask {
-            name: name.to_string(),
+            name: name.as_ref().to_string(),
             copy: CopyArgs::default(),
+            tags: None
         }
     }
 
     #[allow(dead_code)]
-    pub fn src(self: &Self, src: &str) -> CopyTask {
+    pub fn src<S: AsRef<str>>(&self, src: S) -> CopyTask {
         let mut new_task = self.clone();
-        new_task.copy.src = src.to_string();
+        new_task.copy.src = src.as_ref().to_string();
         return new_task;
     }
 
-    pub fn dest(self: &Self, dest: &str) -> CopyTask {
+    pub fn dest<S: AsRef<str>>(&self, dest: S) -> CopyTask {
         let mut new_task = self.clone();
-        new_task.copy.dest = dest.to_string();
+        new_task.copy.dest = dest.as_ref().to_string();
         return new_task;
     }
 
-    pub fn content(self: &Self, content: &str) -> CopyTask {
+    pub fn content<S: AsRef<str>>(&self, content: S) -> CopyTask {
         let mut new_task = self.clone();
-        new_task.copy.content = content.to_string();
+        new_task.copy.content = content.as_ref().to_string();
         return new_task;
     }
 
-    pub fn build(self: &Self) -> TaskType {
-        TaskType::Copy(self.clone())
+    pub fn set_tags(&self, tags: Option<Vec<String>>) -> CopyTask {
+        let mut new_task = self.clone();
+        new_task.tags = tags;
+        return new_task;
+    }
+
+    pub fn build(&self) -> PlaybookYamlTaskType {
+        PlaybookYamlTaskType::Copy(self.clone())
     }
 }
 

@@ -1,7 +1,6 @@
-#![allow(unused)]
+// #![allow(unused)]
 extern crate fs_extra;
 extern crate log;
-// extern crate question;
 
 mod ansible;
 mod cli_args;
@@ -9,16 +8,18 @@ mod commands;
 mod logger;
 mod lumberstack;
 mod manifest;
+mod redwood;
 mod spinner;
 mod system;
-mod templates;
 mod tags;
+mod templates;
 
 use logger::Logger;
 use lumberstack::Lumberstack;
 use manifest::Manifest;
-use spinner::create_spinner;
 use system::System;
+use tags::TaskTag;
+use templates::init::TemplatesInit;
 
 pub static DEFAULT_TEMPLATE_VERSION: &str = "v0.0.4-1";
 pub static DEFAULT_TEMPLATE_REPO: &str = "https://github.com/codingzeal/redwood-template-app";
@@ -34,16 +35,16 @@ pub static TEMPLATE_TOKEN_REGEX: &'static str =
 
 fn main() -> anyhow::Result<()> {
     Logger::init();
-    let spinner = create_spinner();
     let manifest = Manifest::load()?;
 
-    // fs_extra::dir::remove(DEFAULT_WORKDIR.to_string()).expect("error removing");
+    System::init(manifest.clone());
 
-    System::init(manifest.clone(), &spinner);
+    let mut app = Lumberstack::new();
 
-    Lumberstack::start(manifest, &spinner);
+    let init_task = TemplatesInit::new(TaskTag::Init, manifest.clone());
 
-    spinner.set_prefix("✅");
-    spinner.finish_with_message("Lumberstack Complete!");
+    app.queue(init_task);
+    app.process();
+
     Ok(())
 }

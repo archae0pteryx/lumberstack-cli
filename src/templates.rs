@@ -1,4 +1,4 @@
-pub mod clone;
+pub mod init;
 // mod copy;
 // mod parse;
 

@@ -1,33 +1,24 @@
-pub fn should_task_run(this_tag: String, tags: &Option<Vec<String>>) -> bool {
-    if let Some(t) = &tags {
-        return t.contains(&this_tag) || t.is_empty();
-    }
-    return true;
+#![allow(unused)]
+use std::fmt::{self, Display};
+
+#[derive(Clone)]
+pub enum TaskTag {
+    Init,
+    Create,
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn it_checks_if_task_should_run() {
-        /// true if in tag vec
-        let tags = Some(
-            vec!["foo", "bar", "test-tag"]
-                .iter()
-                .map(|i| i.to_string())
-                .collect::<Vec<_>>(),
-        );
-        let is_in_vec = should_task_run("test-tag".to_string(), &tags);
-        assert!(is_in_vec);
-
-        /// true if vec is empty
-        let vec_empty = should_task_run("test-tag".to_string(), &None);
-        assert!(vec_empty);
-
-        /// false is vec not empty and tag is missing
-        let vec_not_empty_not_in = should_task_run("bang".to_string(), &tags);
-        dbg!(&vec_not_empty_not_in);
-        assert!(!vec_not_empty_not_in);
+impl Display for TaskTag {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            TaskTag::Init => write!(f, "init"),
+            TaskTag::Create => write!(f, "create"),
+        }
     }
+}
+
+pub fn should_task_run(this_tag: &TaskTag, tags: &Option<Vec<String>>) -> bool {
+    if let Some(t) = tags {
+        return t.contains(&this_tag.to_string()) || t.is_empty();
+    }
+    return true;
 }

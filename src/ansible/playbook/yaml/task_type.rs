@@ -7,7 +7,7 @@ use super::{
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(untagged)]
-pub enum TaskType {
+pub enum PlaybookYamlTaskType {
     Copy(CopyTask),
     Command(CommandTask),
     Fact(FactTask),

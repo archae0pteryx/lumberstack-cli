@@ -1,19 +1,16 @@
 use std::process::{exit, Command, Output};
 
 use clap::Parser;
-use indicatif::ProgressBar;
-use log::{error};
+use log::error;
 
 use crate::{cli_args::CliArgs, manifest::Manifest};
 
 pub struct System;
 
 impl System {
-    pub fn init(manifest: Manifest, spinner: &ProgressBar) {
+    pub fn init(manifest: Manifest) {
         let args = CliArgs::parse();
         if !args.skip_checks {
-            spinner.set_prefix("🚀");
-            spinner.set_message("Checking system requirements");
             Self::os_ok();
             Self::has_required_bin("yarn");
             Self::check_docker();
@@ -67,7 +64,6 @@ impl System {
 
     fn create_working_dir(manifest: Manifest) {
         let workdir = &manifest.workdir.unwrap_or_default();
-        fs_extra::dir::create_all(workdir, false)
-            .expect("Error creating / cleaning working dir");
+        fs_extra::dir::create_all(workdir, false).expect("Error creating / cleaning working dir");
     }
 }

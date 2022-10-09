@@ -1,28 +1,36 @@
-use super::task_type::TaskType;
+use super::task_type::PlaybookYamlTaskType;
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct FactTask {
     set_fact: Map<String, Value>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    tags: Option<Vec<String>>
 }
 
 impl FactTask {
-    pub fn new(key: &str, value: &str) -> FactTask {
+    pub fn new<S: AsRef<str>>(key: S, value: S) -> FactTask {
         let mut map = Map::new();
-        map.insert(key.to_string(), Value::String(value.to_string()));
-        FactTask { set_fact: map }
+        map.insert(key.as_ref().to_string(), Value::String(value.as_ref().to_string()));
+        FactTask { set_fact: map, tags: None }
     }
 
     #[allow(dead_code)]
-    pub fn set(self: &Self, key: &str, value: &str) -> FactTask {
-        let mut new_fact = self.set_fact.clone();
-        new_fact.insert(key.to_string(), Value::String(value.to_string()));
-        FactTask { set_fact: new_fact }
+    pub fn set<S: AsRef<str>>(&self, key: S, value: S) -> FactTask {
+        let mut new_fact = self.clone();
+        new_fact.set_fact.insert(key.as_ref().to_string(), Value::String(value.as_ref().to_string()));
+        return new_fact;
     }
 
-    pub fn build(self: &Self) -> TaskType {
-        TaskType::Fact(self.clone())
+    pub fn tags(&self, tags: Option<Vec<String>>) -> FactTask {
+        let new_task = self.clone();
+        FactTask { set_fact: new_task.set_fact, tags }
+
+    }
+
+    pub fn build(&self) -> PlaybookYamlTaskType {
+        PlaybookYamlTaskType::Fact(self.clone())
     }
 }
 
@@ -34,8 +42,7 @@ mod tests {
     fn it_builds_fact_task() {
         let actual = FactTask::new("foo", "bar");
         assert_eq!(actual.set_fact.get("foo").unwrap(), "bar");
-
         let built = actual.build();
-        assert!(matches!(built, TaskType::Fact {..}));
+        assert!(matches!(built, PlaybookYamlTaskType::Fact {..}));
     }
 }

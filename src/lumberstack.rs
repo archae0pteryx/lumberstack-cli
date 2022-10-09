@@ -1,16 +1,27 @@
-use crate::{ansible::core::Ansible, manifest::Manifest, templates::clone::CloneTemplates};
-use indicatif::ProgressBar;
+pub trait Runnable {
+    fn run_job(&self);
+}
 
-pub struct Lumberstack;
+pub struct Lumberstack {
+    pub run_items: Vec<Box<dyn Runnable>>
+}
 
 impl Lumberstack {
-    pub fn start(manifest: Manifest, spinner: &ProgressBar) {
-        let clone_task = CloneTemplates::new(manifest.clone());
-        // CloneTemplates::check_tag_and_run(manifest.clone(), spinner);
-        // Ansible::init_templates(manifest.clone(), &spinner);
-        // Ansible::create_redwood_app(manifest.clone(), &spinner);
-        // Templates::collect_templates(manifest.clone(), &spinner);
-        // Ansible::setup_docker(manifest.clone(), &spinner);
-        // Ansible::generate_auth(manifest.clone(), &spinner);
+    pub fn new() -> Lumberstack {
+        Lumberstack { run_items: Vec::new() }
+    }
+
+    pub fn queue<T: Runnable + 'static>(&mut self, item: Option<T>) -> &mut Self {
+        if let Some(runnable) = item  {
+            self.run_items.push(Box::new(runnable));
+        }
+        self
+    }
+
+    pub fn process(&mut self) {
+        let run_items = &self.run_items;
+        run_items.into_iter().for_each(|item| {
+            item.run_job();
+        });
     }
 }

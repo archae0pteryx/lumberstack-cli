@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use super::task_type::TaskType;
+use super::task_type::PlaybookYamlTaskType;
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default, PartialEq)]
 
@@ -10,6 +10,8 @@ pub struct FindTask {
     pub find: Find,
     #[serde(skip_serializing_if = "String::is_empty")]
     pub register: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub tags: Option<Vec<String>>,
 }
 #[derive(Serialize, Deserialize, Debug, Clone, Default, PartialEq)]
 
@@ -29,59 +31,70 @@ pub struct Find {
 }
 
 impl FindTask {
-    pub fn new(name: &str) -> FindTask {
+    pub fn new<S: AsRef<str>>(name: S) -> FindTask {
         FindTask {
-            name: name.to_string(),
+            name: name.as_ref().to_string(),
             find: Find::default(),
             register: String::new(),
+            tags: None
         }
     }
 
-    pub fn register(self: &Self, register: &str) -> FindTask {
+    pub fn register<S: AsRef<str>>(&self, register: S) -> FindTask {
         let mut new_task = self.clone();
-        new_task.register = register.to_string();
+        new_task.register = register.as_ref().to_owned();
         return new_task;
     }
 
-    pub fn file_type(self: &Self, file_type: &str) -> FindTask {
+    pub fn file_type<S: AsRef<str>>(&self, file_type: S) -> FindTask {
         let mut new_task = self.clone();
-        new_task.find.file_type = file_type.to_string();
+        new_task.find.file_type = file_type.as_ref().to_string();
         return new_task;
     }
 
-    pub fn paths(self: &Self, paths: &Option<String>) -> FindTask {
+    pub fn paths<S: AsRef<str>>(&self, paths: S) -> FindTask {
         let mut new_task = self.clone();
-        new_task.find.paths = paths.clone().unwrap_or_default();
+        new_task.find.paths = paths.as_ref().to_string();
         return new_task;
     }
 
-    pub fn recurse(self: &Self, recurse: &Option<String>) -> FindTask {
+    pub fn recurse<S: AsRef<str>>(&self, recurse: S) -> FindTask {
         let mut new_task = self.clone();
-        new_task.find.recurse = recurse.unwrap_or("no".to_string());
+        new_task.find.recurse = recurse.as_ref().to_string();
         return new_task;
     }
 
-    pub fn exclude(self: &Self, exclude: &str) -> FindTask {
-        let new_excludes = [self.find.excludes.clone(), vec![exclude.to_string()]].concat();
+    pub fn exclude<S: AsRef<str>>(&self, exclude: S) -> FindTask {
+        let new_excludes = [
+            self.find.excludes.clone(),
+            vec![exclude.as_ref().to_string()],
+        ]
+        .concat();
         let mut new_task = self.clone();
         new_task.find.excludes = new_excludes;
         return new_task;
     }
 
-    pub fn hidden(self: &Self, hidden: &str) -> FindTask {
+    pub fn hidden<S: AsRef<str>>(&self, hidden: S) -> FindTask {
         let mut new_task = self.clone();
-        new_task.find.hidden = hidden.to_string();
+        new_task.find.hidden = hidden.as_ref().to_string();
         return new_task;
     }
 
-    pub fn contains(self: &Self, contains: &str) -> FindTask {
+    pub fn contains<S: AsRef<str>>(&self, contains: S) -> FindTask {
         let mut new_task = self.clone();
-        new_task.find.contains = contains.to_string();
+        new_task.find.contains = contains.as_ref().to_string();
         return new_task;
     }
 
-    pub fn build(self: &Self) -> TaskType {
-        TaskType::Find(self.clone())
+    pub fn tags(&self, tags: Option<Vec<String>>) -> FindTask {
+        let mut new_task = self.clone();
+        new_task.tags = tags;
+        return new_task;
+    }
+
+    pub fn build(self: &Self) -> PlaybookYamlTaskType {
+        PlaybookYamlTaskType::Find(self.clone())
     }
 }
 
@@ -94,8 +107,8 @@ mod tests {
         let actual = FindTask::new("foo")
             .register("bar")
             .file_type("baz")
-            .paths(&Some("boing".to_string()))
-            .recurse(&Some("snap".to_string()))
+            .paths("boing")
+            .recurse("snap")
             .exclude("crackle")
             .hidden("mitch")
             .contains("pop");
@@ -110,6 +123,6 @@ mod tests {
         assert_eq!(actual.find.contains, "pop");
 
         let built = actual.build();
-        assert!(matches!(built, TaskType::Find { .. }));
+        assert!(matches!(built, PlaybookYamlTaskType::Find { .. }));
     }
 }

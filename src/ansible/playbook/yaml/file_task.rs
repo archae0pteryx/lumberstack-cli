@@ -1,12 +1,14 @@
 #![allow(unused)]
 use serde::{Deserialize, Serialize};
 
-use super::task_type::TaskType;
+use super::task_type::PlaybookYamlTaskType;
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct FileTask {
     pub name: String,
     pub file: File,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub tags: Option<Vec<String>>
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
@@ -14,34 +16,34 @@ pub struct File {
     #[serde(skip_serializing_if = "String::is_empty")]
     pub path: String,
     #[serde(skip_serializing_if = "String::is_empty")]
-    pub state: String,
+    pub state: String
 }
 
 impl FileTask {
-    pub fn new(name: &str) -> FileTask {
+    pub fn new<S: AsRef<str>>(name: S) -> FileTask {
         FileTask {
-            name: name.to_string(),
+            name: name.as_ref().to_string(),
             file: File {
                 path: String::new(),
                 state: String::new(),
-                // hidden: String::new()
             },
+            tags: None
         }
     }
-    pub fn path(self: &Self, path: &str) -> FileTask {
+    pub fn path<S: AsRef<str>>(&self, path: S) -> FileTask {
         let mut new_task = self.clone();
-        new_task.file.path = path.to_string();
+        new_task.file.path = path.as_ref().to_string();
         return new_task;
     }
 
-    pub fn state(self: &Self, state: &str) -> FileTask {
+    pub fn state<S: AsRef<str>>(&self, state: S) -> FileTask {
         let mut new_task = self.clone();
-        new_task.file.state = state.to_string();
+        new_task.file.state = state.as_ref().to_string();
         return new_task;
     }
 
-    pub fn build(self: &Self) -> TaskType {
-        TaskType::File(self.clone())
+    pub fn build(&self) -> PlaybookYamlTaskType {
+        PlaybookYamlTaskType::File(self.clone())
     }
 }
 
@@ -57,6 +59,6 @@ mod tests {
         assert_eq!(actual.file.state, "baz");
 
         let built = actual.build();
-        assert!(matches!(built, TaskType::File { .. }));
+        assert!(matches!(built, PlaybookYamlTaskType::File { .. }));
     }
 }

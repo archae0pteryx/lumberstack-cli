@@ -1,7 +1,7 @@
 #![allow(unused)]
 use serde::{Deserialize, Serialize};
 
-use super::task_type::TaskType;
+use super::task_type::PlaybookYamlTaskType;
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct CommandTask {
@@ -11,13 +11,15 @@ pub struct CommandTask {
     pub register: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub args: Option<CommandArgs>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    tags: Option<Vec<String>>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct CommandTaskCommand {
     pub cmd: String,
     #[serde(skip_serializing_if = "String::is_empty")]
-    pub creates: String
+    pub creates: String,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
@@ -26,42 +28,48 @@ pub struct CommandArgs {
 }
 
 impl CommandTask {
-    pub fn new(name: &str) -> CommandTask {
+    pub fn new<S: AsRef<str>>(name: S) -> CommandTask {
         CommandTask {
-            name: name.to_string(),
+            name: name.as_ref().to_string(),
             ..CommandTask::default()
         }
     }
 
-    pub fn command(self: &Self, command: &str) -> CommandTask {
+    pub fn command<S: AsRef<str>>(&self, command: S) -> CommandTask {
         let mut new_task = self.clone();
-        new_task.command.cmd = command.to_string();
+        new_task.command.cmd = command.as_ref().to_string();
         return new_task;
     }
 
-    pub fn chdir(self: &Self, chdir: &str) -> CommandTask {
+    pub fn chdir<S: AsRef<str>>(&self, chdir: S) -> CommandTask {
         let mut new_task = self.clone();
         let args = CommandArgs {
-            chdir: chdir.to_string(),
+            chdir: chdir.as_ref().to_string(),
         };
         new_task.args = Some(args);
         return new_task;
     }
 
-    pub fn register(self: &Self, register: &str) -> CommandTask {
+    pub fn register<S: AsRef<str>>(&self, register: S) -> CommandTask {
         let mut new_task = self.clone();
-        new_task.register = Some(register.to_string());
+        new_task.register = Some(register.as_ref().to_string());
         return new_task;
     }
 
-    pub fn creates(self: &Self, creates: &str) -> CommandTask {
+    pub fn creates<S: AsRef<str>>(&self, creates: S) -> CommandTask {
         let mut new_task = self.clone();
-        new_task.command.creates = creates.to_string();
+        new_task.command.creates = creates.as_ref().to_string();
         return new_task;
     }
 
-    pub fn build(self: &Self) -> TaskType {
-        TaskType::Command(self.clone())
+    pub fn set_tags(&self, tags: Option<Vec<String>>) -> CommandTask {
+        let mut new_task = self.clone();
+        new_task.tags = tags;
+        return new_task;
+    }
+
+    pub fn build(self: &Self) -> PlaybookYamlTaskType {
+        PlaybookYamlTaskType::Command(self.clone())
     }
 }
 
