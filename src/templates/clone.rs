@@ -1,23 +1,25 @@
+use log::debug;
+
 use crate::{
     ansible::playbook::{
         yaml::{
             copy_task::CopyTask, fact_task::FactTask, find_task::FindTask, git_task::GitTask,
             register_task::RegisterTask, task_type::PlaybookYamlTaskType,
-        },
-        Playbook,
+        }, create::Playbook,
     },
     manifest::Manifest,
     tags::{should_task_run, TaskTag},
-    TEMPLATE_TOKEN_REGEX,
+    DEFAULT_ANSIBLE_TEMPLATE_REGEX,
 };
 
 #[derive(Clone)]
 
-pub struct TemplatesInit;
+pub struct TemplatesClone;
 
-impl TemplatesInit {
+impl TemplatesClone {
     pub fn new(tag: TaskTag, manifest: Manifest) -> Option<Playbook> {
         if !should_task_run(&tag, &manifest.tags) {
+            debug!("Skipping Clone {:?}", &tag);
             return None;
         }
         // Register a dir for ansible to manipulate
@@ -97,9 +99,8 @@ impl TemplatesInit {
         FindTask::new("Gather all template paths")
             .paths("{{ dirs }}")
             .recurse("no")
-            .file_type("file")
             .hidden("true")
-            .contains(TEMPLATE_TOKEN_REGEX)
+            .contains(DEFAULT_ANSIBLE_TEMPLATE_REGEX)
             .register("found_templates")
             .file_type("file")
             .tags(Some(vec![tag.to_string()]))

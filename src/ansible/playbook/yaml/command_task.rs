@@ -68,7 +68,7 @@ impl CommandTask {
         return new_task;
     }
 
-    pub fn build(self: &Self) -> PlaybookYamlTaskType {
+    pub fn build(&self) -> PlaybookYamlTaskType {
         PlaybookYamlTaskType::Command(self.clone())
     }
 }

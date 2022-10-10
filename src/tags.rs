@@ -1,10 +1,22 @@
 #![allow(unused)]
 use std::fmt::{self, Display};
 
-#[derive(Clone)]
+pub trait Runnable {
+    fn run_job(&self);
+}
+
+
+#[derive(Clone, Debug)]
 pub enum TaskTag {
     Init,
     Create,
+    Auth,
+    Prisma,
+    Docker,
+    Pages,
+    Markdown,
+    Github,
+    Parse
 }
 
 impl Display for TaskTag {
@@ -12,6 +24,13 @@ impl Display for TaskTag {
         match self {
             TaskTag::Init => write!(f, "init"),
             TaskTag::Create => write!(f, "create"),
+            TaskTag::Auth => write!(f, "auth"),
+            TaskTag::Prisma => write!(f, "prisma"),
+            TaskTag::Docker => write!(f, "docker"),
+            TaskTag::Pages => write!(f, "pages"),
+            TaskTag::Markdown => write!(f, "markdown"),
+            TaskTag::Github => write!(f, "github"),
+            TaskTag::Parse => write!(f, "parse")
         }
     }
 }

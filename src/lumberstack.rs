@@ -1,6 +1,4 @@
-pub trait Runnable {
-    fn run_job(&self);
-}
+use crate::tags::Runnable;
 
 pub struct Lumberstack {
     pub run_items: Vec<Box<dyn Runnable>>
@@ -11,8 +9,8 @@ impl Lumberstack {
         Lumberstack { run_items: Vec::new() }
     }
 
-    pub fn queue<T: Runnable + 'static>(&mut self, item: Option<T>) -> &mut Self {
-        if let Some(runnable) = item  {
+    pub fn queue<T: Runnable + 'static>(&mut self, task: Option<T>) -> &mut Self {
+        if let Some(runnable) = task  {
             self.run_items.push(Box::new(runnable));
         }
         self

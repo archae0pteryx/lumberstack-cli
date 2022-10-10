@@ -17,9 +17,9 @@ pub struct CliArgs {
     #[clap(long, action)]
     pub skip_checks: bool,
 
-    /// Cleanup all cli created files/folders
-    #[clap(long, action)]
-    pub clean: bool,
+    /// Dont cleanup
+    #[clap(short, long, value_parser)]
+    pub artifacts: Option<String>,
 
     /// Load config from file
     #[clap(short, long, value_parser)]

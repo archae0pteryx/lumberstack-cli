@@ -2,6 +2,7 @@ use std::{collections::HashMap, env};
 
 use anyhow::{Context, Error, Result};
 use clap::Parser;
+use log::debug;
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -71,7 +72,11 @@ impl Default for Manifest {
             workdir: Some(DEFAULT_WORKDIR.to_string()),
             template_repo: Some(DEFAULT_TEMPLATE_REPO.to_string()),
             template_dir: Some(DEFAULT_TEMPLATE_DIR.to_string()),
-            full_template_path: Some(format!("{}/{}", DEFAULT_WORKDIR.to_string(), DEFAULT_TEMPLATE_DIR.to_string())),
+            full_template_path: Some(format!(
+                "{}/{}",
+                DEFAULT_WORKDIR.to_string(),
+                DEFAULT_TEMPLATE_DIR.to_string()
+            )),
             template_paths_file: Some(DEFAULT_TEMPLATE_PATHS_FILE.to_string()),
             log_file: None,
             tags: None,
@@ -96,19 +101,23 @@ impl Manifest {
         // dbg!(&merged_manifest);
 
         Self::set_env(&merged_manifest);
-        return Ok(merged_manifest.clone());
+        Self::manifest_debug_log(&merged_manifest);
+        return Ok(merged_manifest);
     }
 
     fn config_manifest(path: Option<String>) -> Result<Manifest> {
         if let Some(p) = path {
+            debug!("[manifest] from cli arg");
             let loaded_config = Self::load_file(&p)?;
             let config: Manifest = Self::deserialize_config(loaded_config)?;
             return Ok(config);
         }
         if let Ok(c) = Self::load_file(&DEFAULT_MANIFEST_FILE.to_string()) {
+            debug!("[manifest] from default location");
             let config: Manifest = Self::deserialize_config(c)?;
             return Ok(config);
         }
+        debug!("[manifest] from empty config");
         Ok(Manifest::empty())
     }
 
@@ -159,5 +168,16 @@ impl Manifest {
         if let Some(log_path) = &manifest.log_file {
             env::set_var("ANSIBLE_LOG_PATH", log_path);
         }
+    }
+
+    fn manifest_debug_log(manifest: &Manifest) {
+        let app_name = manifest.app_name.to_owned();
+        let template_version = manifest.template_version.to_owned();
+        let msg = format!(
+            "[manifest]: app_name=[{}] template_version=[{}]",
+            &app_name.unwrap(),
+            &template_version.unwrap()
+        );
+        debug!("{}", msg);
     }
 }
