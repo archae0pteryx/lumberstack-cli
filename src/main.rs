@@ -22,7 +22,7 @@ use manifest::Manifest;
 use redwood::{create::RedwoodApp, auth::RedwoodAuth};
 use system::System;
 use tags::TaskTag;
-use templates::{clone::TemplatesClone, parse::TemplateParser};
+use templates::{clone::TemplatesClone, file_io::TemplateFileIO};
 
 pub static DEFAULT_TEMPLATE_VERSION: &str = "v0.0.4";
 pub static DEFAULT_TEMPLATE_REPO: &str = "https://github.com/codingzeal/redwood-template-app";
@@ -50,7 +50,7 @@ fn main() -> anyhow::Result<(), Error> {
     let clone_task = TemplatesClone::new(TaskTag::Init, manifest.clone());
     let create_task = RedwoodApp::new(TaskTag::Create, manifest.clone());
     let auth_task = RedwoodAuth::new(TaskTag::Auth, manifest.clone());
-    let parse_templates_task = TemplateParser::new(TaskTag::Parse, manifest.clone());
+    let parse_templates_task = TemplateFileIO::new(TaskTag::Parse, manifest.clone())?;
 
     app.queue(clone_task);
     app.queue(create_task);

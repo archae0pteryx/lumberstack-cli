@@ -1,4 +1,6 @@
-use crate::tags::Runnable;
+pub trait Runnable {
+    fn run_job(&self);
+}
 
 pub struct Lumberstack {
     pub run_items: Vec<Box<dyn Runnable>>

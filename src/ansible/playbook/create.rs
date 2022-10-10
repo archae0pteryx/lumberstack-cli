@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    commands::ShellCommand, spinner::create_spinner, tags::Runnable, DEFAULT_PLAYBOOK_FILE,
+    commands::ShellCommand, spinner::create_spinner, DEFAULT_PLAYBOOK_FILE, lumberstack::Runnable,
 };
 
 use super::yaml::task_type::PlaybookYamlTaskType;

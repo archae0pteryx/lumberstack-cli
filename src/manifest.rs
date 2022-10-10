@@ -77,7 +77,7 @@ impl Default for Manifest {
                 DEFAULT_WORKDIR.to_string(),
                 DEFAULT_TEMPLATE_DIR.to_string()
             )),
-            template_paths_file: Some(DEFAULT_TEMPLATE_PATHS_FILE.to_string()),
+            template_paths_file: Some(format!("{}/{}", DEFAULT_WORKDIR, DEFAULT_TEMPLATE_PATHS_FILE.to_string())),
             log_file: None,
             tags: None,
             skip_tags: None,

@@ -1,5 +1,6 @@
-use std::process::{exit, Command, Output};
+use std::{process::{exit, Command, Output}, path::PathBuf};
 
+use anyhow::Context;
 use clap::Parser;
 use log::error;
 
@@ -65,5 +66,12 @@ impl System {
     fn create_working_dir(manifest: Manifest) {
         let workdir = &manifest.workdir.unwrap_or_default();
         fs_extra::dir::create_all(workdir, false).expect("Error creating / cleaning working dir");
+    }
+
+    pub fn load_file(path: PathBuf) -> anyhow::Result<String> {
+        let file_str = fs_extra::file::read_to_string(&path).with_context(|| {
+            return format!("Error loading file: {}", &path.to_string_lossy());
+        })?;
+        return Ok(file_str);
     }
 }
