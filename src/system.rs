@@ -13,11 +13,6 @@ pub struct System<T:SysCommands>{
     command_runner: T
 }
 
-pub trait SysCommands {
-    fn app_version(&self, bin_name: &str) -> Result<Output, std::io::Error>;
-    fn docker_ps(&self)  -> Result<Output, std::io::Error>;
-}
-
 impl <T: SysCommands> System<T>{
     pub fn new(manifest: Manifest, command_runner: T) -> Self { Self { manifest, command_runner } }
 
@@ -36,7 +31,7 @@ impl <T: SysCommands> System<T>{
     }
 
     fn os_ok(&self) -> Result<(), SystemError> {
-        if cfg!(windows) {
+        if self.command_runner.is_windows(){
             return Err(SystemError{message: format!("❌ Windows is not supported at this time") });
         }
 
@@ -102,6 +97,12 @@ impl fmt::Display for SystemError {
     }
 }
 
+pub trait SysCommands {
+    fn app_version(&self, bin_name: &str) -> Result<Output, std::io::Error>;
+    fn docker_ps(&self) -> Result<Output, std::io::Error>;
+    fn is_windows(&self) -> bool;
+}
+
 pub struct LumberStackSysCommands;
 
 impl SysCommands for LumberStackSysCommands{
@@ -111,6 +112,10 @@ impl SysCommands for LumberStackSysCommands{
 
     fn docker_ps(&self)  -> Result<Output, std::io::Error> {
         return Command::new("docker").arg("ps").output();
+    }
+
+    fn is_windows(&self) -> bool{
+        return cfg!(windows);
     }
 }
 
@@ -143,6 +148,10 @@ mod tests {
             };
             return Ok(output);
         }
+
+        fn is_windows(&self) -> bool{
+            return false
+        }
     }
 
     impl SysCommands for FakeSysCommandsFail{
@@ -155,6 +164,10 @@ mod tests {
             let e = std::io::Error::new(std::io::ErrorKind::Other, "BOOM");
             return Err(e);
         }
+
+        fn is_windows(&self) -> bool{
+            true
+        }
     }
 
     #[test]
@@ -165,7 +178,7 @@ mod tests {
         let system = System::new(manifest.clone(), commands);
         match system.has_required_bin("yarn") {
             Ok(value) => assert_eq!(value, "yarn"),
-            Err(_) => return assert!(false),
+            Err(_) => assert!(false),
         };
     }
 
@@ -177,7 +190,31 @@ mod tests {
         let system = System::new(manifest.clone(), commands);
         match system.has_required_bin("yarn") {
             Ok(_) => assert!(false),
-            Err(_) => return assert!(true),
+            Err(_) => assert!(true),
+        };
+    }
+
+    #[test]
+    fn os_ok_success() {
+        let manifest = Manifest::load().unwrap();
+        let commands = FakeSysCommandsPass{};
+
+        let system = System::new(manifest.clone(), commands);
+        match system.os_ok() {
+            Ok(_) => assert!(true),
+            Err(_) => assert!(false),
+        };
+    }
+
+    #[test]
+    fn os_ok_fail() {
+        let manifest = Manifest::load().unwrap();
+        let commands = FakeSysCommandsFail{};
+
+        let system = System::new(manifest.clone(), commands);
+        match system.os_ok() {
+            Ok(_) => assert!(false),
+            Err(_) => assert!(true),
         };
     }
 }
