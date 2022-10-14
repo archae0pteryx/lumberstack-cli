@@ -78,7 +78,7 @@ impl <T: SysCommands> System<T>{
 
     fn create_working_dir(&self) -> Result<(), SystemError> {
         let workdir = self.manifest.workdir.clone().unwrap_or_default();
-        match fs_extra::dir::create_all(workdir, false) {
+        match self.command_runner.crate_dir(workdir) {
             Ok(_) => { return Ok(()) }
             Err(_) =>{
                 return Err(SystemError{message: format!("Error creating / cleaning working dir") });
@@ -101,6 +101,7 @@ pub trait SysCommands {
     fn app_version(&self, bin_name: &str) -> Result<Output, std::io::Error>;
     fn docker_ps(&self) -> Result<Output, std::io::Error>;
     fn is_windows(&self) -> bool;
+    fn crate_dir(&self, dir:String) -> Result<(), fs_extra::error::Error>;
 }
 
 pub struct LumberStackSysCommands;
@@ -116,6 +117,10 @@ impl SysCommands for LumberStackSysCommands{
 
     fn is_windows(&self) -> bool{
         return cfg!(windows);
+    }
+
+    fn crate_dir(&self, path:String) -> Result<(), fs_extra::error::Error>{
+        return fs_extra::dir::create_all(path, false);
     }
 }
 
@@ -154,6 +159,10 @@ mod tests {
         fn is_windows(&self) -> bool{
             return false
         }
+
+        fn crate_dir(&self, _:String) -> Result<(), fs_extra::error::Error>{
+            Ok(())
+        }
     }
 
     impl SysCommands for FakeSysCommandsFail{
@@ -169,6 +178,11 @@ mod tests {
 
         fn is_windows(&self) -> bool{
             true
+        }
+
+        fn crate_dir(&self, _:String) -> Result<(), fs_extra::error::Error>{
+            let e = fs_extra::error::Error::new(fs_extra::error::ErrorKind::Other, "BOOM");
+            return Err(e);
         }
     }
 
@@ -301,6 +315,30 @@ mod tests {
         match system.check_docker() {
             Ok(_) => assert!(false),
             Err(_) => assert!(true),
+        };
+    }
+
+    #[test]
+    fn create_working_dir_success() {
+        let manifest = Manifest::load().unwrap();
+        let commands = FakeSysCommandsPass{stdout_str: String::from("") };
+
+        let system = System::new(manifest.clone(), commands);
+        match system.create_working_dir() {
+            Ok(_) => assert!(true),
+            Err(_) => assert!(false),
+        };
+    }
+
+    #[test]
+    fn create_working_dir_fail() {
+        let manifest = Manifest::load().unwrap();
+        let commands = FakeSysCommandsFail{};
+
+        let system = System::new(manifest.clone(), commands);
+        match system.create_working_dir() {
+            Ok(_) => assert!(false),
+            Err(err) => assert_eq!(err.message, "Error creating / cleaning working dir")
         };
     }
 }
