@@ -16,11 +16,13 @@ mod templates;
 mod docker;
 
 use anyhow::Error;
+use log::error;
 use logger::Logger;
 use lumberstack::Lumberstack;
 use manifest::Manifest;
 use redwood::{create::RedwoodApp, auth::RedwoodAuth};
-use system::System;
+use std::process::{exit};
+use system::{ init_system };
 use tags::TaskTag;
 use templates::{clone::TemplatesClone, parse::TemplateParser};
 
@@ -43,7 +45,15 @@ fn main() -> anyhow::Result<(), Error> {
 
     let manifest = Manifest::load()?;
 
-    System::init(manifest.clone());
+
+
+    match init_system(manifest.clone()) {
+        Err(err) => {
+            error!("{}", err.message);
+            exit(exitcode::SOFTWARE);
+        }
+        _ => {}
+    }
 
     let mut app = Lumberstack::new();
 
