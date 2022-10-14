@@ -127,14 +127,16 @@ mod tests {
     use std::process::{ExitStatus};
     use super::*;
 
-    struct FakeSysCommandsPass;
+    struct FakeSysCommandsPass{
+        stdout_str: String
+    }
     struct FakeSysCommandsFail;
 
     impl SysCommands for FakeSysCommandsPass{
-        fn app_version(&self, bin_name: &str) -> Result<Output, std::io::Error> {
+        fn app_version(&self, _: &str) -> Result<Output, std::io::Error> {
             let output = Output{
                 status: ExitStatus::from_raw(0x007f),
-                stdout: Vec::from(bin_name.as_bytes()),
+                stdout: Vec::from(self.stdout_str.as_bytes()),
                 stderr: Vec::new()
             };
             return Ok(output);
@@ -173,7 +175,7 @@ mod tests {
     #[test]
     fn has_required_bin_success() {
         let manifest = Manifest::load().unwrap();
-        let commands = FakeSysCommandsPass{};
+        let commands = FakeSysCommandsPass{stdout_str: String::from("yarn") };
 
         let system = System::new(manifest.clone(), commands);
         match system.has_required_bin("yarn") {
@@ -197,7 +199,7 @@ mod tests {
     #[test]
     fn os_ok_success() {
         let manifest = Manifest::load().unwrap();
-        let commands = FakeSysCommandsPass{};
+        let commands = FakeSysCommandsPass{stdout_str: String::from("") };
 
         let system = System::new(manifest.clone(), commands);
         match system.os_ok() {
@@ -215,6 +217,42 @@ mod tests {
         match system.os_ok() {
             Ok(_) => assert!(false),
             Err(_) => assert!(true),
+        };
+    }
+
+    #[test]
+    fn check_node_version_success() {
+        let manifest = Manifest::load().unwrap();
+        let commands = FakeSysCommandsPass{stdout_str: String::from("node v14") };
+
+        let system = System::new(manifest.clone(), commands);
+        match system.check_node_version() {
+            Ok(_) => assert!(true),
+            Err(_) => assert!(false),
+        };
+    }
+
+    #[test]
+    fn check_node_version_bad_version() {
+        let manifest = Manifest::load().unwrap();
+        let commands = FakeSysCommandsPass{stdout_str: String::from("node v99") };
+
+        let system = System::new(manifest.clone(), commands);
+        match system.check_node_version() {
+            Ok(_) => assert!(true),
+            Err(err) => assert_eq!(err.message, "❌ node v14 required but found: node v99"),
+        };
+    }
+
+    #[test]
+    fn check_node_version_fail() {
+        let manifest = Manifest::load().unwrap();
+        let commands = FakeSysCommandsFail{};
+
+        let system = System::new(manifest.clone(), commands);
+        match system.check_node_version() {
+            Ok(_) => assert!(false),
+            Err(err) => assert_eq!(err.message, "❌ node not found but required"),
         };
     }
 }
