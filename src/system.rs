@@ -255,4 +255,52 @@ mod tests {
             Err(err) => assert_eq!(err.message, "❌ node not found but required"),
         };
     }
+
+    #[test]
+    fn check_docker_success() {
+        let manifest = Manifest::load().unwrap();
+        let commands = FakeSysCommandsPass{stdout_str: String::from("") };
+
+        let system = System::new(manifest.clone(), commands);
+        match system.check_docker() {
+            Ok(_) => assert!(true),
+            Err(_) => assert!(false),
+        };
+    }
+
+    #[test]
+    fn check_docker_error_response() {
+        let manifest = Manifest::load().unwrap();
+        let commands = FakeSysCommandsPass{stdout_str: String::from("Error response") };
+
+        let system = System::new(manifest.clone(), commands);
+        match system.check_docker() {
+            Ok(_) => assert!(true),
+            Err(err) => assert_eq!(err.message, "❌ Docker not running"),
+        };
+    }
+
+    #[test]
+    fn check_docker_cannot_connect() {
+        let manifest = Manifest::load().unwrap();
+        let commands = FakeSysCommandsPass{stdout_str: String::from("Cannot connect") };
+
+        let system = System::new(manifest.clone(), commands);
+        match system.check_docker() {
+            Ok(_) => assert!(true),
+            Err(err) => assert_eq!(err.message, "❌ Docker not running"),
+        };
+    }
+
+    #[test]
+    fn check_docker_fail() {
+        let manifest = Manifest::load().unwrap();
+        let commands = FakeSysCommandsFail{};
+
+        let system = System::new(manifest.clone(), commands);
+        match system.check_docker() {
+            Ok(_) => assert!(false),
+            Err(_) => assert!(true),
+        };
+    }
 }
