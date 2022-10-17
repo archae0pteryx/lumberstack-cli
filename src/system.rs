@@ -1,17 +1,17 @@
 use std::{
-    path::{Path, PathBuf},
+    path::{Path},
     process::{exit, Command, Output},
 };
 
 use clap::Parser;
 use log::{error, warn};
 
-use crate::{cli_args::CliArgs, manifest::Manifest};
+use crate::{cli_args::CliArgs, app_config::{DEFAULT_WORKDIR}};
 
 pub struct System;
 
 impl System {
-    pub fn init(manifest: Manifest) {
+    pub fn init() {
         let args = CliArgs::parse();
         if !args.skip_checks {
             Self::os_ok();
@@ -21,7 +21,7 @@ impl System {
             Self::check_node_version();
         }
 
-        Self::create_working_dir(manifest);
+        Self::create_working_dir();
     }
 
     fn os_ok() {
@@ -65,9 +65,8 @@ impl System {
         }
     }
 
-    fn create_working_dir(manifest: Manifest) {
-        let workdir = &manifest.workdir.unwrap_or_default();
-        fs_extra::dir::create_all(workdir, false).expect("Error creating / cleaning working dir");
+    fn create_working_dir() {
+        fs_extra::dir::create_all(DEFAULT_WORKDIR, false).expect("Error creating / cleaning working dir");
     }
 
     pub fn file_as_str<P: AsRef<Path>>(path: P) -> Option<String> {
@@ -82,6 +81,7 @@ impl System {
         return None;
     }
 
+    #[allow(dead_code)]
     pub fn is_image<P: AsRef<Path>>(path: P) -> bool {
         let mimes = vec!["jpeg", "png", "jpg", "gif"];
         let ext = Self::get_extension(path);

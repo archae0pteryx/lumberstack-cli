@@ -1,6 +1,6 @@
 use std::path::{Path, PathBuf};
 
-use crate::{logger::log_skip, manifest::Manifest, system::System};
+use crate::{logger::log_skip, system::System, app_config::AppConfig};
 use ignore::{DirEntry, WalkBuilder};
 use log::error;
 
@@ -17,42 +17,37 @@ pub struct TemplateFile {
 
 pub struct TemplateFileIO;
 impl TemplateFileIO {
-    pub fn new(tag: TaskTag, manifest: Manifest) -> Option<Vec<TemplateFile>> {
-        if !should_task_run(&tag, &manifest) {
+    pub fn new(tag: TaskTag, app_config: &AppConfig) -> Option<Vec<TemplateFile>> {
+        if !should_task_run(&tag, &app_config) {
             log_skip(tag.to_string());
             return None;
         }
 
-        let workdir = manifest.workdir.to_owned();
-        let template_paths_file = manifest.template_paths_file.to_owned().unwrap_or_default();
-        let full_templates_paths_file_path =
-            format!("{}/{}", workdir.unwrap_or_default(), template_paths_file);
-        let template_paths_file_str = System::file_as_str(full_templates_paths_file_path);
-        if let None = template_paths_file_str {
+        let template_map_file = app_config.template_map.to_owned();
+        let template_map_file_str = System::file_as_str(&app_config.template_map);
+        if let None = template_map_file_str {
             panic!(
                 "[templateIO] Can not load paths file: {}",
-                template_paths_file
+                template_map_file
             );
         }
-        let from_file_template_paths = Self::read_paths_file(template_paths_file_str.unwrap());
+        let from_file_template_paths = Self::read_paths_file(template_map_file_str.unwrap());
         let from_dot_template_paths = Self::collect_dot_templates(&from_file_template_paths);
         let combined_templates = [
             from_file_template_paths.clone(),
             from_dot_template_paths.clone(),
         ]
         .concat();
-        let all_templates = Self::process_combined_templates(&manifest, combined_templates);
+        let all_templates = Self::process_combined_templates(&app_config, combined_templates);
         Some(all_templates)
     }
 
     fn process_combined_templates(
-        manifest: &Manifest,
+        app_config: &AppConfig,
         templates: Vec<PathBuf>,
     ) -> Vec<TemplateFile> {
-        let tags_to_run = manifest.tags.to_owned().unwrap_or_default();
-        let tags_to_skip = manifest.skip_tags.to_owned().unwrap_or_default();
-        let dest_root_dir = manifest.app_name.to_owned().unwrap_or_default();
-        let to_strip = manifest.full_template_path.to_owned().unwrap_or_default();
+        let dest_root_dir = app_config.app_name.to_owned();
+        let to_strip = app_config.template_dir.to_owned();
 
         let replaced_symbol = |pathbuf: &PathBuf| {
             let src = pathbuf.to_owned();
@@ -64,7 +59,7 @@ impl TemplateFileIO {
         let transformed = templates
             .iter()
             .map(replaced_symbol)
-            .filter(|(_, _, own_tags, _)| Self::should_run_tag(own_tags.to_owned(), manifest))
+            .filter(|(_, _, own_tags, _)| Self::should_run_tag(own_tags.to_owned(), app_config))
             .map(|(src, dest, tags, replace_vars)| {
                 return TemplateFile {
                     src,
@@ -78,9 +73,9 @@ impl TemplateFileIO {
         return transformed;
     }
 
-    fn should_run_tag(own_tags: Option<Vec<String>>, manifest: &Manifest) -> bool {
-        let tags_to_run = manifest.tags.to_owned().unwrap_or_default();
-        let tags_to_skip = manifest.skip_tags.to_owned().unwrap_or_default();
+    fn should_run_tag(own_tags: Option<Vec<String>>, app_config: &AppConfig) -> bool {
+        let tags_to_run = app_config.tags.to_owned().unwrap_or_default();
+        let tags_to_skip = app_config.skip_tags.to_owned().unwrap_or_default();
         if let Some(ot) = own_tags {
             let in_tags_to_skip = ot
                 .iter()

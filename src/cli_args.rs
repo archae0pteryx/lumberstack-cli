@@ -1,4 +1,3 @@
-use std::fmt::Display;
 
 use clap::Parser;
 use clap_verbosity_flag::Verbosity;
@@ -37,7 +36,7 @@ pub struct CliArgs {
 
     /// Log ansible output to file
     #[clap(short, long, value_parser)]
-    pub log: Option<String>,
+    pub log_file: Option<String>,
 
     /// Skip tags
     #[clap(short, long, value_parser, multiple(true))]
@@ -53,7 +52,7 @@ pub struct ParsedArgs {
     pub config: Option<String>,
     pub template_version: Option<String>,
     pub tags: Option<Vec<String>>,
-    pub log: Option<String>,
+    pub log_file: Option<String>,
     pub skip_tags: Option<Vec<String>>,
 }
 
@@ -67,7 +66,7 @@ impl Default for ParsedArgs {
             config: None,
             template_version: None,
             tags: None,
-            log: None,
+            log_file: None,
             skip_tags: None,
         }
     }
@@ -84,7 +83,7 @@ impl ParsedArgs {
             config: args.config,
             template_version: args.template_version,
             tags: args.tags,
-            log: args.log,
+            log_file: args.log_file,
             skip_tags: args.skip_tags,
         }
     }

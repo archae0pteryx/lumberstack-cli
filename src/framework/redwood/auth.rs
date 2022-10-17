@@ -1,20 +1,20 @@
+#![allow(unused)]
 use crate::{
     logger::log_skip,
-    manifest::Manifest,
     task_definitions::{
         ansible::{ansible_task::RunnableAnsibleTask, yaml::command_task::CommandTask},
         task_types::DefinedTask,
         templates::tags::{should_task_run, TaskTag},
-    },
+    }, app_config::AppConfig,
 };
 
 pub struct RedwoodAuth;
 
 impl RedwoodAuth {
-    pub fn new(tag: TaskTag, manifest: Manifest) -> Option<RunnableAnsibleTask> {
-        let app_name = manifest.app_name.to_owned().unwrap_or_default();
+    pub fn new(tag: TaskTag, app_config: AppConfig) -> Option<RunnableAnsibleTask> {
+        let app_name = app_config.app_name.to_owned();
 
-        if !should_task_run(&tag, &manifest) {
+        if !should_task_run(&tag, &app_config) {
             log_skip(&tag.to_string());
             return None;
         }
@@ -25,7 +25,7 @@ impl RedwoodAuth {
             .add_task(setup_auth_task)
             .add_task(generate_secret);
 
-        if should_task_run(&TaskTag::Pages, &manifest) {
+        if should_task_run(&TaskTag::Pages, &app_config) {
             let generate_auth_pages_task = Self::generate_auth_pages(&tag, &app_name);
             core_playbook.add_task(generate_auth_pages_task);
         }

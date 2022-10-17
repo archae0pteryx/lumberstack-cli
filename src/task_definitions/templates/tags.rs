@@ -10,7 +10,7 @@ use std::{
     path::PathBuf,
 };
 
-use crate::{manifest::Manifest, app_config::TEMPLATE_TOKEN_REGEX};
+use crate::{app_config::{TEMPLATE_TOKEN_REGEX, AppConfig}};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum TaskTag {
@@ -49,9 +49,9 @@ impl Display for TaskTag {
     }
 }
 
-pub fn should_task_run(this_tag: &TaskTag, manifest: &Manifest) -> bool {
-    let tags = manifest.tags.to_owned();
-    let skip_tags = &manifest.skip_tags.to_owned();
+pub fn should_task_run(this_tag: &TaskTag, app_config: &AppConfig) -> bool {
+    let tags = app_config.tags.to_owned();
+    let skip_tags = &app_config.skip_tags.to_owned();
     if let Some(t) = tags {
         return t.contains(&this_tag.to_string()) || t.is_empty();
     }

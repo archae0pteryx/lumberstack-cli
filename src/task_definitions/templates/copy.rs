@@ -1,12 +1,12 @@
 use aho_corasick::AhoCorasick;
 use std::{
     collections::HashMap,
-    path::{Path, PathBuf}, fs,
+    path::{Path, PathBuf}
 };
 
 use serde::{Deserialize, Serialize};
 
-use crate::{logger::log_skip, lumberstack::Runnable, manifest::Manifest, system::System};
+use crate::{logger::log_skip, lumberstack::Runnable, system::System, app_config::AppConfig};
 
 use super::{
     file_io::{TemplateFile, TemplateFileIO},
@@ -14,7 +14,6 @@ use super::{
 };
 
 fn replacer(file_string: String, replace_vars: HashMap<String, String>) -> String {
-    // dbg!(&replace_vars);
     let keys = replace_vars
         .clone()
         .into_iter()
@@ -37,8 +36,8 @@ fn replacer(file_string: String, replace_vars: HashMap<String, String>) -> Strin
 
 impl Runnable for TemplateCopy {
     fn run_job(&self) {
-        let templates = TemplateFileIO::new(self.tag.to_owned(), self.manifest.clone());
-        let file_tuples = Self::collect_file_tuples(&self.manifest, templates.unwrap());
+        let templates = TemplateFileIO::new(self.tag.to_owned(), &self.app_config);
+        let file_tuples = Self::collect_file_tuples(&self.app_config, templates.unwrap());
         // dbg!(&file_tuples);
         file_tuples.into_iter().for_each(|(dest, file_str)| {
             // let is_image = System::is_image(dest);
@@ -55,23 +54,23 @@ impl Runnable for TemplateCopy {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct TemplateCopy {
     tag: TaskTag,
-    manifest: Manifest,
+    app_config: AppConfig,
 }
 
 impl TemplateCopy {
-    pub fn new(tag: TaskTag, manifest: Manifest) -> Option<TemplateCopy> {
-        if !should_task_run(&tag, &manifest) {
+    pub fn new(tag: TaskTag, app_config: AppConfig) -> Option<TemplateCopy> {
+        if !should_task_run(&tag, &app_config) {
             log_skip(&tag.to_string());
             return None;
         }
-        Some(TemplateCopy { tag, manifest })
+        Some(TemplateCopy { tag, app_config })
     }
 
     fn collect_file_tuples(
-        manifest: &Manifest,
+        app_config: &AppConfig,
         templates: Vec<TemplateFile>,
     ) -> Vec<(PathBuf, String)> {
-        let replace_vars = manifest.replace.to_owned().unwrap_or_default();
+        let replace_vars = app_config.template_vars.to_owned();
         templates
             .iter()
             .filter(|t| !Path::new(&t.src).ends_with(".template"))

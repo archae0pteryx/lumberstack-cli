@@ -1,6 +1,5 @@
 use crate::{
     logger::log_skip,
-    manifest::Manifest,
     task_definitions::{
         ansible::{
             ansible_task::RunnableAnsibleTask,
@@ -10,7 +9,7 @@ use crate::{
             },
         },
         task_types::DefinedTask,
-    }, app_config::DEFAULT_ANSIBLE_TEMPLATE_REGEX,
+    }, app_config::{DEFAULT_ANSIBLE_TEMPLATE_REGEX, AppConfig},
 };
 
 use super::tags::{should_task_run, TaskTag};
@@ -20,17 +19,17 @@ use super::tags::{should_task_run, TaskTag};
 pub struct TemplatesClone;
 
 impl TemplatesClone {
-    pub fn new(tag: TaskTag, manifest: Manifest) -> Option<RunnableAnsibleTask> {
-        if !should_task_run(&tag, &manifest) {
+    pub fn new(tag: TaskTag, app_config: &AppConfig) -> Option<RunnableAnsibleTask> {
+        if !should_task_run(&tag, &app_config) {
             log_skip(tag.to_string());
             return None;
         }
         // Register a dir for ansible to manipulate
-        let register_task = Self::register_template_dir(tag.clone(), manifest.clone());
+        let register_task = Self::register_template_dir(tag.clone(), &app_config);
         // Clone the template repo
-        let clone_task = Self::clone_template_repo(tag.clone(), manifest.clone());
+        let clone_task = Self::clone_template_repo(tag.clone(), &app_config);
         // Exclude unnecessary dirs we search through and filter
-        let exclude_dirs_task = Self::exclude_dirs_from_search(tag.clone(), manifest.clone());
+        let exclude_dirs_task = Self::exclude_dirs_from_search(tag.clone(), &app_config);
         // Filter the directories
         let filter_task = Self::filter_dirs(tag.clone());
         // After we filter we gather all the matching file paths for templates
@@ -38,7 +37,7 @@ impl TemplatesClone {
         // Save the matching template paths as a var
         let save_fact_task = Self::save_found_as_fact(tag.clone());
         // Write the paths var to a file to be read by rust
-        let write_paths_task = Self::write_template_paths_to_file(tag.clone(), manifest.clone());
+        let write_paths_task = Self::write_template_paths_to_file(tag.clone(), &app_config);
         // The playbook combines them all together into a playbook that we can execute
         Some(
             RunnableAnsibleTask::new("Cloning Templates")
@@ -52,32 +51,32 @@ impl TemplatesClone {
         )
     }
 
-    fn register_template_dir(tag: TaskTag, manifest: Manifest) -> DefinedTask {
+    fn register_template_dir(tag: TaskTag, app_config: &AppConfig) -> DefinedTask {
         RegisterTask::new("Register template dir")
             .register("tmp_templates")
-            .stat_path(manifest.full_template_path.clone().unwrap_or_default())
+            .stat_path(&app_config.template_dir)
             .tags(Some(vec![tag.to_string()]))
             .build()
     }
 
-    fn clone_template_repo(tag: TaskTag, manifest: Manifest) -> DefinedTask {
-        let repo = manifest.template_repo;
-        let ver = manifest.template_version;
-        let template_path = manifest.full_template_path;
+    fn clone_template_repo(tag: TaskTag, app_config: &AppConfig) -> DefinedTask {
+        let repo = &app_config.template_repo;
+        let ver = &app_config.template_version;
+        let template_path = &app_config.template_dir;
 
         GitTask::new("Clone template repo")
-            .repo(repo.unwrap_or_default())
-            .dest(template_path.unwrap_or_default())
-            .version(ver.unwrap_or_default())
+            .repo(repo)
+            .dest(template_path)
+            .version(ver)
             .when("not tmp_templates.stat.exists")
             .tags(Some(vec![tag.to_string()]))
             .build()
     }
 
-    fn exclude_dirs_from_search(tag: TaskTag, manifest: Manifest) -> DefinedTask {
-        let workdir = manifest.workdir;
+    fn exclude_dirs_from_search(tag: TaskTag, app_config: &AppConfig) -> DefinedTask {
+        let workdir = &app_config.workdir;
         FindTask::new("Exclude dirs from search")
-            .paths(workdir.unwrap_or_default())
+            .paths(workdir)
             .recurse("yes")
             .hidden("yes")
             .file_type("directory")
@@ -119,17 +118,11 @@ impl TemplatesClone {
         .build()
     }
 
-    fn write_template_paths_to_file(tag: TaskTag, manifest: Manifest) -> DefinedTask {
-        let workdir = manifest.workdir;
-        let paths_file = manifest.template_paths_file;
-        let write_out = format!(
-            "{}/{}",
-            workdir.clone().unwrap_or_default(),
-            paths_file.clone().unwrap_or_default()
-        );
+    fn write_template_paths_to_file(tag: TaskTag, app_config: &AppConfig) -> DefinedTask {
+        let paths_file = &app_config.template_map;
         CopyTask::new("Write template map")
             .content("{{ template_paths }}")
-            .dest(write_out.as_str())
+            .dest(paths_file.as_str())
             .set_tags(Some(vec![tag.to_string()]))
             .build()
     }
