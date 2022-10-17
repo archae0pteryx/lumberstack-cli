@@ -1,94 +1,344 @@
-use std::{
-    path::{Path, PathBuf},
-    process::{exit, Command, Output},
-};
-
 use clap::Parser;
-use log::{error, warn};
-
+use std::fmt;
+use std::process::{Command, Output};
 use crate::{cli_args::CliArgs, manifest::Manifest};
 
-pub struct System;
+pub fn init_system(manifest: Manifest) -> Result<(), SystemError> {
+    let commands = LumberStackSysCommands{};
+    return System::new(manifest.clone(), commands ).run();
+}
 
-impl System {
-    pub fn init(manifest: Manifest) {
+pub struct System<T:SysCommands>{
+    manifest: Manifest,
+    command_runner: T
+}
+
+impl <T: SysCommands> System<T>{
+    pub fn new(manifest: Manifest, command_runner: T) -> Self { Self { manifest, command_runner } }
+
+    pub fn run(&self) -> Result<(), SystemError>{
         let args = CliArgs::parse();
         if !args.skip_checks {
-            Self::os_ok();
-            Self::has_required_bin("yarn");
-            Self::check_docker();
-            Self::has_required_bin("node");
-            Self::check_node_version();
+            self.os_ok()?;
+            self.has_required_bin("yarn")?;
+            self.check_docker()?;
+            self.has_required_bin("node")?;
+            self.check_node_version()?;
         }
 
-        Self::create_working_dir(manifest);
+      self.create_working_dir()?;
+      Ok(())
     }
 
-    fn os_ok() {
-        if cfg!(windows) {
-            error!("❌ Windows is not supported at this time");
-            exit(exitcode::SOFTWARE);
+    fn os_ok(&self) -> Result<(), SystemError> {
+        if self.command_runner.is_windows(){
+            return Err(SystemError{message: format!("❌ Windows is not supported at this time") });
+        }
+
+        return Ok(());
+    }
+
+    fn check_node_version(&self) -> Result<(), SystemError> {
+        match self.has_required_bin("node") {
+            Ok(output) => {
+                if !output.contains("v14") {
+                    return Err(SystemError{message: format!("❌ node v14 required but found: {}", output) });
+                }
+                Ok(())
+            }
+            Err(err) =>{ return Err(err) }
         }
     }
 
-    fn check_node_version() {
-        let output = Self::has_required_bin("node");
-        if !output.contains("v14") {
-            error!("❌ node v14 required but found: {}", output);
-            exit(exitcode::SOFTWARE);
+    fn has_required_bin(&self, bin_name: &str) -> Result<String, SystemError> {
+        match self.command_runner.app_version(bin_name) {
+            Ok(output) => { Ok(String::from_utf8(output.stdout).unwrap()) }
+            Err(_) =>{
+                return Err(SystemError{message: format!("❌ {} not found but required", bin_name) });
+            }
         }
     }
 
-    fn check_app_version(bin_name: &str) -> Result<Output, std::io::Error> {
+    fn check_docker(&self) -> Result<(), SystemError> {
+        self.has_required_bin("docker")?;
+
+        match self.command_runner.docker_ps() {
+            Err(_) => {
+                return Err(SystemError{message: format!("❌ Docker not running") })
+            }
+            Ok(output) => {
+                let message = String::from_utf8(output.stderr).unwrap();
+                if message.contains("Error response") || message.contains("Cannot connect") {
+                    return Err(SystemError{message: format!("❌ Docker not running") });
+                }
+            }
+        }
+        return Ok(())
+    }
+
+    fn create_working_dir(&self) -> Result<(), SystemError> {
+        let workdir = self.manifest.workdir.clone().unwrap_or_default();
+        match self.command_runner.crate_dir(workdir) {
+            Ok(_) => { return Ok(()) }
+            Err(_) =>{
+                return Err(SystemError{message: format!("Error creating / cleaning working dir") });
+            }
+        }
+    }
+}
+
+pub struct SystemError {
+    pub message: String
+}
+
+impl fmt::Display for SystemError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.message)
+    }
+}
+
+pub trait SysCommands {
+    fn app_version(&self, bin_name: &str) -> Result<Output, std::io::Error>;
+    fn docker_ps(&self) -> Result<Output, std::io::Error>;
+    fn is_windows(&self) -> bool;
+    fn crate_dir(&self, dir:String) -> Result<(), fs_extra::error::Error>;
+}
+
+pub struct LumberStackSysCommands;
+
+impl SysCommands for LumberStackSysCommands{
+    fn app_version(&self, bin_name: &str) -> Result<Output, std::io::Error> {
         return Command::new(bin_name).arg("--version").output();
     }
 
-    fn has_required_bin(bin_name: &str) -> String {
-        let output = Self::check_app_version(bin_name);
-        if output.is_err() {
-            error!("❌ {} not found but required", bin_name);
-            exit(exitcode::SOFTWARE);
+    fn docker_ps(&self)  -> Result<Output, std::io::Error> {
+        return Command::new("docker").arg("ps").output();
+    }
+
+    fn is_windows(&self) -> bool{
+        return cfg!(windows);
+    }
+
+    fn crate_dir(&self, path:String) -> Result<(), fs_extra::error::Error>{
+        return fs_extra::dir::create_all(path, false);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::{manifest};
+    use manifest::Manifest;
+    use std::os::unix::process::ExitStatusExt;
+    use std::process::{ExitStatus};
+    use super::*;
+
+    struct FakeSysCommandsPass{
+        stdout_str: String
+    }
+    struct FakeSysCommandsFail;
+
+    impl SysCommands for FakeSysCommandsPass{
+        fn app_version(&self, _: &str) -> Result<Output, std::io::Error> {
+            let output = Output{
+                status: ExitStatus::from_raw(0x007f),
+                stdout: Vec::from(self.stdout_str.as_bytes()),
+                stderr: Vec::new()
+            };
+            return Ok(output);
         }
 
-        return String::from_utf8(output.unwrap().stdout).unwrap();
-    }
+        fn docker_ps(&self)  -> Result<Output, std::io::Error> {
+            let output = Output{
+                status: ExitStatus::from_raw(0x007f),
+                stdout: Vec::from("docker".as_bytes()),
+                stderr: Vec::new()
+            };
+            return Ok(output);
+        }
 
-    fn check_docker() {
-        Self::has_required_bin("docker");
-        let output = Command::new("docker").arg("ps").output().unwrap();
+        fn is_windows(&self) -> bool{
+            return false
+        }
 
-        let err = String::from_utf8(output.stderr).unwrap();
-
-        if err.contains("Error response") || err.contains("Cannot connect") {
-            error!("❌ Docker not running");
-            exit(exitcode::SOFTWARE);
+        fn crate_dir(&self, _:String) -> Result<(), fs_extra::error::Error>{
+            Ok(())
         }
     }
 
-    fn create_working_dir(manifest: Manifest) {
-        let workdir = &manifest.workdir.unwrap_or_default();
-        fs_extra::dir::create_all(workdir, false).expect("Error creating / cleaning working dir");
-    }
-
-    pub fn file_as_str<P: AsRef<Path>>(path: P) -> Option<String> {
-        let file_str = fs_extra::file::read_to_string(&path.as_ref());
-        if let Ok(fs) = file_str {
-            return Some(fs);
+    impl SysCommands for FakeSysCommandsFail{
+        fn app_version(&self, _bin_name: &str) -> Result<Output, std::io::Error> {
+            let e = std::io::Error::new(std::io::ErrorKind::Other, "BOOM");
+            return Err(e);
         }
-        warn!(
-            "[system] Could not read file to string: {}. Skipping",
-            path.as_ref().to_string_lossy()
-        );
-        return None;
+
+        fn docker_ps(&self)  -> Result<Output, std::io::Error> {
+            let e = std::io::Error::new(std::io::ErrorKind::Other, "BOOM");
+            return Err(e);
+        }
+
+        fn is_windows(&self) -> bool{
+            true
+        }
+
+        fn crate_dir(&self, _:String) -> Result<(), fs_extra::error::Error>{
+            let e = fs_extra::error::Error::new(fs_extra::error::ErrorKind::Other, "BOOM");
+            return Err(e);
+        }
     }
 
-    pub fn is_image<P: AsRef<Path>>(path: P) -> bool {
-        let mimes = vec!["jpeg", "png", "jpg", "gif"];
-        let ext = Self::get_extension(path);
-        return mimes.contains(&ext.as_str());
+    #[test]
+    fn has_required_bin_success() {
+        let manifest = Manifest::load().unwrap();
+        let commands = FakeSysCommandsPass{stdout_str: String::from("yarn") };
+
+        let system = System::new(manifest.clone(), commands);
+        match system.has_required_bin("yarn") {
+            Ok(value) => assert_eq!(value, "yarn"),
+            Err(_) => assert!(false),
+        };
     }
 
-    pub fn get_extension<P: AsRef<Path>>(path: P) -> String {
-        path.as_ref().to_string_lossy().as_ref().to_string()
+    #[test]
+    fn has_required_bin_fail() {
+        let manifest = Manifest::load().unwrap();
+        let commands = FakeSysCommandsFail{};
+
+        let system = System::new(manifest.clone(), commands);
+        match system.has_required_bin("yarn") {
+            Ok(_) => assert!(false),
+            Err(_) => assert!(true),
+        };
+    }
+
+    #[test]
+    fn os_ok_success() {
+        let manifest = Manifest::load().unwrap();
+        let commands = FakeSysCommandsPass{stdout_str: String::from("") };
+
+        let system = System::new(manifest.clone(), commands);
+        match system.os_ok() {
+            Ok(_) => assert!(true),
+            Err(_) => assert!(false),
+        };
+    }
+
+    #[test]
+    fn os_ok_fail() {
+        let manifest = Manifest::load().unwrap();
+        let commands = FakeSysCommandsFail{};
+
+        let system = System::new(manifest.clone(), commands);
+        match system.os_ok() {
+            Ok(_) => assert!(false),
+            Err(_) => assert!(true),
+        };
+    }
+
+    #[test]
+    fn check_node_version_success() {
+        let manifest = Manifest::load().unwrap();
+        let commands = FakeSysCommandsPass{stdout_str: String::from("node v14") };
+
+        let system = System::new(manifest.clone(), commands);
+        match system.check_node_version() {
+            Ok(_) => assert!(true),
+            Err(_) => assert!(false),
+        };
+    }
+
+    #[test]
+    fn check_node_version_bad_version() {
+        let manifest = Manifest::load().unwrap();
+        let commands = FakeSysCommandsPass{stdout_str: String::from("node v99") };
+
+        let system = System::new(manifest.clone(), commands);
+        match system.check_node_version() {
+            Ok(_) => assert!(true),
+            Err(err) => assert_eq!(err.message, "❌ node v14 required but found: node v99"),
+        };
+    }
+
+    #[test]
+    fn check_node_version_fail() {
+        let manifest = Manifest::load().unwrap();
+        let commands = FakeSysCommandsFail{};
+
+        let system = System::new(manifest.clone(), commands);
+        match system.check_node_version() {
+            Ok(_) => assert!(false),
+            Err(err) => assert_eq!(err.message, "❌ node not found but required"),
+        };
+    }
+
+    #[test]
+    fn check_docker_success() {
+        let manifest = Manifest::load().unwrap();
+        let commands = FakeSysCommandsPass{stdout_str: String::from("") };
+
+        let system = System::new(manifest.clone(), commands);
+        match system.check_docker() {
+            Ok(_) => assert!(true),
+            Err(_) => assert!(false),
+        };
+    }
+
+    #[test]
+    fn check_docker_error_response() {
+        let manifest = Manifest::load().unwrap();
+        let commands = FakeSysCommandsPass{stdout_str: String::from("Error response") };
+
+        let system = System::new(manifest.clone(), commands);
+        match system.check_docker() {
+            Ok(_) => assert!(true),
+            Err(err) => assert_eq!(err.message, "❌ Docker not running"),
+        };
+    }
+
+    #[test]
+    fn check_docker_cannot_connect() {
+        let manifest = Manifest::load().unwrap();
+        let commands = FakeSysCommandsPass{stdout_str: String::from("Cannot connect") };
+
+        let system = System::new(manifest.clone(), commands);
+        match system.check_docker() {
+            Ok(_) => assert!(true),
+            Err(err) => assert_eq!(err.message, "❌ Docker not running"),
+        };
+    }
+
+    #[test]
+    fn check_docker_fail() {
+        let manifest = Manifest::load().unwrap();
+        let commands = FakeSysCommandsFail{};
+
+        let system = System::new(manifest.clone(), commands);
+        match system.check_docker() {
+            Ok(_) => assert!(false),
+            Err(_) => assert!(true),
+        };
+    }
+
+    #[test]
+    fn create_working_dir_success() {
+        let manifest = Manifest::load().unwrap();
+        let commands = FakeSysCommandsPass{stdout_str: String::from("") };
+
+        let system = System::new(manifest.clone(), commands);
+        match system.create_working_dir() {
+            Ok(_) => assert!(true),
+            Err(_) => assert!(false),
+        };
+    }
+
+    #[test]
+    fn create_working_dir_fail() {
+        let manifest = Manifest::load().unwrap();
+        let commands = FakeSysCommandsFail{};
+
+        let system = System::new(manifest.clone(), commands);
+        match system.create_working_dir() {
+            Ok(_) => assert!(false),
+            Err(err) => assert_eq!(err.message, "Error creating / cleaning working dir")
+        };
     }
 }
