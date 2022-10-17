@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use super::task_type::PlaybookYamlTaskType;
+use crate::task_definitions::task_types::DefinedTask;
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default, PartialEq)]
 
@@ -93,8 +93,8 @@ impl FindTask {
         return new_task;
     }
 
-    pub fn build(self: &Self) -> PlaybookYamlTaskType {
-        PlaybookYamlTaskType::Find(self.clone())
+    pub fn build(self: &Self) -> DefinedTask {
+        DefinedTask::Find(self.clone())
     }
 }
 
@@ -123,6 +123,6 @@ mod tests {
         assert_eq!(actual.find.contains, "pop");
 
         let built = actual.build();
-        assert!(matches!(built, PlaybookYamlTaskType::Find { .. }));
+        assert!(matches!(built, DefinedTask::Find { .. }));
     }
 }

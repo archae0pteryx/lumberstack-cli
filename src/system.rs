@@ -1,8 +1,10 @@
-use std::{process::{exit, Command, Output}, path::PathBuf};
+use std::{
+    path::{Path, PathBuf},
+    process::{exit, Command, Output},
+};
 
-use anyhow::Context;
 use clap::Parser;
-use log::error;
+use log::{error, warn};
 
 use crate::{cli_args::CliArgs, manifest::Manifest};
 
@@ -68,10 +70,25 @@ impl System {
         fs_extra::dir::create_all(workdir, false).expect("Error creating / cleaning working dir");
     }
 
-    pub fn load_file(path: PathBuf) -> anyhow::Result<String> {
-        let file_str = fs_extra::file::read_to_string(&path).with_context(|| {
-            return format!("Error loading file: {}", &path.to_string_lossy());
-        })?;
-        return Ok(file_str);
+    pub fn file_as_str<P: AsRef<Path>>(path: P) -> Option<String> {
+        let file_str = fs_extra::file::read_to_string(&path.as_ref());
+        if let Ok(fs) = file_str {
+            return Some(fs);
+        }
+        warn!(
+            "[system] Could not read file to string: {}. Skipping",
+            path.as_ref().to_string_lossy()
+        );
+        return None;
+    }
+
+    pub fn is_image<P: AsRef<Path>>(path: P) -> bool {
+        let mimes = vec!["jpeg", "png", "jpg", "gif"];
+        let ext = Self::get_extension(path);
+        return mimes.contains(&ext.as_str());
+    }
+
+    pub fn get_extension<P: AsRef<Path>>(path: P) -> String {
+        path.as_ref().to_string_lossy().as_ref().to_string()
     }
 }

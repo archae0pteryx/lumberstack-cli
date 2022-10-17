@@ -1,7 +1,7 @@
 #![allow(unused)]
 use serde::{Deserialize, Serialize};
 
-use super::task_type::PlaybookYamlTaskType;
+use crate::task_definitions::task_types::DefinedTask;
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct CommandTask {
@@ -68,8 +68,8 @@ impl CommandTask {
         return new_task;
     }
 
-    pub fn build(&self) -> PlaybookYamlTaskType {
-        PlaybookYamlTaskType::Command(self.clone())
+    pub fn build(&self) -> DefinedTask {
+        DefinedTask::Command(self.clone())
     }
 }
 

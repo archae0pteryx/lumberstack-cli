@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use super::task_type::PlaybookYamlTaskType;
+use crate::task_definitions::task_types::DefinedTask;
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default, PartialEq)]
 pub struct GitTask {
@@ -60,8 +60,8 @@ impl GitTask {
         return new_task;
     }
 
-    pub fn build(&self) -> PlaybookYamlTaskType {
-        PlaybookYamlTaskType::Git(self.clone())
+    pub fn build(&self) -> DefinedTask {
+        DefinedTask::Git(self.clone())
     }
 }
 
@@ -77,6 +77,6 @@ mod tests {
         assert_eq!(actual.git.version, "boing");
 
         let built = actual.build();
-        assert!(matches!(built, PlaybookYamlTaskType::Git { .. }));
+        assert!(matches!(built, DefinedTask::Git { .. }));
     }
 }

@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use super::task_type::PlaybookYamlTaskType;
+use crate::{task_definitions::task_types::DefinedTask, lumberstack::Runnable};
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default, PartialEq)]
 pub struct CopyTask {
@@ -19,6 +19,14 @@ pub struct CopyArgs {
     #[serde(skip_serializing_if = "String::is_empty")]
     pub content: String,
 }
+
+
+impl Runnable for CopyTask {
+    fn run_job(&self) {
+        
+    }
+}
+
 
 impl CopyTask {
     pub fn new<S: AsRef<str>>(name: S) -> CopyTask {
@@ -54,8 +62,8 @@ impl CopyTask {
         return new_task;
     }
 
-    pub fn build(&self) -> PlaybookYamlTaskType {
-        PlaybookYamlTaskType::Copy(self.clone())
+    pub fn build(&self) -> DefinedTask {
+        DefinedTask::Copy(self.clone())
     }
 }
 

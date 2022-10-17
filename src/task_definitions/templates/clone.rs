@@ -1,25 +1,28 @@
-use log::debug;
-
 use crate::{
-    ansible::playbook::{
-        yaml::{
-            copy_task::CopyTask, fact_task::FactTask, find_task::FindTask, git_task::GitTask,
-            register_task::RegisterTask, task_type::PlaybookYamlTaskType,
-        }, create::Playbook,
-    },
+    logger::log_skip,
     manifest::Manifest,
-    tags::{should_task_run, TaskTag},
-    DEFAULT_ANSIBLE_TEMPLATE_REGEX,
+    task_definitions::{
+        ansible::{
+            ansible_task::RunnableAnsibleTask,
+            yaml::{
+                copy_task::CopyTask, fact_task::FactTask, find_task::FindTask, git_task::GitTask,
+                register_task::RegisterTask,
+            },
+        },
+        task_types::DefinedTask,
+    }, app_config::DEFAULT_ANSIBLE_TEMPLATE_REGEX,
 };
+
+use super::tags::{should_task_run, TaskTag};
 
 #[derive(Clone)]
 
 pub struct TemplatesClone;
 
 impl TemplatesClone {
-    pub fn new(tag: TaskTag, manifest: Manifest) -> Option<Playbook> {
-        if !should_task_run(&tag, &manifest.tags) {
-            debug!("Skipping Clone {:?}", &tag);
+    pub fn new(tag: TaskTag, manifest: Manifest) -> Option<RunnableAnsibleTask> {
+        if !should_task_run(&tag, &manifest) {
+            log_skip(tag.to_string());
             return None;
         }
         // Register a dir for ansible to manipulate
@@ -38,7 +41,7 @@ impl TemplatesClone {
         let write_paths_task = Self::write_template_paths_to_file(tag.clone(), manifest.clone());
         // The playbook combines them all together into a playbook that we can execute
         Some(
-            Playbook::new("create templates")
+            RunnableAnsibleTask::new("Cloning Templates")
                 .add_task(register_task)
                 .add_task(clone_task)
                 .add_task(exclude_dirs_task)
@@ -49,7 +52,7 @@ impl TemplatesClone {
         )
     }
 
-    fn register_template_dir(tag: TaskTag, manifest: Manifest) -> PlaybookYamlTaskType {
+    fn register_template_dir(tag: TaskTag, manifest: Manifest) -> DefinedTask {
         RegisterTask::new("Register template dir")
             .register("tmp_templates")
             .stat_path(manifest.full_template_path.clone().unwrap_or_default())
@@ -57,7 +60,7 @@ impl TemplatesClone {
             .build()
     }
 
-    fn clone_template_repo(tag: TaskTag, manifest: Manifest) -> PlaybookYamlTaskType {
+    fn clone_template_repo(tag: TaskTag, manifest: Manifest) -> DefinedTask {
         let repo = manifest.template_repo;
         let ver = manifest.template_version;
         let template_path = manifest.full_template_path;
@@ -71,7 +74,7 @@ impl TemplatesClone {
             .build()
     }
 
-    fn exclude_dirs_from_search(tag: TaskTag, manifest: Manifest) -> PlaybookYamlTaskType {
+    fn exclude_dirs_from_search(tag: TaskTag, manifest: Manifest) -> DefinedTask {
         let workdir = manifest.workdir;
         FindTask::new("Exclude dirs from search")
             .paths(workdir.unwrap_or_default())
@@ -86,7 +89,7 @@ impl TemplatesClone {
             .build()
     }
 
-    fn filter_dirs(tag: TaskTag) -> PlaybookYamlTaskType {
+    fn filter_dirs(tag: TaskTag) -> DefinedTask {
         FactTask::new(
             "dirs",
             "{{ filtered_dirs | json_query(\"files[*].path\") }}",
@@ -95,7 +98,7 @@ impl TemplatesClone {
         .build()
     }
 
-    fn gather_template_paths(tag: TaskTag) -> PlaybookYamlTaskType {
+    fn gather_template_paths(tag: TaskTag) -> DefinedTask {
         FindTask::new("Gather all template paths")
             .paths("{{ dirs }}")
             .recurse("no")
@@ -107,7 +110,7 @@ impl TemplatesClone {
             .build()
     }
 
-    fn save_found_as_fact(tag: TaskTag) -> PlaybookYamlTaskType {
+    fn save_found_as_fact(tag: TaskTag) -> DefinedTask {
         FactTask::new(
             "template_paths",
             "{{ found_templates | json_query(\"files[*].path\") }}",
@@ -116,7 +119,7 @@ impl TemplatesClone {
         .build()
     }
 
-    fn write_template_paths_to_file(tag: TaskTag, manifest: Manifest) -> PlaybookYamlTaskType {
+    fn write_template_paths_to_file(tag: TaskTag, manifest: Manifest) -> DefinedTask {
         let workdir = manifest.workdir;
         let paths_file = manifest.template_paths_file;
         let write_out = format!(

@@ -6,9 +6,18 @@ use log::debug;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    cli_args::CliArgs, DEFAULT_APP_NAME, DEFAULT_MANIFEST_FILE, DEFAULT_TEMPLATE_DIR,
-    DEFAULT_TEMPLATE_PATHS_FILE, DEFAULT_TEMPLATE_REPO, DEFAULT_TEMPLATE_VERSION, DEFAULT_WORKDIR,
+    app_config::{
+        DEFAULT_APP_NAME, DEFAULT_MANIFEST_FILE, DEFAULT_TEMPLATE_DIR, DEFAULT_TEMPLATE_PATHS_FILE,
+        DEFAULT_TEMPLATE_REPO, DEFAULT_TEMPLATE_VERSION, DEFAULT_WORKDIR,
+    },
+    cli_args::CliArgs,
 };
+
+pub fn default_var_replace_map() -> HashMap<String, String> {
+    let mut m = HashMap::new();
+    m.insert("$app_name".to_string(), DEFAULT_APP_NAME.to_string());
+    m
+}
 
 /// The core config file for the CLI
 /// It is created by both CLI arguments as well as a config file
@@ -63,8 +72,10 @@ impl Empty<Manifest> for Manifest {
         }
     }
 }
+
 impl Default for Manifest {
     fn default() -> Self {
+        let replacers = default_var_replace_map();
         Manifest {
             app_name: Some(DEFAULT_APP_NAME.to_string()),
             template_version: Some(DEFAULT_TEMPLATE_VERSION.to_string()),
@@ -77,11 +88,11 @@ impl Default for Manifest {
                 DEFAULT_WORKDIR.to_string(),
                 DEFAULT_TEMPLATE_DIR.to_string()
             )),
-            template_paths_file: Some(format!("{}/{}", DEFAULT_WORKDIR, DEFAULT_TEMPLATE_PATHS_FILE.to_string())),
+            template_paths_file: Some(DEFAULT_TEMPLATE_PATHS_FILE.to_string()),
             log_file: None,
             tags: None,
             skip_tags: None,
-            replace: None,
+            replace: Some(replacers),
         }
     }
 }
@@ -123,13 +134,13 @@ impl Manifest {
 
     fn deserialize_config(loaded_config: String) -> Result<Manifest> {
         let from_yml: Result<Manifest, Error> = serde_yaml::from_str(&loaded_config)
-            .with_context(|| "Error deserializing loaded manifest yaml".to_string());
+            .with_context(|| "[manifest] Error deserializing loaded yaml".to_string());
         if let Ok(m) = from_yml {
             return Ok(m);
         }
 
         let from_json: Result<Manifest, Error> = serde_json::from_str(&loaded_config)
-            .with_context(|| "Error deserializing loaded manifest json".to_string());
+            .with_context(|| "[manifest] Error deserializing loaded json".to_string());
 
         if let Ok(m) = from_json {
             return Ok(m);
@@ -140,7 +151,7 @@ impl Manifest {
 
     fn load_file(path: &String) -> Result<String> {
         let file = fs_extra::file::read_to_string(&path)
-            .with_context(|| format!("Tried to load: {} but could not", path))?;
+            .with_context(|| format!("[manifest] Tried to load: {} but could not", path))?;
         Ok(file)
     }
 
@@ -173,10 +184,14 @@ impl Manifest {
     fn manifest_debug_log(manifest: &Manifest) {
         let app_name = manifest.app_name.to_owned();
         let template_version = manifest.template_version.to_owned();
+        let tags = manifest.tags.to_owned();
+        let skip_tags = manifest.skip_tags.to_owned();
         let msg = format!(
-            "[manifest]: app_name=[{}] template_version=[{}]",
+            "[manifest]: app_name=[{}] template_version=[{}] run=[{:?}] skip=[{:?}]",
             &app_name.unwrap(),
-            &template_version.unwrap()
+            &template_version.unwrap(),
+            &tags.unwrap_or_default(),
+            &skip_tags.unwrap_or_default()
         );
         debug!("{}", msg);
     }

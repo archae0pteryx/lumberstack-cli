@@ -1,1 +1,5 @@
 template_version: v0.0.5
+skip_checks: true
+vars:
+  - key1: val1
+  - key2: val2

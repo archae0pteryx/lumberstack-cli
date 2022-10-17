@@ -1,7 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use super::task_type::PlaybookYamlTaskType;
-
+use crate::task_definitions::task_types::DefinedTask;
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Default)]
 pub struct RegisterTask {
@@ -47,8 +46,8 @@ impl RegisterTask {
         return new_task;
 
     }
-    pub fn build(&self) -> PlaybookYamlTaskType {
-        PlaybookYamlTaskType::Register(self.clone())
+    pub fn build(&self) -> DefinedTask {
+        DefinedTask::Register(self.clone())
 
     }
 }
@@ -68,6 +67,6 @@ mod tests {
         assert_eq!(actual.stat.path, "baz");
 
         let built = actual.build();
-        assert!(matches!(built, PlaybookYamlTaskType::Register { .. }));
+        assert!(matches!(built, DefinedTask::Register { .. }));
     }
 }

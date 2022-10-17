@@ -1,23 +1,22 @@
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    commands::ShellCommand, spinner::create_spinner, DEFAULT_PLAYBOOK_FILE, lumberstack::Runnable,
+    commands::ShellCommand, spinner::create_spinner, lumberstack::Runnable, task_definitions::task_types::DefinedTask, app_config::DEFAULT_PLAYBOOK_FILE,
 };
 
-use super::yaml::task_type::PlaybookYamlTaskType;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct Playbook {
+pub struct RunnableAnsibleTask {
     #[serde(skip_serializing)]
     pub label: String,
     pub hosts: String,
     pub r#become: String,
     pub become_user: String,
     pub gather_facts: bool,
-    pub tasks: Vec<PlaybookYamlTaskType>,
+    pub tasks: Vec<DefinedTask>,
 }
 
-impl Runnable for Playbook {
+impl Runnable for RunnableAnsibleTask {
     fn run_job(&self) {
         let spinner = create_spinner(format!("{}", self.label));
         spinner.set_prefix("👟");
@@ -28,9 +27,9 @@ impl Runnable for Playbook {
     }
 }
 
-impl Playbook {
-    pub fn new<T: AsRef<str>>(label: T) -> Playbook {
-        Playbook {
+impl RunnableAnsibleTask {
+    pub fn new<T: AsRef<str>>(label: T) -> RunnableAnsibleTask {
+        RunnableAnsibleTask {
             label: label.as_ref().to_string(),
             hosts: "localhost".to_string(),
             r#become: "yes".to_string(),
@@ -40,10 +39,10 @@ impl Playbook {
         }
     }
 
-    pub(crate) fn add_task(&self, task: PlaybookYamlTaskType) -> Playbook {
+    pub(crate) fn add_task(&self, task: DefinedTask) -> RunnableAnsibleTask {
         let mut new_playbook = self.clone();
         match task {
-            PlaybookYamlTaskType::None() => {
+            DefinedTask::None() => {
                 return new_playbook;
             }
             _ => {

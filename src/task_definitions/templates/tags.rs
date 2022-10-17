@@ -1,6 +1,7 @@
 #![allow(unused)]
 use lazy_static::lazy_static;
 use regex::{Captures, Regex};
+use serde::{Deserialize, Serialize};
 
 use std::{
     fmt::{self, Display},
@@ -9,9 +10,9 @@ use std::{
     path::PathBuf,
 };
 
-use crate::{TEMPLATE_TOKEN_REGEX};
+use crate::{manifest::Manifest, app_config::TEMPLATE_TOKEN_REGEX};
 
-#[derive(Clone, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum TaskTag {
     Init,
     Create,
@@ -22,6 +23,7 @@ pub enum TaskTag {
     Markdown,
     Github,
     Parse,
+    Templates,
 }
 
 lazy_static! {
@@ -42,24 +44,31 @@ impl Display for TaskTag {
             TaskTag::Markdown => write!(f, "markdown"),
             TaskTag::Github => write!(f, "github"),
             TaskTag::Parse => write!(f, "parse"),
+            TaskTag::Templates => write!(f, "templates"),
         }
     }
 }
 
-pub fn should_task_run(this_tag: &TaskTag, tags: &Option<Vec<String>>) -> bool {
+pub fn should_task_run(this_tag: &TaskTag, manifest: &Manifest) -> bool {
+    let tags = manifest.tags.to_owned();
+    let skip_tags = &manifest.skip_tags.to_owned();
     if let Some(t) = tags {
         return t.contains(&this_tag.to_string()) || t.is_empty();
     }
+    if let Some(st) = skip_tags {
+        let has_skip_tag = st.contains(&this_tag.to_string());
+        return !has_skip_tag;
+    }
+
     return true;
 }
-
 pub type Tags = Vec<String>;
 
 #[derive(Debug, Clone)]
 pub struct ReplaceVars {
-    line_num: usize,
-    key: String,
-    value: String,
+    pub line_num: usize,
+    pub key: String,
+    pub value: String,
 }
 
 pub struct Symbol;

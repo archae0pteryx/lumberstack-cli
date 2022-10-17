@@ -1,7 +1,7 @@
 #![allow(unused)]
 use serde::{Deserialize, Serialize};
 
-use super::task_type::PlaybookYamlTaskType;
+use crate::task_definitions::task_types::DefinedTask;
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct FileTask {
@@ -42,8 +42,8 @@ impl FileTask {
         return new_task;
     }
 
-    pub fn build(&self) -> PlaybookYamlTaskType {
-        PlaybookYamlTaskType::File(self.clone())
+    pub fn build(&self) -> DefinedTask {
+        DefinedTask::File(self.clone())
     }
 }
 
@@ -59,6 +59,6 @@ mod tests {
         assert_eq!(actual.file.state, "baz");
 
         let built = actual.build();
-        assert!(matches!(built, PlaybookYamlTaskType::File { .. }));
+        assert!(matches!(built, DefinedTask::File { .. }));
     }
 }

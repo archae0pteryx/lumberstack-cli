@@ -1,6 +1,7 @@
-use super::task_type::PlaybookYamlTaskType;
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
+
+use crate::task_definitions::task_types::DefinedTask;
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct FactTask {
@@ -29,8 +30,8 @@ impl FactTask {
 
     }
 
-    pub fn build(&self) -> PlaybookYamlTaskType {
-        PlaybookYamlTaskType::Fact(self.clone())
+    pub fn build(&self) -> DefinedTask {
+        DefinedTask::Fact(self.clone())
     }
 }
 
@@ -43,6 +44,6 @@ mod tests {
         let actual = FactTask::new("foo", "bar");
         assert_eq!(actual.set_fact.get("foo").unwrap(), "bar");
         let built = actual.build();
-        assert!(matches!(built, PlaybookYamlTaskType::Fact {..}));
+        assert!(matches!(built, DefinedTask::Fact {..}));
     }
 }
