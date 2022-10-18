@@ -1,20 +1,8 @@
-use super::cli_args::CliArgs;
+use crate::cli_args::CliArgs;
 use clap::Parser;
 use env_logger::fmt::Color;
 use log::{warn, Level};
-use std::io::Write;
-
-// pub fn log_run<S: AsRef<str>>(tag: S) {
-//     warn!("[+] {}", tag.as_ref());
-// }
-
-// pub fn log_error<S: AsRef<str>>(scope: S, msg: S) {
-//     error!("[ERROR][{}] {}", scope.as_ref(), msg.as_ref());
-// }
-
-// pub fn log_warn<S: AsRef<str>>(scope: S, msg: S) {
-//     warn!("[{}] {}", scope.as_ref(), msg.as_ref())
-// }
+use std::{env, io::Write};
 
 pub fn log_skip<S: AsRef<str>>(tag: S) {
     warn!("[SKIPPING] {}", tag.as_ref());
@@ -25,6 +13,7 @@ pub struct Logger;
 impl Logger {
     pub fn init() {
         let args = CliArgs::parse();
+        Self::set_ansible_log(&args.log_file);
         env_logger::Builder::new()
             .filter_level(args.verbose.log_level_filter())
             .format(|buf, record| {
@@ -66,5 +55,11 @@ impl Logger {
                 }
             })
             .init();
+    }
+
+    fn set_ansible_log(log_path: &Option<String>) {
+        if let Some(log_path) = &log_path {
+            env::set_var("ANSIBLE_LOG_PATH", log_path);
+        }
     }
 }

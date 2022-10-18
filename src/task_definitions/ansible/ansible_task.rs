@@ -1,9 +1,11 @@
+use std::env;
+
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    commands::ShellCommand, spinner::create_spinner, lumberstack::Runnable, task_definitions::task_types::DefinedTask, app_config::DEFAULT_PLAYBOOK_FILE,
+    app_config::DEFAULT_PLAYBOOK_FILE, commands::ShellCommand, lumberstack::Runnable,
+    spinner::create_spinner, task_definitions::task_types::DefinedTask,
 };
-
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct RunnableAnsibleTask {
@@ -29,6 +31,9 @@ impl Runnable for RunnableAnsibleTask {
 
 impl RunnableAnsibleTask {
     pub fn new<T: AsRef<str>>(label: T) -> RunnableAnsibleTask {
+        env::set_var("ANSIBLE_NOCOWS", "True");
+        env::set_var("ANSIBLE_ANY_ERRORS_FATAL", "True");
+        env::set_var("ANSIBLE_LOCALHOST_WARNING", "False");
         RunnableAnsibleTask {
             label: label.as_ref().to_string(),
             hosts: "localhost".to_string(),

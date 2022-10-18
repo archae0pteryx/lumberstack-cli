@@ -3,15 +3,17 @@ use std::process::{exit, Command, Output};
 
 use log::error;
 
-use crate::{
-    app_config::{AppConfig, DEFAULT_WORKDIR},
-    file_io::FileIO,
-};
+use crate::app_config::{load_app_config, AppConfig, DEFAULT_WORKDIR};
+
+use super::{file_io::FileIO, logger::Logger};
 
 pub struct System;
 
 impl System {
-    pub fn init(app_config: &AppConfig) -> Result<()> {
+    pub fn init() -> Result<AppConfig> {
+        Logger::init();
+        let app_config = load_app_config()?;
+
         if !app_config.skip_checks {
             Self::os_ok();
             Self::has_required_bin("yarn");
@@ -21,7 +23,7 @@ impl System {
         }
 
         FileIO::create_dir(DEFAULT_WORKDIR)?;
-        Ok(())
+        Ok(app_config)
     }
 
     fn os_ok() {

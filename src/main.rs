@@ -2,35 +2,23 @@
 extern crate fs_extra;
 extern crate log;
 
-use app_config::{load_app_config};
-
 mod app_config;
 mod cli_args;
 mod commands;
-mod file_io;
 mod framework;
-mod logger;
 mod lumberstack;
-mod manifest;
 mod spinner;
 mod system;
 mod task_definitions;
 
 use anyhow::Error;
-use framework::redwood::{create::RedwoodApp, auth::RedwoodAuth};
-use logger::Logger;
+use framework::redwood::{auth::RedwoodAuth, create::RedwoodApp};
 use lumberstack::Lumberstack;
-use system::System;
-use task_definitions::templates::{github::GithubTemplates, tags::TaskTag, copy::TemplateCopy};
+use system::checks::System;
+use task_definitions::templates::{copy::TemplateCopy, github::GithubTemplates, tags::TaskTag};
 
 fn main() -> anyhow::Result<(), Error> {
-    Logger::init();
-
-    let app_config = load_app_config()?;
-
-    System::init(&app_config)?;
-
-
+    let app_config = System::init()?;
     let mut app = Lumberstack::new();
 
     let clone_task = GithubTemplates::new(TaskTag::Init, &app_config);

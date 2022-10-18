@@ -4,7 +4,7 @@ use anyhow::Result;
 use log::debug;
 use serde::{Deserialize, Serialize};
 
-use crate::{cli_args::ParsedArgs, file_io::FileIO};
+use crate::{cli_args::ParsedArgs, system::file_io::FileIO};
 
 pub static DEFAULT_TEMPLATE_VERSION: &str = "v0.0.4";
 pub static DEFAULT_TEMPLATE_REPO: &str = "https://github.com/codingzeal/redwood-template-app";
