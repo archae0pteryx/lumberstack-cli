@@ -1,7 +1,9 @@
-use std::{ffi::OsStr, path::Path, fs::File};
-use std::io::Write;
 use anyhow::{Context, Result};
-use log::{warn, error};
+use fs_extra::dir::CopyOptions;
+use log::{debug, error, warn};
+use std::fs;
+use std::io::Write;
+use std::{ffi::OsStr, fs::File, path::Path};
 
 pub struct FileIO;
 
@@ -24,18 +26,27 @@ impl FileIO {
         Ok(())
     }
 
+    // Copy entire contents of directory
+    #[allow(dead_code)]
+    pub fn copy_dir<P: AsRef<Path>>(src: P, dest: P) {
+        let mut opts = CopyOptions::new();
+        opts.overwrite = true;
+        opts.skip_exist = false;
+        opts.copy_inside = true;
+        fs_extra::dir::copy(&src, &dest, &opts).unwrap();
+    }
+
     pub fn create_dir<P: AsRef<Path>>(path: P) -> Result<()> {
-        fs_extra::dir::create_all(&path, false).with_context(|| {
-            format!(
-                "Failed to create directories for path: {}",
-                &path.as_ref().to_str().unwrap()
-            )
-        })?;
-        // let mut opts = CopyOptions::new();
-        //     opts.overwrite = true;
-        //     opts.skip_exist = false;
-        //     opts.copy_inside = true;
-        //     fs_extra::dir::copy(&src, &dest, &opts).unwrap();
+        fs::create_dir_all(&path)
+            .map_err(|_| {
+                format!(
+                    "Error creating directory: {}",
+                    &path.as_ref().to_str().unwrap()
+                )
+            })
+            .unwrap();
+        debug!("Created directory: {}", &path.as_ref().to_str().unwrap());
+
         Ok(())
     }
 

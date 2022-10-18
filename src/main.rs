@@ -21,7 +21,7 @@ use framework::redwood::{create::RedwoodApp, auth::RedwoodAuth};
 use logger::Logger;
 use lumberstack::Lumberstack;
 use system::System;
-use task_definitions::templates::{clone::TemplatesClone, tags::TaskTag, copy::TemplateCopy};
+use task_definitions::templates::{github::GithubTemplates, tags::TaskTag, copy::TemplateCopy};
 
 fn main() -> anyhow::Result<(), Error> {
     Logger::init();
@@ -33,7 +33,7 @@ fn main() -> anyhow::Result<(), Error> {
 
     let mut app = Lumberstack::new();
 
-    let clone_task = TemplatesClone::new(TaskTag::Init, &app_config);
+    let clone_task = GithubTemplates::new(TaskTag::Init, &app_config);
     let create_task = RedwoodApp::new(TaskTag::Create, &app_config);
     let auth_task = RedwoodAuth::new(TaskTag::Auth, &app_config);
     let template_copy_task = TemplateCopy::new(TaskTag::Templates, &app_config);

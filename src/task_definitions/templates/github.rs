@@ -16,9 +16,9 @@ use super::tags::{should_task_run, TaskTag};
 
 #[derive(Clone)]
 
-pub struct TemplatesClone;
+pub struct GithubTemplates;
 
-impl TemplatesClone {
+impl GithubTemplates {
     pub fn new(tag: TaskTag, app_config: &AppConfig) -> Option<RunnableAnsibleTask> {
         if !should_task_run(&tag, &app_config) {
             log_skip(tag.to_string());

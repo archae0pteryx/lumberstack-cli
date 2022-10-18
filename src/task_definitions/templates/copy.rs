@@ -1,12 +1,7 @@
-use std::{
-    fs::{File, self},
-    path::{Path, PathBuf},
-};
+use std::path::Path;
 
-use fs_extra::dir::CopyOptions;
 use log::debug;
 use serde::{Deserialize, Serialize};
-use std::io::Write;
 
 use crate::{app_config::AppConfig, file_io::FileIO, logger::log_skip, lumberstack::Runnable};
 
@@ -35,27 +30,14 @@ impl TemplateCopy {
 
     pub fn copy_template(template: TemplateFile) {
         debug!("Copying template: {}", &template.src.display());
-        let src = &template.src;
         let dest = &template.dest;
-        let exists = Path::exists(&dest);
-        let is_dir = Path::is_dir(&src);
-        let is_file = Path::is_file(&dest);
+        let dest_dir = &dest.parent().unwrap();
+        let dest_dir_exists = &dest.exists();
 
-        if is_dir {
-            debug!("is dir");
-            let mut opts = CopyOptions::new();
-            opts.overwrite = true;
-            opts.skip_exist = false;
-            opts.copy_inside = true;
-            fs_extra::dir::copy(&src, &dest, &opts).unwrap();
-            return;
+        if !dest_dir_exists {
+            FileIO::create_dir(dest_dir).unwrap();
         }
 
-        if !exists && is_file {
-            debug!("creating missing dir");
-            Self::create_missing_dest_dir(&dest);
-        }
-        
         Self::write_template_to_dest(&template);
         debug!("template written");
     }
@@ -65,24 +47,17 @@ impl TemplateCopy {
         let src = &template.src;
         let dest = &template.dest;
 
+        if Path::is_dir(&template.src) {
+            FileIO::copy_dir(&src, &dest);
+            return;
+        }
+
         if let Some(contents) = contents {
-            let mut file = File::create(&dest).unwrap();
-            file.write_all(contents.as_bytes()).unwrap();
+            FileIO::write(&dest, contents).unwrap();
             return;
         }
         // must be binary file at this point
         FileIO::copy(src, dest).unwrap();
-    }
-
-    fn create_missing_dest_dir(dest: &PathBuf) {
-        let is_dir = Path::is_dir(&dest);
-        let fileless_path = dest.parent().unwrap();
-        if is_dir {
-            fs::create_dir_all(&fileless_path).unwrap();
-            return;
-        }
-        panic!("Cannot create parent directory for file: {:?}", dest);
-
     }
 }
 
