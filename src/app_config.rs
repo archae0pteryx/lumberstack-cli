@@ -1,10 +1,10 @@
-use std::collections::HashMap;
+use std::{collections::HashMap};
 
 use anyhow::Result;
 use log::debug;
 use serde::{Deserialize, Serialize};
 
-use crate::cli_args::ParsedArgs;
+use crate::{cli_args::ParsedArgs, file_io::FileIO};
 
 pub static DEFAULT_TEMPLATE_VERSION: &str = "v0.0.4";
 pub static DEFAULT_TEMPLATE_REPO: &str = "https://github.com/codingzeal/redwood-template-app";
@@ -31,24 +31,25 @@ pub struct AppConfig {
     pub template_map: String,
     pub log_file: Option<String>,
     pub workdir: String,
+    pub skip_checks: bool
 }
 
 pub fn load_app_config() -> Result<AppConfig> {
     let args = ParsedArgs::new();
     let config_file = load_config_file(args.config.clone())?;
-    let generated_config = generate_app_config(args.clone(), config_file);
-    debug!("AppConfig: {:#?}", generated_config);
-    Ok(generated_config)
+    let processed_config = process_config(args.clone(), config_file);
+    debug!("AppConfig: {:#?}", processed_config);
+    Ok(processed_config)
 }
 
 fn load_config_file(config: Option<String>) -> Result<ConfigFile> {
     let config_file_str =
-        fs_extra::file::read_to_string(config.unwrap_or(DEFAULT_MANIFEST_FILE.to_string()))?;
+        FileIO::read(&config.unwrap_or(DEFAULT_MANIFEST_FILE.to_string())).unwrap();
     let config: ConfigFile = serde_yaml::from_str(config_file_str.as_str())?;
     return Ok(config);
 }
 
-fn generate_app_config(args: ParsedArgs, config_file: ConfigFile) -> AppConfig {
+fn process_config(args: ParsedArgs, config_file: ConfigFile) -> AppConfig {
     let app_name = select_or_default_string(args.name, config_file.name, DEFAULT_APP_NAME);
     let template_version = select_or_default_string(
         args.template_version,
@@ -60,13 +61,13 @@ fn generate_app_config(args: ParsedArgs, config_file: ConfigFile) -> AppConfig {
         .unwrap_or(DEFAULT_TEMPLATE_REPO.to_string());
     let tags = args.tags.or(config_file.tags);
     let skip_tags = args.skip_tags.or(config_file.skip_tags);
-    let template_vars = gather_template_vars(&app_name, config_file.template_vars);
+    let template_vars = process_template_vars(&app_name, config_file.template_vars);
 
     let workdir = DEFAULT_WORKDIR.to_string();
     let template_dir = format!("{}/{}", workdir, DEFAULT_TEMPLATE_DIR);
     let template_map = format!("{}/{}", workdir, DEFAULT_TEMPLATE_PATHS_FILE);
     let log_file = select_or_none(args.log_file, config_file.log_file);
-
+    let skip_checks = args.skip_checks || config_file.skip_checks.unwrap_or(false);
     AppConfig {
         app_name,
         template_version,
@@ -77,12 +78,12 @@ fn generate_app_config(args: ParsedArgs, config_file: ConfigFile) -> AppConfig {
         template_dir,
         template_map,
         log_file,
-        workdir
+        workdir,
+        skip_checks
     }
 }
 
-// gather template vars
-fn gather_template_vars(
+fn process_template_vars(
     app_name: &String,
     config_template_vars: Option<HashMap<String, String>>,
 ) -> HashMap<String, String> {
@@ -110,6 +111,7 @@ struct ConfigFile {
     tags: Option<Vec<String>>,
     skip_tags: Option<Vec<String>>,
     log_file: Option<String>,
+    skip_checks: Option<bool>
 }
 
 impl Default for ConfigFile {
@@ -122,6 +124,7 @@ impl Default for ConfigFile {
             tags: None,
             template_vars: None,
             log_file: None,
+            skip_checks: None
         }
     }
 }
@@ -140,7 +143,7 @@ mod tests {
 
         let config_file = ConfigFile::default();
 
-        let actual = generate_app_config(args, config_file);
+        let actual = process_config(args, config_file);
 
         assert_eq!(actual.app_name, DEFAULT_APP_NAME.to_string());
         assert_eq!(

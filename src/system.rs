@@ -1,19 +1,18 @@
-use std::{
-    path::{Path},
-    process::{exit, Command, Output},
+use anyhow::Result;
+use std::process::{exit, Command, Output};
+
+use log::error;
+
+use crate::{
+    app_config::{AppConfig, DEFAULT_WORKDIR},
+    file_io::FileIO,
 };
-
-use clap::Parser;
-use log::{error, warn};
-
-use crate::{cli_args::CliArgs, app_config::{DEFAULT_WORKDIR}};
 
 pub struct System;
 
 impl System {
-    pub fn init() {
-        let args = CliArgs::parse();
-        if !args.skip_checks {
+    pub fn init(app_config: &AppConfig) -> Result<()> {
+        if !app_config.skip_checks {
             Self::os_ok();
             Self::has_required_bin("yarn");
             Self::check_docker();
@@ -21,7 +20,8 @@ impl System {
             Self::check_node_version();
         }
 
-        Self::create_working_dir();
+        FileIO::create_dir(DEFAULT_WORKDIR)?;
+        Ok(())
     }
 
     fn os_ok() {
@@ -63,32 +63,5 @@ impl System {
             error!("❌ Docker not running");
             exit(exitcode::SOFTWARE);
         }
-    }
-
-    fn create_working_dir() {
-        fs_extra::dir::create_all(DEFAULT_WORKDIR, false).expect("Error creating / cleaning working dir");
-    }
-
-    pub fn file_as_str<P: AsRef<Path>>(path: P) -> Option<String> {
-        let file_str = fs_extra::file::read_to_string(&path.as_ref());
-        if let Ok(fs) = file_str {
-            return Some(fs);
-        }
-        warn!(
-            "[system] Could not read file to string: {}. Skipping",
-            path.as_ref().to_string_lossy()
-        );
-        return None;
-    }
-
-    #[allow(dead_code)]
-    pub fn is_image<P: AsRef<Path>>(path: P) -> bool {
-        let mimes = vec!["jpeg", "png", "jpg", "gif"];
-        let ext = Self::get_extension(path);
-        return mimes.contains(&ext.as_str());
-    }
-
-    pub fn get_extension<P: AsRef<Path>>(path: P) -> String {
-        path.as_ref().to_string_lossy().as_ref().to_string()
     }
 }

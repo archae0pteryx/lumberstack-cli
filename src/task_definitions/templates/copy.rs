@@ -1,55 +1,19 @@
-use aho_corasick::AhoCorasick;
 use std::{
-    collections::HashMap,
-    path::{Path, PathBuf}
+    fs::{File, self},
+    path::{Path, PathBuf},
 };
 
+use fs_extra::dir::CopyOptions;
+use log::debug;
 use serde::{Deserialize, Serialize};
+use std::io::Write;
 
-use crate::{logger::log_skip, lumberstack::Runnable, system::System, app_config::AppConfig};
+use crate::{app_config::AppConfig, file_io::FileIO, logger::log_skip, lumberstack::Runnable};
 
 use super::{
-    file_io::{TemplateFile, TemplateFileIO},
     tags::{should_task_run, TaskTag},
+    template_io::{TemplateFile, TemplateIO},
 };
-
-fn replacer(file_string: String, replace_vars: HashMap<String, String>) -> String {
-    let keys = replace_vars
-        .clone()
-        .into_iter()
-        .map(|(key, _)| key)
-        .collect::<Vec<String>>();
-    let values = replace_vars
-        .clone()
-        .into_iter()
-        .map(|(_, value)| value)
-        .collect::<Vec<String>>();
-
-    if keys.len().ne(&values.len()) {
-        panic!("Error parsing replacer vars!");
-    }
-
-    let ac = AhoCorasick::new(keys);
-    let result = ac.replace_all(&file_string, &values);
-    return result;
-}
-
-impl Runnable for TemplateCopy {
-    fn run_job(&self) {
-        let templates = TemplateFileIO::new(self.tag.to_owned(), &self.app_config);
-        let file_tuples = Self::collect_file_tuples(&self.app_config, templates.unwrap());
-        // dbg!(&file_tuples);
-        file_tuples.into_iter().for_each(|(dest, file_str)| {
-            // let is_image = System::is_image(dest);
-            // if is_image {
-            //     fs::copy(from, to)
-            // }
-
-            fs_extra::file::write_all(&dest, &file_str).expect("Error writing template");
-            // debug!("wrote: {}", &dest.display());
-        })
-    }
-}
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct TemplateCopy {
@@ -58,33 +22,76 @@ pub struct TemplateCopy {
 }
 
 impl TemplateCopy {
-    pub fn new(tag: TaskTag, app_config: AppConfig) -> Option<TemplateCopy> {
+    pub fn new(tag: TaskTag, app_config: &AppConfig) -> Option<TemplateCopy> {
         if !should_task_run(&tag, &app_config) {
             log_skip(&tag.to_string());
             return None;
         }
-        Some(TemplateCopy { tag, app_config })
+        Some(TemplateCopy {
+            tag,
+            app_config: app_config.to_owned(),
+        })
     }
 
-    fn collect_file_tuples(
-        app_config: &AppConfig,
-        templates: Vec<TemplateFile>,
-    ) -> Vec<(PathBuf, String)> {
-        let replace_vars = app_config.template_vars.to_owned();
-        templates
-            .iter()
-            .filter(|t| !Path::new(&t.src).ends_with(".template"))
-            .map(|t| (t, System::file_as_str(&t.src)))
-            .filter(|(_, fs)| fs.is_some())
-            .map(|(t, fs)| {
-                (
-                    t.dest.to_owned(),
-                    replacer(fs.unwrap(), replace_vars.to_owned()),
-                )
-            })
-            .inspect(|f| {
-                dbg!(&f.0);
-            })
-            .collect::<Vec<(PathBuf, String)>>()
+    pub fn copy_template(template: TemplateFile) {
+        debug!("Copying template: {}", &template.src.display());
+        let src = &template.src;
+        let dest = &template.dest;
+        let exists = Path::exists(&dest);
+        let is_dir = Path::is_dir(&src);
+        let is_file = Path::is_file(&dest);
+
+        if is_dir {
+            debug!("is dir");
+            let mut opts = CopyOptions::new();
+            opts.overwrite = true;
+            opts.skip_exist = false;
+            opts.copy_inside = true;
+            fs_extra::dir::copy(&src, &dest, &opts).unwrap();
+            return;
+        }
+
+        if !exists && is_file {
+            debug!("creating missing dir");
+            Self::create_missing_dest_dir(&dest);
+        }
+        
+        Self::write_template_to_dest(&template);
+        debug!("template written");
+    }
+
+    fn write_template_to_dest(template: &TemplateFile) {
+        let contents = &template.content;
+        let src = &template.src;
+        let dest = &template.dest;
+
+        if let Some(contents) = contents {
+            let mut file = File::create(&dest).unwrap();
+            file.write_all(contents.as_bytes()).unwrap();
+            return;
+        }
+        // must be binary file at this point
+        FileIO::copy(src, dest).unwrap();
+    }
+
+    fn create_missing_dest_dir(dest: &PathBuf) {
+        let is_dir = Path::is_dir(&dest);
+        let fileless_path = dest.parent().unwrap();
+        if is_dir {
+            fs::create_dir_all(&fileless_path).unwrap();
+            return;
+        }
+        panic!("Cannot create parent directory for file: {:?}", dest);
+
+    }
+}
+
+impl Runnable for TemplateCopy {
+    fn run_job(&self) {
+        let templates = TemplateIO::new(self.tag.to_owned(), &self.app_config);
+
+        templates.unwrap().into_iter().for_each(|template| {
+            Self::copy_template(template);
+        });
     }
 }

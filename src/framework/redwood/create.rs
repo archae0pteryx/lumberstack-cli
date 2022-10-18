@@ -1,5 +1,3 @@
-#![allow(unused)]
-
 use crate::{
     logger::log_skip,
     task_definitions::{
@@ -13,8 +11,8 @@ use crate::{
 pub struct RedwoodApp;
 
 impl RedwoodApp {
-    pub fn new(tag: TaskTag, app_config: AppConfig) -> Option<RunnableAnsibleTask> {
-        let app_name = &app_config.app_name.to_owned();
+    pub fn new(tag: TaskTag, app_config: &AppConfig) -> Option<RunnableAnsibleTask> {
+        let app_name = &app_config.app_name;
 
         if !should_task_run(&tag, &app_config) {
             log_skip(&tag.to_string());

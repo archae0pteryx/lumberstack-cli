@@ -1,6 +1,6 @@
 use std::path::{Path, PathBuf};
 
-use crate::{logger::log_skip, system::System, app_config::AppConfig};
+use crate::{app_config::AppConfig, file_io::FileIO, logger::log_skip};
 use ignore::{DirEntry, WalkBuilder};
 use log::error;
 
@@ -15,8 +15,8 @@ pub struct TemplateFile {
     pub content: Option<String>,
 }
 
-pub struct TemplateFileIO;
-impl TemplateFileIO {
+pub struct TemplateIO;
+impl TemplateIO {
     pub fn new(tag: TaskTag, app_config: &AppConfig) -> Option<Vec<TemplateFile>> {
         if !should_task_run(&tag, &app_config) {
             log_skip(tag.to_string());
@@ -24,7 +24,7 @@ impl TemplateFileIO {
         }
 
         let template_map_file = app_config.template_map.to_owned();
-        let template_map_file_str = System::file_as_str(&app_config.template_map);
+        let template_map_file_str = FileIO::read(&app_config.template_map);
         if let None = template_map_file_str {
             panic!(
                 "[templateIO] Can not load paths file: {}",
@@ -38,8 +38,8 @@ impl TemplateFileIO {
             from_dot_template_paths.clone(),
         ]
         .concat();
-        let all_templates = Self::process_combined_templates(&app_config, combined_templates);
-        Some(all_templates)
+        let processed_templates = Self::process_combined_templates(&app_config, combined_templates);
+        Some(processed_templates)
     }
 
     fn process_combined_templates(
@@ -49,7 +49,7 @@ impl TemplateFileIO {
         let dest_root_dir = app_config.app_name.to_owned();
         let to_strip = app_config.template_dir.to_owned();
 
-        let replaced_symbol = |pathbuf: &PathBuf| {
+        let prep_paths_tags_vars = |pathbuf: &PathBuf| {
             let src = pathbuf.to_owned();
             let dest = Self::strip_from_path(&dest_root_dir, &to_strip, pathbuf.as_path());
             let (tags, replace_vars) = Symbol::new(pathbuf.to_owned());
@@ -58,19 +58,46 @@ impl TemplateFileIO {
 
         let transformed = templates
             .iter()
-            .map(replaced_symbol)
+            .map(prep_paths_tags_vars)
             .filter(|(_, _, own_tags, _)| Self::should_run_tag(own_tags.to_owned(), app_config))
-            .map(|(src, dest, tags, replace_vars)| {
-                return TemplateFile {
-                    src,
-                    dest,
-                    tags,
-                    replace_vars,
-                    content: None,
-                };
-            })
+            .map(|template_data| Self::process_template_content(&template_data))
             .collect::<Vec<TemplateFile>>();
         return transformed;
+    }
+
+    fn process_template_content(
+        template_data: &(PathBuf, PathBuf, Option<Tags>, Option<Vec<ReplaceVars>>),
+    ) -> TemplateFile {
+        let src = &template_data.0;
+        let dest = &template_data.1;
+        let tags = &template_data.2;
+        let replace_vars = &template_data.3;
+
+        if FileIO::is_image(&src) {
+            return TemplateFile {
+                src: src.to_owned(),
+                dest: dest.to_owned(),
+                tags: tags.to_owned(),
+                replace_vars: None,
+                content: None,
+            };
+        }
+
+        let mut content = FileIO::read(&src).unwrap();
+
+        if let Some(vars) = replace_vars {
+            for obj in vars {
+                content = content.replace(&obj.key, &obj.value);
+            }
+        }
+
+        TemplateFile {
+            src: src.to_owned(),
+            dest: dest.to_owned(),
+            tags: tags.to_owned(),
+            replace_vars: replace_vars.to_owned(),
+            content: Some(content),
+        }
     }
 
     fn should_run_tag(own_tags: Option<Vec<String>>, app_config: &AppConfig) -> bool {
@@ -151,53 +178,3 @@ impl TemplateFileIO {
         error!("{}", msg);
     }
 }
-
-struct TemplatePaths;
-
-impl TemplatePaths {
-    fn read_paths_file(json: String) -> Vec<PathBuf> {
-        let loaded: Vec<String> = serde_json::from_str(&json.as_str())
-            .map_err(|_| Self::generate_read_error("to json struct".to_string()))
-            .unwrap();
-
-        loaded
-            .iter()
-            .map(|i| PathBuf::from(i))
-            .collect::<Vec<PathBuf>>()
-    }
-
-    fn generate_read_error(path: String) {
-        let msg = format!("[templates] Error reading file {}", path);
-        error!("{}", msg);
-    }
-}
-
-// #[cfg(test)]
-// mod tests {
-//     use std::str::FromStr;
-
-//     use super::*;
-
-//     #[test]
-//     fn it_tests() {
-//         let template_tags = Some(vec!["foo".to_string()]);
-//         let mock_src = PathBuf::from("tostrip/file.js");
-//         let mock_dest = PathBuf::from("myapp/file.js");
-
-//         let template = TemplateFile { src: mock_src, dest: mock_dest, tags: template_tags, replace_vars: None };
-
-//         let mock_file = PathBuf::from("tostrip/foo.txt");
-
-//         let templates = vec![mock_file];
-
-//         let manifest = &Manifest {
-//             tags: Some(vec!["tag1".to_string(), "tag2".to_string()]),
-//             full_template_path: Some(String::from("tostrip")),
-//             ..Manifest::default()
-//         };
-
-//         let actual = TemplateFileIO::process_combined_templates(manifest, templates);
-
-//         dbg!(actual);
-//     }
-// }

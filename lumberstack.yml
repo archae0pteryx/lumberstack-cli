@@ -1,5 +1,6 @@
 template_version: v0.0.5
 skip_checks: true
+clean: true
 vars:
-  - key1: val1
+  - const: foobar
   - key2: val2
