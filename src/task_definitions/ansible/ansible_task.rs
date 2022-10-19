@@ -1,4 +1,7 @@
-use std::env;
+use std::{
+    env,
+    time::{SystemTime, UNIX_EPOCH},
+};
 
 use serde::{Deserialize, Serialize};
 
@@ -24,16 +27,16 @@ impl Runnable for RunnableAnsibleTask {
         spinner.set_prefix("👟");
         self.write_yml();
         ShellCommand::exec("./", "ansible-playbook", &[&DEFAULT_PLAYBOOK_FILE], true);
-        self.remove_playbook();
+        Self::save_playbook(&self);
         spinner.finish_and_clear();
     }
 }
 
 impl RunnableAnsibleTask {
-    pub fn new<T: AsRef<str>>(label: T) -> RunnableAnsibleTask {
-        env::set_var("ANSIBLE_NOCOWS", "True");
-        env::set_var("ANSIBLE_ANY_ERRORS_FATAL", "True");
-        env::set_var("ANSIBLE_LOCALHOST_WARNING", "False");
+    pub fn new<T: AsRef<str>>(label: T) -> Self {
+        env::set_var("ANSIBLE_NOCOWS", "yes");
+        env::set_var("ANSIBLE_ANY_ERRORS_FATAL", "yes");
+        env::set_var("ANSIBLE_LOCALHOST_WARNING", "no");
         RunnableAnsibleTask {
             label: label.as_ref().to_string(),
             hosts: "localhost".to_string(),
@@ -44,15 +47,14 @@ impl RunnableAnsibleTask {
         }
     }
 
-    pub(crate) fn add_task(&self, task: DefinedTask) -> RunnableAnsibleTask {
-        let mut new_playbook = self.clone();
+    pub fn add_task(&mut self, task: DefinedTask) -> &mut Self {
         match task {
             DefinedTask::None() => {
-                return new_playbook;
+                return self;
             }
             _ => {
-                new_playbook.tasks.push(task);
-                return new_playbook;
+                self.tasks.push(task);
+                return self;
             }
         }
     }
@@ -64,7 +66,14 @@ impl RunnableAnsibleTask {
             .expect("Tried to write playbook yaml to file. Could not");
     }
 
-    fn remove_playbook(&self) {
-        fs_extra::file::remove(DEFAULT_PLAYBOOK_FILE).expect("Tried to remove playbook. Could not");
+    // fn remove_playbook(&self) {
+    //     fs_extra::file::remove(DEFAULT_PLAYBOOK_FILE).expect("Tried to remove playbook. Could not");
+    // }
+
+    fn save_playbook(&self) {
+        let opts = fs_extra::file::CopyOptions::new();
+        let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
+        let move_to = format!("tmp/{}_{}.yml", now.as_secs(), &self.label.replace(" ", ""));
+        fs_extra::file::move_file(DEFAULT_PLAYBOOK_FILE, move_to, &opts).unwrap();
     }
 }

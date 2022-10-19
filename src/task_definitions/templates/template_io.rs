@@ -1,6 +1,6 @@
 use std::path::{Path, PathBuf};
 
-use crate::{app_config::AppConfig, system::file_io::FileIO, system::logger::log_skip};
+use crate::{app_config::AppConfig, system::file_io::FileIO, system::logger::log_task_skip};
 use ignore::{DirEntry, WalkBuilder};
 use log::error;
 
@@ -19,7 +19,7 @@ pub struct TemplateIO;
 impl TemplateIO {
     pub fn new(tag: TaskTag, app_config: &AppConfig) -> Option<Vec<TemplateFile>> {
         if !should_task_run(&tag, &app_config) {
-            log_skip(tag.to_string());
+            log_task_skip(tag.to_string());
             return None;
         }
 
@@ -118,7 +118,7 @@ impl TemplateIO {
                 return true;
             }
 
-            log_skip(format!("{:?}", in_tags_to_run));
+            log_task_skip(format!("{:?}", in_tags_to_run));
             return false;
         }
         return true;

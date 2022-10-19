@@ -1,10 +1,11 @@
-use std::{collections::HashMap};
+use std::collections::HashMap;
 
 use anyhow::Result;
 use log::debug;
 use serde::{Deserialize, Serialize};
 
 use crate::{cli_args::ParsedArgs, system::file_io::FileIO};
+use phf::phf_map;
 
 pub static DEFAULT_TEMPLATE_VERSION: &str = "v0.0.4";
 pub static DEFAULT_TEMPLATE_REPO: &str = "https://github.com/codingzeal/redwood-template-app";
@@ -19,6 +20,13 @@ pub static DEFAULT_ANSIBLE_TEMPLATE_REGEX: &'static str = r#"(\/\/|\/\/\*|#|\<!-
 pub static TEMPLATE_TOKEN_REGEX: &'static str =
     r#"(//\*|//|#|<!--)\stemplate\[((?P<method>[^\]]+))\]"#;
 
+pub static DEFAULT_PAGES: phf::Map<&str, &str> = phf_map! {
+    "home" => "/",
+    "about" => "/about",
+};
+
+pub static DEFAULT_LAYOUTS: &[&str] = &["admin"];
+
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct AppConfig {
     pub app_name: String,
@@ -31,7 +39,11 @@ pub struct AppConfig {
     pub template_map: String,
     pub log_file: Option<String>,
     pub workdir: String,
-    pub skip_checks: bool
+    pub skip_checks: bool,
+    pub pages: HashMap<String, String>,
+    pub layouts: Vec<String>,
+    pub clean: bool,
+    pub save_playbook: bool,
 }
 
 pub fn load_app_config() -> Result<AppConfig> {
@@ -67,7 +79,11 @@ fn process_config(args: ParsedArgs, config_file: ConfigFile) -> AppConfig {
     let template_dir = format!("{}/{}", workdir, DEFAULT_TEMPLATE_DIR);
     let template_map = format!("{}/{}", workdir, DEFAULT_TEMPLATE_PATHS_FILE);
     let log_file = select_or_none(args.log_file, config_file.log_file);
-    let skip_checks = args.skip_checks || config_file.skip_checks.unwrap_or(false);
+    let skip_checks = args.skip_checks || config_file.skip_checks.unwrap_or(false).to_owned();
+    let pages = pages_to_generate(config_file.pages);
+    let layouts = layouts_to_generate(config_file.layouts);
+    let clean = config_file.clean || args.clean;
+    let save_playbook = config_file.save_playbook;
     AppConfig {
         app_name,
         template_version,
@@ -79,8 +95,43 @@ fn process_config(args: ParsedArgs, config_file: ConfigFile) -> AppConfig {
         template_map,
         log_file,
         workdir,
-        skip_checks
+        skip_checks,
+        pages,
+        layouts,
+        clean,
+        save_playbook
     }
+}
+
+fn pages_to_generate(config_pages: Option<HashMap<String, String>>) -> HashMap<String, String> {
+    let mut pages = HashMap::new();
+    for (name, path) in DEFAULT_PAGES.into_iter() {
+        pages.insert(name.to_string(), path.to_string());
+    }
+
+    if config_pages.is_some() {
+        for (key, value) in config_pages.unwrap().iter() {
+            pages.insert(key.to_string(), value.to_string());
+        }
+    }
+
+    if pages.len() == 0 {
+        return HashMap::new();
+    }
+    return pages;
+}
+
+fn layouts_to_generate(config_layouts: Option<Vec<String>>) -> Vec<String> {
+    let mut layouts = Vec::new();
+    for default_layout in DEFAULT_LAYOUTS {
+        layouts.push(default_layout.to_string());
+    }
+    if config_layouts.is_some() {
+        for layout in config_layouts.unwrap().iter() {
+            layouts.push(layout.to_string());
+        }
+    }
+    return layouts;
 }
 
 fn process_template_vars(
@@ -102,7 +153,7 @@ fn select_or_none(opt_a: Option<String>, opt_b: Option<String>) -> Option<String
     opt_a.or(opt_b)
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 struct ConfigFile {
     name: Option<String>,
     template_version: Option<String>,
@@ -111,7 +162,13 @@ struct ConfigFile {
     tags: Option<Vec<String>>,
     skip_tags: Option<Vec<String>>,
     log_file: Option<String>,
-    skip_checks: Option<bool>
+    skip_checks: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pages: Option<HashMap<String, String>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    layouts: Option<Vec<String>>,
+    clean: bool,
+    save_playbook: bool,
 }
 
 impl Default for ConfigFile {
@@ -124,7 +181,11 @@ impl Default for ConfigFile {
             tags: None,
             template_vars: None,
             log_file: None,
-            skip_checks: None
+            skip_checks: None,
+            pages: None,
+            layouts: None,
+            clean: false,
+            save_playbook: false
         }
     }
 }

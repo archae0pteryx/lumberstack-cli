@@ -1,7 +1,7 @@
 use anyhow::Result;
 use std::process::{exit, Command, Output};
 
-use log::error;
+use log::{error, debug};
 
 use crate::app_config::{load_app_config, AppConfig, DEFAULT_WORKDIR};
 
@@ -20,6 +20,15 @@ impl System {
             Self::check_docker();
             Self::has_required_bin("node");
             Self::check_node_version();
+        }
+
+        if app_config.clean {
+            debug!("Removing artifacts...");
+            FileIO::remove(&app_config.app_name);
+            FileIO::remove(&app_config.workdir);
+            if let Some(lf) = &app_config.log_file {
+                FileIO::remove(lf);
+            }
         }
 
         FileIO::create_dir(DEFAULT_WORKDIR)?;

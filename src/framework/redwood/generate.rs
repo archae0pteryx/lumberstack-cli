@@ -1,32 +1,69 @@
-// use crate::{
-//     manifest::Manifest,
-//     task_definitions::{
-//         ansible::{ansible_task::RunnableAnsibleTask, yaml::command_task::CommandTask},
-//         task_types::DefinedTask,
-//         templates::tags::{should_task_run, TaskTag},
-//     },
-// };
+use crate::{
+    app_config::AppConfig,
+    system::logger::log_task_skip,
+    task_definitions::{
+        ansible::{ansible_task::RunnableAnsibleTask, yaml::command_task::CommandTask},
+        task_types::DefinedTask,
+        templates::tags::{should_task_run, TaskTag},
+    },
+};
 
-// pub struct RedwoodGenerate;
+pub struct RedwoodGenerate;
 
-// impl RedwoodGenerate {
-//     pub fn new(tag: TaskTag, manifest: Manifest) -> Option<RunnableAnsibleTask> {
-//         let app_name = manifest.app_name.to_owned().unwrap_or_default();
-//         let skip_tags = &manifest.skip_tags.to_owned();
+impl RedwoodGenerate {
+    pub fn new(tag: TaskTag, app_config: &AppConfig) -> Option<RunnableAnsibleTask> {
+        if !should_task_run(&tag, &app_config) {
+            log_task_skip(&tag.to_string());
+            return None;
+        }
 
-//         if !should_task_run(&tag, &manifest) {
-//             return None;
-//         }
+        let mut playbook = RunnableAnsibleTask::new("Generating Pages and Layouts");
 
-//         let home_task = Self::generate_home_page(app_name);
+        let page_tasks = Self::gather_pages(app_config);
+        for task in page_tasks {
+            playbook.add_task(task.to_owned());
+        }
 
-//         None
-//     }
+        let layout_tasks = Self::gather_layouts(app_config);
+        for task in layout_tasks {
+            playbook.add_task(task.to_owned());
+        }
+        // dbg!(&playbook);
+        Some(playbook)
+    }
 
-//     fn generate_home_page(app_name: String) -> DefinedTask {
-//         CommandTask::new("Generate homepage")
-//             .chdir(app_name)
-//             .command("foo")
-//             .build()
-//     }
-// }
+    fn gather_pages(app_config: &AppConfig) -> Vec<DefinedTask> {
+        let p = app_config
+            .pages
+            .to_owned()
+            .into_iter()
+            .map(|page| Self::generate_page(&app_config.app_name, page))
+            .collect::<Vec<_>>();
+        return p;
+    }
+
+    fn gather_layouts(app_config: &AppConfig) -> Vec<DefinedTask> {
+        app_config
+            .layouts
+            .to_owned()
+            .into_iter()
+            .map(|layout| Self::generate_layout(&app_config.app_name, layout))
+            .collect::<Vec<_>>()
+    }
+
+    fn generate_page(app_name: &String, (name, path): (String, String)) -> DefinedTask {
+        let command = format!("yarn redwood generate page {} {}", &name, &path);
+        return CommandTask::new(format!("Generating page: {}", &name))
+            .command(command)
+            .chdir(app_name)
+            .build();
+    }
+
+    fn generate_layout(app_name: &String, layout_name: String) -> DefinedTask {
+        let command = format!("yarn redwood generate layout {} --ts", layout_name);
+        return CommandTask::new(format!("Generating layout: {}", &layout_name))
+            .command(command)
+            .chdir(app_name)
+            .build();
+    }
+}

@@ -1,5 +1,5 @@
 use crate::{
-    system::logger::log_skip,
+    system::logger::log_task_skip,
     task_definitions::{
         ansible::{ansible_task::RunnableAnsibleTask, yaml::command_task::CommandTask},
         task_types::DefinedTask,
@@ -14,13 +14,14 @@ impl RedwoodAuth {
         let app_name = &app_config.app_name;
 
         if !should_task_run(&tag, &app_config) {
-            log_skip(&tag.to_string());
+            log_task_skip(&tag.to_string());
             return None;
         }
 
         let setup_auth_task = Self::setup_auth(&tag, &app_name);
         let generate_secret = Self::generate_secret(&tag, &app_name);
-        let core_playbook = RunnableAnsibleTask::new("Generating db auth")
+        let mut binding = RunnableAnsibleTask::new("Generating db auth");
+        let core_playbook = binding
             .add_task(setup_auth_task)
             .add_task(generate_secret);
 
@@ -29,7 +30,7 @@ impl RedwoodAuth {
             core_playbook.add_task(generate_auth_pages_task);
         }
 
-        return Some(core_playbook);
+        return Some(core_playbook.to_owned());
     }
 
     fn setup_auth(tag: &TaskTag, app_name: &String) -> DefinedTask {

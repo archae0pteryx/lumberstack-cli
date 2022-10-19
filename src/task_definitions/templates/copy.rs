@@ -1,9 +1,8 @@
 use std::path::Path;
 
-use log::debug;
 use serde::{Deserialize, Serialize};
 
-use crate::{app_config::AppConfig, system::file_io::FileIO, system::logger::log_skip, lumberstack::Runnable};
+use crate::{app_config::AppConfig, system::file_io::FileIO, system::logger::log_task_skip, lumberstack::Runnable};
 
 use super::{
     tags::{should_task_run, TaskTag},
@@ -19,7 +18,7 @@ pub struct TemplateCopy {
 impl TemplateCopy {
     pub fn new(tag: TaskTag, app_config: &AppConfig) -> Option<TemplateCopy> {
         if !should_task_run(&tag, &app_config) {
-            log_skip(&tag.to_string());
+            log_task_skip(&tag.to_string());
             return None;
         }
         Some(TemplateCopy {
@@ -29,7 +28,7 @@ impl TemplateCopy {
     }
 
     pub fn copy_template(template: TemplateFile) {
-        debug!("Copying template: {}", &template.src.display());
+        // debug!("Copying template: {}", &template.src.display());
         let dest = &template.dest;
         let dest_dir = &dest.parent().unwrap();
         let dest_dir_exists = &dest.exists();
@@ -39,7 +38,7 @@ impl TemplateCopy {
         }
 
         Self::write_template_to_dest(&template);
-        debug!("template written");
+        // debug!("template written");
     }
 
     fn write_template_to_dest(template: &TemplateFile) {

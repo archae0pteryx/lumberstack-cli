@@ -1,10 +1,11 @@
 use crate::{
-    system::logger::log_skip,
+    app_config::AppConfig,
+    system::logger::log_task_skip,
     task_definitions::{
         ansible::{ansible_task::RunnableAnsibleTask, yaml::command_task::CommandTask},
         task_types::DefinedTask,
         templates::tags::{should_task_run, TaskTag},
-    }, app_config::AppConfig,
+    },
 };
 
 #[derive(Clone)]
@@ -15,14 +16,15 @@ impl RedwoodApp {
         let app_name = &app_config.app_name;
 
         if !should_task_run(&tag, &app_config) {
-            log_skip(&tag.to_string());
+            log_task_skip(&tag.to_string());
             return None;
         }
 
         let create_task = Self::create_redwood_command(&tag, app_name);
-        let base_playbook = RunnableAnsibleTask::new("create redwood app").add_task(create_task);
+        let mut base_playbook = RunnableAnsibleTask::new("create redwood app");
+        base_playbook.add_task(create_task);
 
-        return Some(base_playbook);
+        return Some(base_playbook.to_owned());
     }
 
     fn create_redwood_command(tag: &TaskTag, app_name: &String) -> DefinedTask {

@@ -1,6 +1,13 @@
 template_version: v0.0.5
 skip_checks: true
 clean: true
+save_playbook: true
+pages:
+  home: "/"
+  about: "/about"
+  admin: "/admin"
+layouts:
+  - foo
 vars:
   - const: foobar
   - key2: val2

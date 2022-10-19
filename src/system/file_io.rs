@@ -49,6 +49,14 @@ impl FileIO {
 
         Ok(())
     }
+    pub fn remove<P: AsRef<Path>>(path: P) {
+        debug!("Removing {}", &path.as_ref().to_str().unwrap());
+        if Path::is_dir(&path.as_ref()) {
+            fs_extra::dir::remove(&path).expect("Error removing directory");
+        } else {
+            fs_extra::file::remove(path).expect("Error removing file");
+        }
+    }
 
     pub fn read(path: &impl AsRef<Path>) -> Option<String> {
         let file_str = fs_extra::file::read_to_string(&path);

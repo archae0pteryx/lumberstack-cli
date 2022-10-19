@@ -24,6 +24,8 @@ pub enum TaskTag {
     Github,
     Parse,
     Templates,
+    Layouts,
+    Generate
 }
 
 lazy_static! {
@@ -45,6 +47,8 @@ impl Display for TaskTag {
             TaskTag::Github => write!(f, "github"),
             TaskTag::Parse => write!(f, "parse"),
             TaskTag::Templates => write!(f, "templates"),
+            TaskTag::Layouts => write!(f, "layouts"),
+            TaskTag::Generate => write!(f, "generate"),
         }
     }
 }

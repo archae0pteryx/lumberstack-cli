@@ -18,6 +18,10 @@ pub struct CliArgs {
     #[clap(long, action)]
     pub skip_checks: bool,
 
+    /// Remove previous artifacts
+    #[clap(long, action)]
+    pub clean: bool,
+
     /// Dont cleanup
     #[clap(short, long, value_parser)]
     pub artifacts: Option<String>,
@@ -54,6 +58,7 @@ pub struct ParsedArgs {
     pub tags: Option<Vec<String>>,
     pub log_file: Option<String>,
     pub skip_tags: Option<Vec<String>>,
+    pub clean: bool
 }
 
 impl Default for ParsedArgs {
@@ -68,6 +73,7 @@ impl Default for ParsedArgs {
             tags: None,
             log_file: None,
             skip_tags: None,
+            clean: false,
         }
     }
 }
@@ -85,6 +91,7 @@ impl ParsedArgs {
             tags: args.tags,
             log_file: args.log_file,
             skip_tags: args.skip_tags,
+            clean: args.clean,
         }
     }
 }

@@ -4,7 +4,7 @@ use env_logger::fmt::Color;
 use log::{warn, Level};
 use std::{env, io::Write};
 
-pub fn log_skip<S: AsRef<str>>(tag: S) {
+pub fn log_task_skip<S: AsRef<str>>(tag: S) {
     warn!("[SKIPPING] {}", tag.as_ref());
 }
 
