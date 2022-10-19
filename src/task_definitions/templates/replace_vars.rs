@@ -11,9 +11,9 @@ impl Replacer {
         file_str: &String,
         app_config: AppConfig,
     ) -> String {
-        let symbol_replace_vars = Symbols::extract_replacers_from_file(&file_str);
-        let replaced = Self::replace_in_content(&app_config, symbol_replace_vars, file_str);
-        replaced
+        let symbol_replace_vars = Symbols::extract_replacers_from_file(file_str);
+        
+        Self::replace_in_content(&app_config, symbol_replace_vars, file_str)
     }
 
     fn replace_in_content(
@@ -22,11 +22,11 @@ impl Replacer {
         content: &String,
     ) -> String {
         let mut replaced_content = String::new();
-        let interpolated_vars = Self::interpolate_vars(&app_config, symbol_vars);
+        let interpolated_vars = Self::interpolate_vars(app_config, symbol_vars);
         for (key, value) in interpolated_vars {
             replaced_content = content.replace(&key, &value);
         }
-        return replaced_content;
+        replaced_content
     }
 
     fn interpolate_vars(
@@ -41,7 +41,7 @@ impl Replacer {
         }
 
         for (key, value) in symbol_vars {
-            if value.starts_with("$") {
+            if value.starts_with('$') {
                 let v = Self::clip_dollar_sign(&value);
                 let config_var = interpolated_vars.get(&v);
 
@@ -62,8 +62,8 @@ impl Replacer {
     }
 
     fn clip_dollar_sign(value: &String) -> String {
-        if value.starts_with("$") {
-            return value.trim_start_matches("$").to_string();
+        if value.starts_with('$') {
+            return value.trim_start_matches('$').to_string();
         }
         value.to_owned()
     }

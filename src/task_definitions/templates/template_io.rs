@@ -20,14 +20,14 @@ pub struct TemplateFile {
 pub struct TemplateIO;
 impl TemplateIO {
     pub fn new(tag: TaskTag, app_config: &AppConfig) -> Option<Vec<TemplateFile>> {
-        if !should_task_run(&tag, &app_config) {
+        if !should_task_run(&tag, app_config) {
             log_task_skip(tag.to_string());
             return None;
         }
 
         let template_map_file = app_config.template_map.to_owned();
         let template_map_file_str = FileIO::read(&app_config.template_map);
-        if let None = template_map_file_str {
+        if template_map_file_str.is_none() {
             panic!(
                 "[templateIO] Can not load paths file: {}",
                 template_map_file
@@ -36,12 +36,12 @@ impl TemplateIO {
         let from_file_template_paths = Self::read_paths_file(template_map_file_str.unwrap());
         let from_dot_template_paths = Self::collect_dot_templates(&from_file_template_paths);
         let combined_templates = [
-            from_file_template_paths.clone(),
-            from_dot_template_paths.clone(),
+            from_file_template_paths,
+            from_dot_template_paths,
         ]
         .concat();
-        let processed_templates = Self::process_all_templates(&app_config, combined_templates);
-        assert!(processed_templates.len() > 0);
+        let processed_templates = Self::process_all_templates(app_config, combined_templates);
+        assert!(!processed_templates.is_empty());
 
         Some(processed_templates)
     }
@@ -59,7 +59,7 @@ impl TemplateIO {
             .map(|template_path| {
                 let src = template_path.to_owned();
                 let dest =
-                    Self::strip_from_path(&dest_root_dir, &path_to_strip, template_path.as_path());
+                    Self::strip_from_path(dest_root_dir, path_to_strip, template_path.as_path());
                 if FileIO::is_not_contentful(&src) {
                     debug!("Template is not contentful: {}", src.to_str().unwrap());
                     return TemplateFile {
@@ -77,15 +77,15 @@ impl TemplateIO {
                 let replaced_content =
                     Replacer::process_and_replace_vars(&file_str, app_config.clone());
 
-                return TemplateFile {
+                TemplateFile {
                     src,
                     dest,
                     tags,
                     content: Some(replaced_content),
-                };
+                }
             })
             .collect::<Vec<_>>();
-        return transformed;
+        transformed
     }
 
     // fn process_template_content(mut template_file: TemplateFile) -> TemplateFile {
@@ -145,9 +145,9 @@ impl TemplateIO {
             .map(|f| {
                 let mut buf = f.clone();
                 buf.pop();
-                return buf;
+                buf
             })
-            .flat_map(|pathbuf| Self::collect_dir(pathbuf))
+            .flat_map(Self::collect_dir)
             .filter(|f| f.path().is_file())
             .map(|de| de.into_path())
             .collect::<Vec<PathBuf>>()
@@ -172,18 +172,18 @@ impl TemplateIO {
             .strip_prefix(to_strip)
             .expect("Error stripping prefix from path");
         let app_path = Path::new(&dest_root_dir);
-        let dest = app_path.join(stripped);
-        return dest;
+        
+        app_path.join(stripped)
     }
 
     fn read_paths_file(json: String) -> Vec<PathBuf> {
-        let loaded: Vec<String> = serde_json::from_str(&json.as_str())
+        let loaded: Vec<String> = serde_json::from_str(json.as_str())
             .map_err(|_| Self::generate_read_error("to json struct".to_string()))
             .unwrap();
 
         loaded
             .iter()
-            .map(|i| PathBuf::from(i))
+            .map(PathBuf::from)
             .collect::<Vec<PathBuf>>()
     }
 

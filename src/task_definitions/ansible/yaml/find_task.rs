@@ -43,25 +43,25 @@ impl FindTask {
     pub fn register<S: AsRef<str>>(&self, register: S) -> FindTask {
         let mut new_task = self.clone();
         new_task.register = register.as_ref().to_owned();
-        return new_task;
+        new_task
     }
 
     pub fn file_type<S: AsRef<str>>(&self, file_type: S) -> FindTask {
         let mut new_task = self.clone();
         new_task.find.file_type = file_type.as_ref().to_string();
-        return new_task;
+        new_task
     }
 
     pub fn paths<S: AsRef<str>>(&self, paths: S) -> FindTask {
         let mut new_task = self.clone();
         new_task.find.paths = paths.as_ref().to_string();
-        return new_task;
+        new_task
     }
 
     pub fn recurse<S: AsRef<str>>(&self, recurse: S) -> FindTask {
         let mut new_task = self.clone();
         new_task.find.recurse = recurse.as_ref().to_string();
-        return new_task;
+        new_task
     }
 
     pub fn exclude<S: AsRef<str>>(&self, exclude: S) -> FindTask {
@@ -72,28 +72,28 @@ impl FindTask {
         .concat();
         let mut new_task = self.clone();
         new_task.find.excludes = new_excludes;
-        return new_task;
+        new_task
     }
 
     pub fn hidden<S: AsRef<str>>(&self, hidden: S) -> FindTask {
         let mut new_task = self.clone();
         new_task.find.hidden = hidden.as_ref().to_string();
-        return new_task;
+        new_task
     }
 
     pub fn contains<S: AsRef<str>>(&self, contains: S) -> FindTask {
         let mut new_task = self.clone();
         new_task.find.contains = contains.as_ref().to_string();
-        return new_task;
+        new_task
     }
 
     pub fn tags(&self, tags: Option<Vec<String>>) -> FindTask {
         let mut new_task = self.clone();
         new_task.tags = tags;
-        return new_task;
+        new_task
     }
 
-    pub fn build(self: &Self) -> DefinedTask {
+    pub fn build(&self) -> DefinedTask {
         DefinedTask::Find(self.clone())
     }
 }

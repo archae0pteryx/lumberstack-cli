@@ -41,25 +41,25 @@ impl CopyTask {
     pub fn src<S: AsRef<str>>(&self, src: S) -> CopyTask {
         let mut new_task = self.clone();
         new_task.copy.src = src.as_ref().to_string();
-        return new_task;
+        new_task
     }
 
     pub fn dest<S: AsRef<str>>(&self, dest: S) -> CopyTask {
         let mut new_task = self.clone();
         new_task.copy.dest = dest.as_ref().to_string();
-        return new_task;
+        new_task
     }
 
     pub fn content<S: AsRef<str>>(&self, content: S) -> CopyTask {
         let mut new_task = self.clone();
         new_task.copy.content = content.as_ref().to_string();
-        return new_task;
+        new_task
     }
 
     pub fn set_tags(&self, tags: Option<Vec<String>>) -> CopyTask {
         let mut new_task = self.clone();
         new_task.tags = tags;
-        return new_task;
+        new_task
     }
 
     pub fn build(&self) -> DefinedTask {

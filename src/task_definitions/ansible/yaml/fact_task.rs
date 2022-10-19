@@ -21,7 +21,7 @@ impl FactTask {
     pub fn set<S: AsRef<str>>(&self, key: S, value: S) -> FactTask {
         let mut new_fact = self.clone();
         new_fact.set_fact.insert(key.as_ref().to_string(), Value::String(value.as_ref().to_string()));
-        return new_fact;
+        new_fact
     }
 
     pub fn tags(&self, tags: Option<Vec<String>>) -> FactTask {

@@ -22,13 +22,13 @@ pub struct RunnableAnsibleTask {
 
 impl Runnable for RunnableAnsibleTask {
     fn run_job(&self) {
-        let spinner = create_spinner(format!("{}", self.label));
+        let spinner = create_spinner(&self.label);
         spinner.set_prefix("👟");
 
         self.write_yml();
 
-        ShellCommand::exec("./", "ansible-playbook", &[&DEFAULT_PLAYBOOK_FILE], true);
-        Self::save_playbook(&self);
+        ShellCommand::exec("./", "ansible-playbook", &[DEFAULT_PLAYBOOK_FILE], true);
+        Self::save_playbook(self);
     }
 }
 
@@ -50,11 +50,11 @@ impl RunnableAnsibleTask {
     pub fn add_task(&mut self, task: DefinedTask) -> &mut Self {
         match task {
             DefinedTask::None() => {
-                return self;
+                self
             }
             _ => {
                 self.tasks.push(task);
-                return self;
+                self
             }
         }
     }
@@ -69,7 +69,7 @@ impl RunnableAnsibleTask {
     fn save_playbook(&self) {
         let opts = fs_extra::file::CopyOptions::new();
         let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
-        let move_to = format!("tmp/{}_{}.yml", now.as_secs(), &self.label.replace(" ", ""));
+        let move_to = format!("tmp/{}_{}.yml", now.as_secs(), &self.label.replace(' ', ""));
         fs_extra::file::move_file(DEFAULT_PLAYBOOK_FILE, move_to, &opts).unwrap();
     }
 }

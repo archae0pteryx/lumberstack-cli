@@ -22,5 +22,5 @@ pub fn create_spinner<T: AsRef<str>>(msg: T) -> ProgressBar {
     );
     spinner.enable_steady_tick(Duration::from_millis(120));
     spinner.set_message(msg.as_ref().to_string());
-    return spinner;
+    spinner
 }

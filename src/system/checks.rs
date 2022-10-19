@@ -61,7 +61,7 @@ impl System {
             exit(exitcode::SOFTWARE);
         }
 
-        return String::from_utf8(output.unwrap().stdout).unwrap();
+        String::from_utf8(output.unwrap().stdout).unwrap()
     }
 
     fn check_docker() {

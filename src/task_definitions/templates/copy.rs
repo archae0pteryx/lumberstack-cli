@@ -18,7 +18,7 @@ pub struct TemplateCopy {
 
 impl TemplateCopy {
     pub fn new(tag: TaskTag, app_config: &AppConfig) -> Option<TemplateCopy> {
-        if !should_task_run(&tag, &app_config) {
+        if !should_task_run(&tag, app_config) {
             log_task_skip(&tag.to_string());
             return None;
         }
@@ -52,7 +52,7 @@ impl TemplateCopy {
         let dest = &template.dest;
 
         if let Some(contents) = contents {
-            FileIO::write(&dest, contents).unwrap();
+            FileIO::write(dest, contents).unwrap();
             return;
         }
         // must be binary file at this point

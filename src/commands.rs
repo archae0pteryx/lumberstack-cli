@@ -34,6 +34,6 @@ impl ShellCommand {
         if log::log_enabled!(log::Level::Info) {
             return Stdio::inherit();
         }
-        return Stdio::piped();
+        Stdio::piped()
     }
 }

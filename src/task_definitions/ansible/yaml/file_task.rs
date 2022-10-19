@@ -33,13 +33,13 @@ impl FileTask {
     pub fn path<S: AsRef<str>>(&self, path: S) -> FileTask {
         let mut new_task = self.clone();
         new_task.file.path = path.as_ref().to_string();
-        return new_task;
+        new_task
     }
 
     pub fn state<S: AsRef<str>>(&self, state: S) -> FileTask {
         let mut new_task = self.clone();
         new_task.file.state = state.as_ref().to_string();
-        return new_task;
+        new_task
     }
 
     pub fn build(&self) -> DefinedTask {

@@ -20,16 +20,16 @@ pub struct GithubTemplates;
 
 impl GithubTemplates {
     pub fn new(tag: TaskTag, app_config: &AppConfig) -> Option<RunnableAnsibleTask> {
-        if !should_task_run(&tag, &app_config) {
+        if !should_task_run(&tag, app_config) {
             log_task_skip(tag.to_string());
             return None;
         }
         // Register a dir for ansible to manipulate
-        let register_task = Self::register_template_dir(tag.clone(), &app_config);
+        let register_task = Self::register_template_dir(tag.clone(), app_config);
         // Clone the template repo
-        let clone_task = Self::clone_template_repo(tag.clone(), &app_config);
+        let clone_task = Self::clone_template_repo(tag.clone(), app_config);
         // Exclude unnecessary dirs we search through and filter
-        let exclude_dirs_task = Self::exclude_dirs_from_search(tag.clone(), &app_config);
+        let exclude_dirs_task = Self::exclude_dirs_from_search(tag.clone(), app_config);
         // Filter the directories
         let filter_task = Self::filter_dirs(tag.clone());
         // After we filter we gather all the matching file paths for templates
@@ -37,7 +37,7 @@ impl GithubTemplates {
         // Save the matching template paths as a var
         let save_fact_task = Self::save_found_as_fact(tag.clone());
         // Write the paths var to a file to be read by rust
-        let write_paths_task = Self::write_template_paths_to_file(tag.clone(), &app_config);
+        let write_paths_task = Self::write_template_paths_to_file(tag, app_config);
         // The playbook combines them all together into a playbook that we can execute
         Some(
             RunnableAnsibleTask::new("Cloning Templates")

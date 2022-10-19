@@ -33,31 +33,31 @@ impl GitTask {
     pub fn when<S: AsRef<str>>(&self, when: S) -> GitTask {
         let mut new_task = self.clone();
         new_task.when = when.as_ref().to_string();
-        return new_task;
+        new_task
     }
 
     pub fn repo<S: AsRef<str>>(&self, repo: S) -> GitTask {
         let mut new_task = self.clone();
         new_task.git.repo = repo.as_ref().to_string();
-        return new_task;
+        new_task
     }
 
     pub fn dest<S: AsRef<str>>(&self, dest: S) -> GitTask {
         let mut new_task = self.clone();
         new_task.git.dest = dest.as_ref().to_string();
-        return new_task;
+        new_task
     }
 
     pub fn version<S: AsRef<str>>(&self, version: S) -> GitTask {
         let mut new_task = self.clone();
         new_task.git.version = version.as_ref().to_string();
-        return new_task;
+        new_task
     }
 
     pub fn tags(&self, tags: Option<Vec<String>>) -> GitTask {
         let mut new_task = self.clone();
         new_task.tags = tags;
-        return new_task;
+        new_task
     }
 
     pub fn build(&self) -> DefinedTask {

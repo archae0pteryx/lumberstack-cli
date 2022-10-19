@@ -9,15 +9,15 @@ use phf::phf_map;
 
 pub static DEFAULT_TEMPLATE_VERSION: &str = "v0.0.4";
 pub static DEFAULT_TEMPLATE_REPO: &str = "https://github.com/codingzeal/redwood-template-app";
-pub static DEFAULT_WORKDIR: &'static str = "tmp";
-pub static DEFAULT_APP_NAME: &'static str = "myapp";
-pub static DEFAULT_TEMPLATE_DIR: &'static str = "templates";
-pub static DEFAULT_MANIFEST_FILE: &'static str = "lumberstack.yml";
-pub static DEFAULT_TEMPLATE_PATHS_FILE: &'static str = "template_map.txt";
-pub static DEFAULT_PLAYBOOK_FILE: &'static str = "playbook.yml";
-pub static DEFAULT_ANSIBLE_TEMPLATE_REGEX: &'static str = r#"(\/\/|\/\/\*|#|\<!--) template!?.*"#;
+pub static DEFAULT_WORKDIR: &str = "tmp";
+pub static DEFAULT_APP_NAME: &str = "myapp";
+pub static DEFAULT_TEMPLATE_DIR: &str = "templates";
+pub static DEFAULT_MANIFEST_FILE: &str = "lumberstack.yml";
+pub static DEFAULT_TEMPLATE_PATHS_FILE: &str = "template_map.txt";
+pub static DEFAULT_PLAYBOOK_FILE: &str = "playbook.yml";
+pub static DEFAULT_ANSIBLE_TEMPLATE_REGEX: &str = r#"(\/\/|\/\/\*|#|\<!--) template!?.*"#;
 // Rust regex specific
-pub static TEMPLATE_TOKEN_REGEX: &'static str =
+pub static TEMPLATE_TOKEN_REGEX: &str =
     r#"(//\*|//|#|<!--)\stemplate\[((?P<method>[^\]]+))\]"#;
 
 pub static DEFAULT_PAGES: phf::Map<&str, &str> = phf_map! {
@@ -49,7 +49,7 @@ pub struct AppConfig {
 pub fn load_app_config() -> Result<AppConfig> {
     let args = ParsedArgs::new();
     let config_file = load_config_file(args.config.clone())?;
-    let processed_config = process_config(args.clone(), config_file);
+    let processed_config = process_config(args, config_file);
     debug!("AppConfig: {:#?}", processed_config);
     Ok(processed_config)
 }
@@ -58,7 +58,7 @@ fn load_config_file(config: Option<String>) -> Result<ConfigFile> {
     let config_file_str =
         FileIO::read(&config.unwrap_or(DEFAULT_MANIFEST_FILE.to_string())).unwrap();
     let config: ConfigFile = serde_yaml::from_str(config_file_str.as_str())?;
-    return Ok(config);
+    Ok(config)
 }
 
 fn process_config(args: ParsedArgs, config_file: ConfigFile) -> AppConfig {
@@ -115,10 +115,10 @@ fn pages_to_generate(config_pages: Option<HashMap<String, String>>) -> HashMap<S
         }
     }
 
-    if pages.len() == 0 {
+    if pages.is_empty() {
         return HashMap::new();
     }
-    return pages;
+    pages
 }
 
 fn layouts_to_generate(config_layouts: Option<Vec<String>>) -> Vec<String> {
@@ -131,7 +131,7 @@ fn layouts_to_generate(config_layouts: Option<Vec<String>>) -> Vec<String> {
             layouts.push(layout.to_string());
         }
     }
-    return layouts;
+    layouts
 }
 
 fn combine_replace_vars(
@@ -154,6 +154,7 @@ fn select_or_none(opt_a: Option<String>, opt_b: Option<String>) -> Option<String
 }
 
 #[derive(Serialize, Deserialize, Clone)]
+#[derive(Default)]
 struct ConfigFile {
     name: Option<String>,
     template_version: Option<String>,
@@ -171,24 +172,7 @@ struct ConfigFile {
     save_playbook: bool,
 }
 
-impl Default for ConfigFile {
-    fn default() -> Self {
-        Self {
-            name: None,
-            template_version: None,
-            template_repo: None,
-            skip_tags: None,
-            tags: None,
-            vars: None,
-            log_file: None,
-            skip_checks: None,
-            pages: None,
-            layouts: None,
-            clean: false,
-            save_playbook: false
-        }
-    }
-}
+
 
 fn select_or_default_string(s1: Option<String>, s2: Option<String>, default: &str) -> String {
     s1.unwrap_or(s2.unwrap_or(default.to_string()))

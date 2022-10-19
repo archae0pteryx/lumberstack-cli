@@ -15,7 +15,7 @@ impl RedwoodApp {
     pub fn new(tag: TaskTag, app_config: &AppConfig) -> Option<RunnableAnsibleTask> {
         let app_name = &app_config.app_name;
 
-        if !should_task_run(&tag, &app_config) {
+        if !should_task_run(&tag, app_config) {
             log_task_skip(&tag.to_string());
             return None;
         }
@@ -24,7 +24,7 @@ impl RedwoodApp {
         let mut base_playbook = RunnableAnsibleTask::new("create redwood app");
         base_playbook.add_task(create_task);
 
-        return Some(base_playbook.to_owned());
+        Some(base_playbook.to_owned())
     }
 
     fn create_redwood_command(tag: &TaskTag, app_name: &String) -> DefinedTask {

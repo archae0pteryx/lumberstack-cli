@@ -51,7 +51,7 @@ impl FileIO {
     }
     pub fn remove<P: AsRef<Path>>(path: P) {
         debug!("Removing {}", &path.as_ref().to_str().unwrap());
-        if Path::is_dir(&path.as_ref()) {
+        if Path::is_dir(path.as_ref()) {
             fs_extra::dir::remove(&path).expect("Error removing directory");
         } else {
             fs_extra::file::remove(path).expect("Error removing file");
@@ -59,7 +59,7 @@ impl FileIO {
     }
 
     pub fn read(path: &impl AsRef<Path>) -> Option<String> {
-        let file_str = fs_extra::file::read_to_string(&path);
+        let file_str = fs_extra::file::read_to_string(path);
         if let Ok(fs) = file_str {
             return Some(fs);
         }
@@ -67,7 +67,7 @@ impl FileIO {
             "[system] Could not read file to string: {}. Skipping",
             path.as_ref().to_str().unwrap()
         );
-        return None;
+        None
     }
 
     pub fn is_not_contentful<P: AsRef<Path>>(path: P) -> bool {
@@ -77,13 +77,13 @@ impl FileIO {
         if Path::is_dir(path.as_ref()) {
             return true;
         }
-        return false;
+        false
     }
 
     pub fn is_image<P: AsRef<Path>>(path: P) -> bool {
         let mimes = vec!["jpeg", "png", "jpg", "gif"];
         let ext = Self::file_ext(&path);
-        return mimes.contains(&ext);
+        mimes.contains(&ext)
     }
 
     pub fn file_ext<P: AsRef<Path>>(path: &P) -> &str {
@@ -91,6 +91,6 @@ impl FileIO {
         if let Some(e) = ext {
             return e;
         }
-        return "";
+        ""
     }
 }

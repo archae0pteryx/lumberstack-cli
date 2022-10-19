@@ -12,7 +12,7 @@ pub struct RedwoodGenerate;
 
 impl RedwoodGenerate {
     pub fn new(tag: TaskTag, app_config: &AppConfig) -> Option<RunnableAnsibleTask> {
-        if !should_task_run(&tag, &app_config) {
+        if !should_task_run(&tag, app_config) {
             log_task_skip(&tag.to_string());
             return None;
         }
@@ -33,13 +33,13 @@ impl RedwoodGenerate {
     }
 
     fn gather_pages(app_config: &AppConfig) -> Vec<DefinedTask> {
-        let p = app_config
+
+        app_config
             .pages
-            .to_owned()
-            .into_iter()
+            .iter()
             .map(|page| Self::generate_page(&app_config.app_name, page))
-            .collect::<Vec<_>>();
-        return p;
+            .collect::<Vec<_>>()
+
     }
 
     fn gather_layouts(app_config: &AppConfig) -> Vec<DefinedTask> {
@@ -51,7 +51,7 @@ impl RedwoodGenerate {
             .collect::<Vec<_>>()
     }
 
-    fn generate_page(app_name: &String, (name, path): (String, String)) -> DefinedTask {
+    fn generate_page(app_name: &String, (name, path): (&String, &String)) -> DefinedTask {
         let command = format!("yarn redwood generate page {} {}", &name, &path);
         return CommandTask::new(format!("Generating page: {}", &name))
             .command(command)

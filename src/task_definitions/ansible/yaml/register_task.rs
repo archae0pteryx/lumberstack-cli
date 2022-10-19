@@ -31,19 +31,19 @@ impl RegisterTask {
     pub fn register<S: AsRef<str>>(&self, register: S) -> RegisterTask {
         let mut new_task = self.clone();
         new_task.register = register.as_ref().to_string();
-        return new_task;
+        new_task
     }
 
     pub fn stat_path<S: AsRef<str>>(&self, path: S) -> RegisterTask {
         let mut new_task = self.clone();
         new_task.stat.path = path.as_ref().to_string();
-        return new_task;
+        new_task
     }
 
     pub fn tags(&self, tags: Option<Vec<String>>) -> RegisterTask {
         let mut new_task = self.clone();
         new_task.tags = tags;
-        return new_task;
+        new_task
 
     }
     pub fn build(&self) -> DefinedTask {

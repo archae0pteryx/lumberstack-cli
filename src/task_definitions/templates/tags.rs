@@ -61,7 +61,7 @@ pub fn should_task_run(this_tag: &TaskTag, app_config: &AppConfig) -> bool {
         return !has_skip_tag;
     }
 
-    return true;
+    true
 }
 
 #[derive(Debug, Clone)]
@@ -73,7 +73,7 @@ impl Symbols {
         for line in file_str.lines() {
             var_map = Self::capture_and_collect(var_map, line);
         }
-        return var_map;
+        var_map
     }
 
     fn capture_and_collect(
@@ -87,14 +87,14 @@ impl Symbols {
                 let extracted_replace_strings = Self::split_arr(rg.as_str().trim().to_string());
 
                 extracted_replace_strings.iter().for_each(|key_value| {
-                    let kv: Vec<&str> = key_value.split(":").collect();
+                    let kv: Vec<&str> = key_value.split(':').collect();
                     let key = kv[0].to_string();
                     let value = kv[1].to_string();
                     var_map.insert(key, value);
                 });
             }
         }
-        return var_map;
+        var_map
     }
 
     pub fn parse_tags(file_str: &String) -> Vec<String> {
@@ -108,11 +108,11 @@ impl Symbols {
                 }
             }
         }
-        return vec![];
+        vec![]
     }
 
     fn split_arr(arr: String) -> Vec<String> {
-        arr.split(",").map(str::to_string).collect()
+        arr.split(',').map(str::to_string).collect()
     }
 }
 // #[cfg(test)]

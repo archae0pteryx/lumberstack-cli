@@ -38,7 +38,7 @@ impl CommandTask {
     pub fn command<S: AsRef<str>>(&self, command: S) -> CommandTask {
         let mut new_task = self.clone();
         new_task.command.cmd = command.as_ref().to_string();
-        return new_task;
+        new_task
     }
 
     pub fn chdir<S: AsRef<str>>(&self, chdir: S) -> CommandTask {
@@ -47,25 +47,25 @@ impl CommandTask {
             chdir: chdir.as_ref().to_string(),
         };
         new_task.args = Some(args);
-        return new_task;
+        new_task
     }
 
     pub fn register<S: AsRef<str>>(&self, register: S) -> CommandTask {
         let mut new_task = self.clone();
         new_task.register = Some(register.as_ref().to_string());
-        return new_task;
+        new_task
     }
 
     pub fn creates<S: AsRef<str>>(&self, creates: S) -> CommandTask {
         let mut new_task = self.clone();
         new_task.command.creates = creates.as_ref().to_string();
-        return new_task;
+        new_task
     }
 
     pub fn set_tags(&self, tags: Option<Vec<String>>) -> CommandTask {
         let mut new_task = self.clone();
         new_task.tags = tags;
-        return new_task;
+        new_task
     }
 
     pub fn build(&self) -> DefinedTask {

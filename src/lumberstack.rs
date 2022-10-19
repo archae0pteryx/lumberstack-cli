@@ -20,7 +20,7 @@ impl Lumberstack {
 
     pub fn process(&mut self) {
         let run_items = &self.run_items;
-        run_items.into_iter().for_each(|item| {
+        run_items.iter().for_each(|item| {
             item.run_job();
         });
     }
