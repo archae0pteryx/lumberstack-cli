@@ -9,5 +9,4 @@ pages:
 layouts:
   - foo
 vars:
-  - const: foobar
-  - key2: val2
+  key2: val2

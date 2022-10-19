@@ -33,7 +33,7 @@ pub struct AppConfig {
     pub template_version: String,
     pub tags: Option<Vec<String>>,
     pub skip_tags: Option<Vec<String>>,
-    pub template_vars: HashMap<String, String>,
+    pub replace_vars: HashMap<String, String>,
     pub template_repo: String,
     pub template_dir: String,
     pub template_map: String,
@@ -73,7 +73,7 @@ fn process_config(args: ParsedArgs, config_file: ConfigFile) -> AppConfig {
         .unwrap_or(DEFAULT_TEMPLATE_REPO.to_string());
     let tags = args.tags.or(config_file.tags);
     let skip_tags = args.skip_tags.or(config_file.skip_tags);
-    let template_vars = process_template_vars(&app_name, config_file.template_vars);
+    let replace_vars = combine_replace_vars(&app_name, config_file.vars);
 
     let workdir = DEFAULT_WORKDIR.to_string();
     let template_dir = format!("{}/{}", workdir, DEFAULT_TEMPLATE_DIR);
@@ -90,7 +90,7 @@ fn process_config(args: ParsedArgs, config_file: ConfigFile) -> AppConfig {
         template_repo,
         tags,
         skip_tags,
-        template_vars,
+        replace_vars,
         template_dir,
         template_map,
         log_file,
@@ -134,12 +134,12 @@ fn layouts_to_generate(config_layouts: Option<Vec<String>>) -> Vec<String> {
     return layouts;
 }
 
-fn process_template_vars(
+fn combine_replace_vars(
     app_name: &String,
     config_template_vars: Option<HashMap<String, String>>,
 ) -> HashMap<String, String> {
     let mut template_vars = HashMap::new();
-    template_vars.insert("$app_name".to_string(), app_name.clone());
+    template_vars.insert("app_name".to_string(), app_name.clone());
 
     if let Some(vars) = config_template_vars {
         for (key, value) in vars {
@@ -158,7 +158,7 @@ struct ConfigFile {
     name: Option<String>,
     template_version: Option<String>,
     template_repo: Option<String>,
-    template_vars: Option<HashMap<String, String>>,
+    vars: Option<HashMap<String, String>>,
     tags: Option<Vec<String>>,
     skip_tags: Option<Vec<String>>,
     log_file: Option<String>,
@@ -179,7 +179,7 @@ impl Default for ConfigFile {
             template_repo: None,
             skip_tags: None,
             tags: None,
-            template_vars: None,
+            vars: None,
             log_file: None,
             skip_checks: None,
             pages: None,
@@ -215,7 +215,7 @@ mod tests {
         assert_eq!(actual.tags, None);
         assert_eq!(actual.skip_tags, None);
         assert_eq!(
-            actual.template_vars.get("$app_name").unwrap(),
+            actual.replace_vars.get("$app_name").unwrap(),
             &DEFAULT_APP_NAME.to_string()
         );
 

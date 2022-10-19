@@ -1,8 +1,7 @@
 use std::{
     env,
-    time::{SystemTime, UNIX_EPOCH},
+    time::{SystemTime, UNIX_EPOCH}
 };
-
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -25,10 +24,11 @@ impl Runnable for RunnableAnsibleTask {
     fn run_job(&self) {
         let spinner = create_spinner(format!("{}", self.label));
         spinner.set_prefix("👟");
+
         self.write_yml();
+
         ShellCommand::exec("./", "ansible-playbook", &[&DEFAULT_PLAYBOOK_FILE], true);
         Self::save_playbook(&self);
-        spinner.finish_and_clear();
     }
 }
 
@@ -65,10 +65,6 @@ impl RunnableAnsibleTask {
         fs_extra::file::write_all(DEFAULT_PLAYBOOK_FILE, yaml.as_str())
             .expect("Tried to write playbook yaml to file. Could not");
     }
-
-    // fn remove_playbook(&self) {
-    //     fs_extra::file::remove(DEFAULT_PLAYBOOK_FILE).expect("Tried to remove playbook. Could not");
-    // }
 
     fn save_playbook(&self) {
         let opts = fs_extra::file::CopyOptions::new();

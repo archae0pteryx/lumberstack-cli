@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 use anyhow::{Context, Result};
 use fs_extra::dir::CopyOptions;
 use log::{debug, error, warn};
@@ -27,7 +28,6 @@ impl FileIO {
     }
 
     // Copy entire contents of directory
-    #[allow(dead_code)]
     pub fn copy_dir<P: AsRef<Path>>(src: P, dest: P) {
         let mut opts = CopyOptions::new();
         opts.overwrite = true;
@@ -68,6 +68,16 @@ impl FileIO {
             path.as_ref().to_str().unwrap()
         );
         return None;
+    }
+
+    pub fn is_not_contentful<P: AsRef<Path>>(path: P) -> bool {
+        if Self::is_image(path.as_ref()) {
+            return true;
+        }
+        if Path::is_dir(path.as_ref()) {
+            return true;
+        }
+        return false;
     }
 
     pub fn is_image<P: AsRef<Path>>(path: P) -> bool {

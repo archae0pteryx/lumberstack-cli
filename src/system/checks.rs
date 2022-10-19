@@ -1,7 +1,7 @@
 use anyhow::Result;
 use std::process::{exit, Command, Output};
 
-use log::{error, debug};
+use log::{debug, error};
 
 use crate::app_config::{load_app_config, AppConfig, DEFAULT_WORKDIR};
 
@@ -22,8 +22,8 @@ impl System {
             Self::check_node_version();
         }
 
-        if app_config.clean {
-            debug!("Removing artifacts...");
+        if app_config.clean && app_config.tags.is_none() && app_config.skip_tags.is_none() {
+            debug!("Found clean flag");
             FileIO::remove(&app_config.app_name);
             FileIO::remove(&app_config.workdir);
             if let Some(lf) = &app_config.log_file {

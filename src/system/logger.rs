@@ -46,7 +46,7 @@ impl Logger {
                     Level::Debug => {
                         let msg = buf_style
                             .set_color(Color::White)
-                            .set_bg(Color::Rgb(90, 90, 90))
+                            .set_bg(Color::Rgb(10, 10, 130))
                             .set_intense(true)
                             .value(record.args());
                         writeln!(buf, "{}", msg)
