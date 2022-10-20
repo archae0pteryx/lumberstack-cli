@@ -21,12 +21,12 @@ fn main() -> anyhow::Result<(), Error> {
     let app_config = System::init()?;
     let mut app = Lumberstack::new();
 
-    let clone_task = GithubTemplates::new(TaskTag::Init, &app_config);
-    let create_task = RedwoodApp::new(TaskTag::Create, &app_config);
+    let clone_task = GithubTemplates::create_runnable_task(TaskTag::Init, &app_config);
+    let create_task = RedwoodApp::create_runnable_task(TaskTag::Create, &app_config);
 
-    let generate_pages_task = RedwoodGenerate::new(TaskTag::Generate, &app_config);
+    let generate_pages_task = RedwoodGenerate::create_runnable_task(TaskTag::Generate, &app_config);
 
-    let auth_task = RedwoodAuth::new(TaskTag::Auth, &app_config);
+    let auth_task = RedwoodAuth::create_runnable_task(TaskTag::Auth, &app_config);
 
     let template_copy_task = TemplateCopy::new(TaskTag::Templates, &app_config);
 

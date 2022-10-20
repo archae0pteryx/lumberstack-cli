@@ -1,16 +1,20 @@
 use crate::{
+    app_config::AppConfig,
     system::logger::log_task_skip,
     task_definitions::{
         ansible::{ansible_task::RunnableAnsibleTask, yaml::command_task::CommandTask},
         task_types::DefinedTask,
         templates::tags::{should_task_run, TaskTag},
-    }, app_config::AppConfig,
+    },
 };
 
 pub struct RedwoodAuth;
 
 impl RedwoodAuth {
-    pub fn new(tag: TaskTag, app_config: &AppConfig) -> Option<RunnableAnsibleTask> {
+    pub fn create_runnable_task(
+        tag: TaskTag,
+        app_config: &AppConfig,
+    ) -> Option<RunnableAnsibleTask> {
         let app_name = &app_config.app_name;
 
         if !should_task_run(&tag, app_config) {
@@ -21,9 +25,7 @@ impl RedwoodAuth {
         let setup_auth_task = Self::setup_auth(&tag, app_name);
         let generate_secret = Self::generate_secret(&tag, app_name);
         let mut binding = RunnableAnsibleTask::new("Generating db auth");
-        let core_playbook = binding
-            .add_task(setup_auth_task)
-            .add_task(generate_secret);
+        let core_playbook = binding.add_task(setup_auth_task).add_task(generate_secret);
 
         if should_task_run(&TaskTag::Pages, app_config) {
             let generate_auth_pages_task = Self::generate_auth_pages(&tag, app_name);

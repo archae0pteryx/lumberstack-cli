@@ -1,4 +1,3 @@
-
 use clap::Parser;
 use clap_verbosity_flag::Verbosity;
 
@@ -58,7 +57,7 @@ pub struct ParsedArgs {
     pub tags: Option<Vec<String>>,
     pub log_file: Option<String>,
     pub skip_tags: Option<Vec<String>>,
-    pub clean: bool
+    pub clean: bool,
 }
 
 impl Default for ParsedArgs {

@@ -36,7 +36,7 @@ impl FindTask {
             name: name.as_ref().to_string(),
             find: Find::default(),
             register: String::new(),
-            tags: None
+            tags: None,
         }
     }
 

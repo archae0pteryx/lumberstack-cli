@@ -3,16 +3,18 @@ pub trait Runnable {
 }
 
 pub struct Lumberstack {
-    pub run_items: Vec<Box<dyn Runnable>>
+    pub run_items: Vec<Box<dyn Runnable>>,
 }
 
 impl Lumberstack {
     pub fn new() -> Lumberstack {
-        Lumberstack { run_items: Vec::new() }
+        Lumberstack {
+            run_items: Vec::new(),
+        }
     }
 
     pub fn queue<T: Runnable + 'static>(&mut self, task: Option<T>) -> &mut Self {
-        if let Some(runnable) = task  {
+        if let Some(runnable) = task {
             self.run_items.push(Box::new(runnable));
         }
         self

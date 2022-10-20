@@ -1,12 +1,13 @@
 template_version: v0.0.5
 skip_checks: true
 clean: true
-save_playbook: true
+save_playbook: false
 pages:
   home: "/"
   about: "/about"
   admin: "/admin"
 layouts:
-  - foo
+  - admin
 vars:
-  key2: val2
+  foo: bar
+  baz: qux

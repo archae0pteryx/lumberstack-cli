@@ -8,7 +8,7 @@ pub struct FileTask {
     pub name: String,
     pub file: File,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub tags: Option<Vec<String>>
+    pub tags: Option<Vec<String>>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
@@ -16,7 +16,7 @@ pub struct File {
     #[serde(skip_serializing_if = "String::is_empty")]
     pub path: String,
     #[serde(skip_serializing_if = "String::is_empty")]
-    pub state: String
+    pub state: String,
 }
 
 impl FileTask {
@@ -27,7 +27,7 @@ impl FileTask {
                 path: String::new(),
                 state: String::new(),
             },
-            tags: None
+            tags: None,
         }
     }
     pub fn path<S: AsRef<str>>(&self, path: S) -> FileTask {

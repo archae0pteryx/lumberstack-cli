@@ -1,5 +1,5 @@
 // use crate::manifest::CommandItem;
-use log::{error};
+use log::error;
 use std::process::{exit, Command, Stdio};
 
 pub struct ShellCommand;

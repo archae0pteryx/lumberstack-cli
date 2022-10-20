@@ -11,7 +11,10 @@ use crate::{
 pub struct RedwoodGenerate;
 
 impl RedwoodGenerate {
-    pub fn new(tag: TaskTag, app_config: &AppConfig) -> Option<RunnableAnsibleTask> {
+    pub fn create_runnable_task(
+        tag: TaskTag,
+        app_config: &AppConfig,
+    ) -> Option<RunnableAnsibleTask> {
         if !should_task_run(&tag, app_config) {
             log_task_skip(&tag.to_string());
             return None;
@@ -33,20 +36,18 @@ impl RedwoodGenerate {
     }
 
     fn gather_pages(app_config: &AppConfig) -> Vec<DefinedTask> {
-
         app_config
             .pages
             .iter()
             .map(|page| Self::generate_page(&app_config.app_name, page))
             .collect::<Vec<_>>()
-
     }
 
     fn gather_layouts(app_config: &AppConfig) -> Vec<DefinedTask> {
         app_config
             .layouts
-            .to_owned()
-            .into_iter()
+            .iter()
+            .cloned()
             .map(|layout| Self::generate_layout(&app_config.app_name, layout))
             .collect::<Vec<_>>()
     }

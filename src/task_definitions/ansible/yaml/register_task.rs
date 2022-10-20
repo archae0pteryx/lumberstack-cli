@@ -9,7 +9,7 @@ pub struct RegisterTask {
     #[serde(skip_serializing_if = "String::is_empty")]
     pub register: String,
     #[serde(skip_serializing_if = "Option::is_none")]
-    tags: Option<Vec<String>>
+    tags: Option<Vec<String>>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Default)]
@@ -24,7 +24,7 @@ impl RegisterTask {
             name: name.as_ref().to_string(),
             stat: StatPath::default(),
             register: String::new(),
-            tags: None
+            tags: None,
         }
     }
 
@@ -44,11 +44,9 @@ impl RegisterTask {
         let mut new_task = self.clone();
         new_task.tags = tags;
         new_task
-
     }
     pub fn build(&self) -> DefinedTask {
         DefinedTask::Register(self.clone())
-
     }
 }
 
@@ -58,9 +56,7 @@ mod tests {
 
     #[test]
     fn it_builds_register_task() {
-        let actual = RegisterTask::new("foo")
-            .register("bar")
-            .stat_path("baz");
+        let actual = RegisterTask::new("foo").register("bar").stat_path("baz");
 
         assert_eq!(actual.name, "foo");
         assert_eq!(actual.register, "bar");

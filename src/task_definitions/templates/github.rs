@@ -1,4 +1,5 @@
 use crate::{
+    app_config::{AppConfig, DEFAULT_ANSIBLE_TEMPLATE_REGEX},
     system::logger::log_task_skip,
     task_definitions::{
         ansible::{
@@ -9,7 +10,7 @@ use crate::{
             },
         },
         task_types::DefinedTask,
-    }, app_config::{DEFAULT_ANSIBLE_TEMPLATE_REGEX, AppConfig},
+    },
 };
 
 use super::tags::{should_task_run, TaskTag};
@@ -19,7 +20,10 @@ use super::tags::{should_task_run, TaskTag};
 pub struct GithubTemplates;
 
 impl GithubTemplates {
-    pub fn new(tag: TaskTag, app_config: &AppConfig) -> Option<RunnableAnsibleTask> {
+    pub fn create_runnable_task(
+        tag: TaskTag,
+        app_config: &AppConfig,
+    ) -> Option<RunnableAnsibleTask> {
         if !should_task_run(&tag, app_config) {
             log_task_skip(tag.to_string());
             return None;
@@ -48,7 +52,8 @@ impl GithubTemplates {
                 .add_task(gather_paths_task)
                 .add_task(save_fact_task)
                 .add_task(write_paths_task),
-        ).cloned()
+        )
+        .cloned()
     }
 
     fn register_template_dir(tag: TaskTag, app_config: &AppConfig) -> DefinedTask {

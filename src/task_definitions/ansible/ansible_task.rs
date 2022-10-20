@@ -1,8 +1,8 @@
+use serde::{Deserialize, Serialize};
 use std::{
     env,
-    time::{SystemTime, UNIX_EPOCH}
+    time::{SystemTime, UNIX_EPOCH},
 };
-use serde::{Deserialize, Serialize};
 
 use crate::{
     app_config::DEFAULT_PLAYBOOK_FILE, commands::ShellCommand, lumberstack::Runnable,
@@ -49,9 +49,7 @@ impl RunnableAnsibleTask {
 
     pub fn add_task(&mut self, task: DefinedTask) -> &mut Self {
         match task {
-            DefinedTask::None() => {
-                self
-            }
+            DefinedTask::None() => self,
             _ => {
                 self.tasks.push(task);
                 self

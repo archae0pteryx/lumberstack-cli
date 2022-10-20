@@ -2,24 +2,21 @@ use std::collections::HashMap;
 
 use crate::app_config::AppConfig;
 
-use super::tags::Symbols;
+use super::symbols::Symbols;
 
 pub struct Replacer;
 
 impl Replacer {
-    pub fn process_and_replace_vars(
-        file_str: &String,
-        app_config: AppConfig,
-    ) -> String {
-        let symbol_replace_vars = Symbols::extract_replacers_from_file(file_str);
-        
+    pub fn process_and_replace_vars(file_str: &str, app_config: AppConfig) -> String {
+        let symbol_replace_vars = Symbols::get_replacers(file_str);
+
         Self::replace_in_content(&app_config, symbol_replace_vars, file_str)
     }
 
     fn replace_in_content(
         app_config: &AppConfig,
         symbol_vars: HashMap<String, String>,
-        content: &String,
+        content: &str,
     ) -> String {
         let mut replaced_content = String::new();
         let interpolated_vars = Self::interpolate_vars(app_config, symbol_vars);
@@ -54,10 +51,8 @@ impl Replacer {
                 interpolated_vars.insert(key.to_string(), value.to_string());
             }
         }
-
         let sanity_check = interpolated_vars.get("app_name").unwrap();
         assert_eq!(sanity_check, &app_config.app_name);
-
         interpolated_vars
     }
 

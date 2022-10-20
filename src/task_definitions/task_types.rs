@@ -1,9 +1,12 @@
 use serde::{Deserialize, Serialize};
 
-use super::{ansible::yaml::{
-    command_task::CommandTask, copy_task::CopyTask, fact_task::FactTask, file_task::FileTask,
-    find_task::FindTask, git_task::GitTask, register_task::RegisterTask,
-}, templates::copy::TemplateCopy};
+use super::{
+    ansible::yaml::{
+        command_task::CommandTask, copy_task::CopyTask, fact_task::FactTask, file_task::FileTask,
+        find_task::FindTask, git_task::GitTask, register_task::RegisterTask,
+    },
+    templates::copy::TemplateCopy,
+};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(untagged)]

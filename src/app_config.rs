@@ -17,8 +17,7 @@ pub static DEFAULT_TEMPLATE_PATHS_FILE: &str = "template_map.txt";
 pub static DEFAULT_PLAYBOOK_FILE: &str = "playbook.yml";
 pub static DEFAULT_ANSIBLE_TEMPLATE_REGEX: &str = r#"(\/\/|\/\/\*|#|\<!--) template!?.*"#;
 // Rust regex specific
-pub static TEMPLATE_TOKEN_REGEX: &str =
-    r#"(//\*|//|#|<!--)\stemplate\[((?P<method>[^\]]+))\]"#;
+pub static TEMPLATE_TOKEN_REGEX: &str = r#"(//\*|//|#|<!--)\stemplate\[((?P<method>[^\]]+))\]"#;
 
 pub static DEFAULT_PAGES: phf::Map<&str, &str> = phf_map! {
     "home" => "/",
@@ -56,7 +55,7 @@ pub fn load_app_config() -> Result<AppConfig> {
 
 fn load_config_file(config: Option<String>) -> Result<ConfigFile> {
     let config_file_str =
-        FileIO::read(&config.unwrap_or(DEFAULT_MANIFEST_FILE.to_string())).unwrap();
+        FileIO::read(&config.unwrap_or_else(|| DEFAULT_MANIFEST_FILE.to_string())).unwrap();
     let config: ConfigFile = serde_yaml::from_str(config_file_str.as_str())?;
     Ok(config)
 }
@@ -70,7 +69,7 @@ fn process_config(args: ParsedArgs, config_file: ConfigFile) -> AppConfig {
     );
     let template_repo = config_file
         .template_repo
-        .unwrap_or(DEFAULT_TEMPLATE_REPO.to_string());
+        .unwrap_or_else(|| DEFAULT_TEMPLATE_REPO.to_string());
     let tags = args.tags.or(config_file.tags);
     let skip_tags = args.skip_tags.or(config_file.skip_tags);
     let replace_vars = combine_replace_vars(&app_name, config_file.vars);
@@ -99,7 +98,7 @@ fn process_config(args: ParsedArgs, config_file: ConfigFile) -> AppConfig {
         pages,
         layouts,
         clean,
-        save_playbook
+        save_playbook,
     }
 }
 
@@ -109,15 +108,12 @@ fn pages_to_generate(config_pages: Option<HashMap<String, String>>) -> HashMap<S
         pages.insert(name.to_string(), path.to_string());
     }
 
-    if config_pages.is_some() {
-        for (key, value) in config_pages.unwrap().iter() {
-            pages.insert(key.to_string(), value.to_string());
+    if let Some(config_pages) = config_pages {
+        for (name, path) in config_pages.into_iter() {
+            pages.insert(name, path);
         }
     }
 
-    if pages.is_empty() {
-        return HashMap::new();
-    }
     pages
 }
 
@@ -126,20 +122,21 @@ fn layouts_to_generate(config_layouts: Option<Vec<String>>) -> Vec<String> {
     for default_layout in DEFAULT_LAYOUTS {
         layouts.push(default_layout.to_string());
     }
-    if config_layouts.is_some() {
-        for layout in config_layouts.unwrap().iter() {
-            layouts.push(layout.to_string());
+
+    if let Some(config_layouts) = config_layouts {
+        for layout in config_layouts {
+            layouts.push(layout);
         }
     }
     layouts
 }
 
 fn combine_replace_vars(
-    app_name: &String,
+    app_name: &str,
     config_template_vars: Option<HashMap<String, String>>,
 ) -> HashMap<String, String> {
     let mut template_vars = HashMap::new();
-    template_vars.insert("app_name".to_string(), app_name.clone());
+    template_vars.insert("app_name".to_string(), app_name.to_owned());
 
     if let Some(vars) = config_template_vars {
         for (key, value) in vars {
@@ -153,8 +150,7 @@ fn select_or_none(opt_a: Option<String>, opt_b: Option<String>) -> Option<String
     opt_a.or(opt_b)
 }
 
-#[derive(Serialize, Deserialize, Clone)]
-#[derive(Default)]
+#[derive(Serialize, Deserialize, Clone, Default)]
 struct ConfigFile {
     name: Option<String>,
     template_version: Option<String>,
@@ -172,10 +168,8 @@ struct ConfigFile {
     save_playbook: bool,
 }
 
-
-
 fn select_or_default_string(s1: Option<String>, s2: Option<String>, default: &str) -> String {
-    s1.unwrap_or(s2.unwrap_or(default.to_string()))
+    s1.unwrap_or_else(|| s2.unwrap_or_else(|| default.to_string()))
 }
 
 #[cfg(test)]

@@ -3,7 +3,10 @@ use std::process::{exit, Command, Output};
 
 use log::{debug, error};
 
-use crate::app_config::{load_app_config, AppConfig, DEFAULT_WORKDIR};
+use crate::{
+    app_config::{load_app_config, AppConfig, DEFAULT_WORKDIR},
+    spinner::create_spinner,
+};
 
 use super::{file_io::FileIO, logger::Logger};
 
@@ -12,6 +15,8 @@ pub struct System;
 impl System {
     pub fn init() -> Result<AppConfig> {
         Logger::init();
+        let spinner = create_spinner("Initializing...");
+        spinner.set_prefix("🖥 ");
         let app_config = load_app_config()?;
 
         if !app_config.skip_checks {
@@ -32,6 +37,7 @@ impl System {
         }
 
         FileIO::create_dir(DEFAULT_WORKDIR)?;
+        spinner.finish_and_clear();
         Ok(app_config)
     }
 
