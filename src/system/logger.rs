@@ -60,6 +60,7 @@ impl Logger {
     fn set_ansible_log(log_path: &Option<String>) {
         if let Some(log_path) = &log_path {
             env::set_var("ANSIBLE_LOG_PATH", log_path);
+            env::set_var("ANSIBLE_STDOUT_CALLBACK", "debug");
         }
     }
 }

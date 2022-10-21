@@ -1,0 +1,43 @@
+# Most of these flags can be manually enabled/disabled via the CLI
+# See `lumberstack --help` for more information
+
+# github.com/codingzeal/redwood-template-app <default: v0.0.5>
+template_version: v0.0.5
+
+# System checks for dependencies <default: false>
+skip_checks: true
+
+# delete all previous artifacts (tmp,project,logs) <default: false>
+clean: true
+
+# save all ansible output <default: none>
+log_path: ansible.log
+
+# tagged tasks to run <default: all>
+tags:
+  - clone
+  - create
+  - generate
+  - templates
+  - auth
+  - prisma
+  - tests
+
+# tagged tasks to skip
+skip_tags:
+  - <same as above>
+
+# redwood pages to generate
+pages:
+  home: "/"
+  about: "/about"
+  admin: "/admin"
+
+# redwood layouts to generate
+layouts:
+  - test
+
+# app_name variable is auto set to project name
+vars:
+  foo: bar
+  baz: qux

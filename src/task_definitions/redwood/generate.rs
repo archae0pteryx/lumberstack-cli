@@ -11,7 +11,7 @@ use crate::{
 pub struct RedwoodGenerate;
 
 impl RedwoodGenerate {
-    pub fn create_runnable_task(
+    pub fn generate_pages(
         tag: TaskTag,
         app_config: &AppConfig,
     ) -> Option<RunnableAnsibleTask> {

@@ -5,3 +5,4 @@ pub mod file_task;
 pub mod find_task;
 pub mod git_task;
 pub mod register_task;
+pub mod debug_task;

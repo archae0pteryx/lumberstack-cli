@@ -42,7 +42,7 @@ impl RunnableAnsibleTask {
             hosts: "localhost".to_string(),
             r#become: "yes".to_string(),
             become_user: r#"{{ lookup("env","USER") }}"#.to_string(),
-            gather_facts: true,
+            gather_facts: false,
             tasks: Vec::new(),
         }
     }

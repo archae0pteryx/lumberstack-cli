@@ -13,6 +13,20 @@ use super::{
     template_io::{TemplateFile, TemplateIO},
 };
 
+impl Runnable for TemplateCopy {
+    fn run_job(&self) {
+        let spinner = create_spinner("Copying templates");
+        spinner.set_prefix("💾");
+        let templates = TemplateIO::processed_templates(self.tag.to_owned(), &self.app_config);
+
+        templates.unwrap().into_iter().for_each(|template| {
+            Self::copy_template(template);
+        });
+        debug!("Finished tag: {}", &self.tag.to_string());
+        spinner.finish_and_clear();
+    }
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct TemplateCopy {
     tag: TaskTag,
@@ -20,7 +34,7 @@ pub struct TemplateCopy {
 }
 
 impl TemplateCopy {
-    pub fn new(tag: TaskTag, app_config: &AppConfig) -> Option<TemplateCopy> {
+    pub fn inject_templates(tag: TaskTag, app_config: &AppConfig) -> Option<TemplateCopy> {
         if !should_task_run(&tag, app_config) {
             log_task_skip(&tag.to_string());
             return None;
@@ -60,19 +74,5 @@ impl TemplateCopy {
         // must be binary file at this point
         debug!("Copying binary file: {}", &src.display());
         FileIO::copy(src, dest).unwrap();
-    }
-}
-
-impl Runnable for TemplateCopy {
-    fn run_job(&self) {
-        let spinner = create_spinner("Copying templates");
-        spinner.set_prefix("💾");
-        let templates = TemplateIO::processed_templates(self.tag.to_owned(), &self.app_config);
-
-        templates.unwrap().into_iter().for_each(|template| {
-            Self::copy_template(template);
-        });
-        debug!("Finished tag: {}", &self.tag.to_string());
-        spinner.finish_and_clear();
     }
 }

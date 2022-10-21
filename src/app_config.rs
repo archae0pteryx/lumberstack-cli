@@ -78,7 +78,7 @@ fn process_config(args: ParsedArgs, config_file: ConfigFile) -> AppConfig {
     let template_dir = format!("{}/{}", workdir, DEFAULT_TEMPLATE_DIR);
     let template_map = format!("{}/{}", workdir, DEFAULT_TEMPLATE_PATHS_FILE);
     let log_file = select_or_none(args.log_file, config_file.log_file);
-    let skip_checks = args.skip_checks || config_file.skip_checks.unwrap_or(false).to_owned();
+    let skip_checks = args.skip_checks || config_file.skip_checks;
     let pages = pages_to_generate(config_file.pages);
     let layouts = layouts_to_generate(config_file.layouts);
     let clean = config_file.clean || args.clean;
@@ -159,12 +159,15 @@ struct ConfigFile {
     tags: Option<Vec<String>>,
     skip_tags: Option<Vec<String>>,
     log_file: Option<String>,
-    skip_checks: Option<bool>,
+    #[serde(default = "bool::default")]
+    skip_checks: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
     pages: Option<HashMap<String, String>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     layouts: Option<Vec<String>>,
+    #[serde(default = "bool::default")]
     clean: bool,
+    #[serde(default = "bool::default")]
     save_playbook: bool,
 }
 

@@ -73,8 +73,10 @@ impl TemplateIO {
 
                 let tags = Symbols::get_tags(&file_str);
 
-                let replaced_content =
-                    Replacer::process_and_replace_vars(&file_str, app_config.clone());
+                let replaced_content = Replacer::process_and_replace_vars(
+                    &file_str,
+                    app_config.clone(),
+                );
                 let sanitized_content = Symbols::remove_symbols(&replaced_content);
                 TemplateFile {
                     src,

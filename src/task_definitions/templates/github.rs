@@ -20,7 +20,7 @@ use super::tags::{should_task_run, TaskTag};
 pub struct GithubTemplates;
 
 impl GithubTemplates {
-    pub fn create_runnable_task(
+    pub fn clone_templates(
         tag: TaskTag,
         app_config: &AppConfig,
     ) -> Option<RunnableAnsibleTask> {

@@ -12,7 +12,7 @@ use crate::{
 pub struct RedwoodApp;
 
 impl RedwoodApp {
-    pub fn create_runnable_task(
+    pub fn create_redwood_app(
         tag: TaskTag,
         app_config: &AppConfig,
     ) -> Option<RunnableAnsibleTask> {

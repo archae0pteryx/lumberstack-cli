@@ -1,7 +1,7 @@
 use clap::Parser;
 use clap_verbosity_flag::Verbosity;
 
-/// Opinionated typescript project generator with a RedwoodJS core
+/// Generator for Opinionated RedwoodJS Projects
 #[derive(Parser, Debug, Clone)]
 #[clap(version, about, long_about = None)]
 pub struct CliArgs {
@@ -21,15 +21,11 @@ pub struct CliArgs {
     #[clap(long, action)]
     pub clean: bool,
 
-    /// Dont cleanup
-    #[clap(short, long, value_parser)]
-    pub artifacts: Option<String>,
-
-    /// Load config from file
+    /// Specifiy a config from file
     #[clap(short, long, value_parser)]
     pub config: Option<String>,
 
-    /// Specify a template version to use
+    /// Specify a template version
     #[clap(long, value_parser)]
     pub template_version: Option<String>,
 
@@ -37,11 +33,11 @@ pub struct CliArgs {
     #[clap(short, long, value_parser, multiple(true))]
     pub tags: Option<Vec<String>>,
 
-    /// Log ansible output to file
+    /// Log output to file
     #[clap(short, long, value_parser)]
     pub log_file: Option<String>,
 
-    /// Skip tags
+    /// Tasks to skip
     #[clap(short, long, value_parser, multiple(true))]
     pub skip_tags: Option<Vec<String>>,
 }
@@ -51,7 +47,6 @@ pub struct ParsedArgs {
     pub name: Option<String>,
     pub verbose: Verbosity,
     pub skip_checks: bool,
-    pub artifacts: Option<String>,
     pub config: Option<String>,
     pub template_version: Option<String>,
     pub tags: Option<Vec<String>>,
@@ -66,7 +61,6 @@ impl Default for ParsedArgs {
             name: None,
             verbose: Verbosity::new(0, 0),
             skip_checks: false,
-            artifacts: None,
             config: None,
             template_version: None,
             tags: None,
@@ -84,7 +78,6 @@ impl ParsedArgs {
             name: args.name,
             verbose: args.verbose,
             skip_checks: args.skip_checks,
-            artifacts: args.artifacts,
             config: args.config,
             template_version: args.template_version,
             tags: args.tags,

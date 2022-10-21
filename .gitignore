@@ -2,8 +2,7 @@
 tmp
 .vscode
 logs/*
-!logs/.gitkeep
 myapp
 .cache
 .DS_Store
-old
+lumberstack.yml

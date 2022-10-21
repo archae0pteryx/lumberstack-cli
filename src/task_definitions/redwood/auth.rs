@@ -11,10 +11,7 @@ use crate::{
 pub struct RedwoodAuth;
 
 impl RedwoodAuth {
-    pub fn create_runnable_task(
-        tag: TaskTag,
-        app_config: &AppConfig,
-    ) -> Option<RunnableAnsibleTask> {
+    pub fn generate_auth(tag: TaskTag, app_config: &AppConfig) -> Option<RunnableAnsibleTask> {
         let app_name = &app_config.app_name;
 
         if !should_task_run(&tag, app_config) {
