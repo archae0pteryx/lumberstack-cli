@@ -1,7 +1,7 @@
 use anyhow::Result;
-use std::process::{exit, Command, Output};
+use std::process::{Command, Output};
 
-use log::{debug, error};
+use log::debug;
 
 use crate::{
     app_config::{load_app_config, AppConfig, DEFAULT_WORKDIR},
@@ -10,20 +10,32 @@ use crate::{
 
 use super::{file_io::FileIO, logger::Logger};
 
-pub struct System;
+pub fn init_system() -> Result<AppConfig> {
+    let commands = LumberStackSysCommands {};
+    return System::new(commands).run();
+}
 
-impl System {
-    pub fn init() -> Result<AppConfig> {
+pub struct System<T: SysCommands> {
+    command_runner: T,
+}
+
+impl<T: SysCommands> System<T> {
+    pub fn new(command_runner: T) -> Self {
+        Self { command_runner }
+    }
+
+    pub fn run(&self) -> Result<AppConfig> {
         Logger::init();
         let spinner = create_spinner("Initializing...");
         spinner.set_prefix("🖥 ");
+
         let app_config = load_app_config()?;
 
         if !app_config.skip_checks {
-            Self::os_ok();
-            Self::has_required_bin("yarn");
-            Self::check_docker();
-            Self::has_required_bin("node");
+            self.os_ok()?;
+            self.has_required_bin("yarn")?;
+            self.check_docker()?;
+            self.has_required_bin("node")?;
         }
 
         if app_config.clean && app_config.tags.is_none() && app_config.skip_tags.is_none() {
@@ -35,41 +47,267 @@ impl System {
             }
         }
 
-        FileIO::create_dir(DEFAULT_WORKDIR)?;
+        self.create_working_dir(String::from(DEFAULT_WORKDIR))?;
         spinner.finish_and_clear();
         Ok(app_config)
     }
 
-    fn os_ok() {
-        if cfg!(windows) {
-            error!("❌ Windows is not supported at this time");
-            exit(exitcode::SOFTWARE);
+    fn os_ok(&self) -> Result<()> {
+        if self.command_runner.is_windows() {
+            return Err(anyhow::format_err!("System not supported"));
+        }
+
+        Ok(())
+    }
+
+    fn has_required_bin(&self, bin_name: &str) -> Result<String> {
+        match self.command_runner.app_version(bin_name) {
+            Ok(output) => Ok(String::from_utf8(output.stdout).unwrap()),
+            Err(_) => {
+                Err(anyhow::format_err!(
+                    "❌ {} not found but required",
+                    bin_name
+                ))
+            }
         }
     }
 
-    fn check_app_version(bin_name: &str) -> Result<Output, std::io::Error> {
-        return Command::new(bin_name).arg("--version").output();
+    fn check_docker(&self) -> Result<()> {
+        self.has_required_bin("docker")?;
+
+        match self.command_runner.docker_ps() {
+            Err(_) => {
+                return Err(anyhow::format_err!("❌ Docker not running"));
+            }
+            Ok(output) => {
+                let message = String::from_utf8(output.stderr).unwrap();
+                if message.contains("Error response") || message.contains("Cannot connect") {
+                    return Err(anyhow::format_err!("❌ Docker not running"));
+                }
+            }
+        }
+        Ok(())
     }
 
-    fn has_required_bin(bin_name: &str) -> String {
-        let output = Self::check_app_version(bin_name);
-        if output.is_err() {
-            error!("❌ {} not found but required", bin_name);
-            exit(exitcode::SOFTWARE);
+    fn create_working_dir(&self, dir: String) -> Result<()> {
+        match self.command_runner.crate_dir(dir) {
+            Ok(_) => Ok(()),
+            Err(_) => {
+                return Err(anyhow::format_err!("❌ Error creating / cleaning working dir"));
+            }
         }
+    }
+}
 
-        String::from_utf8(output.unwrap().stdout).unwrap()
+pub trait SysCommands {
+    fn app_version(&self, bin_name: &str) -> Result<Output, std::io::Error>;
+    fn docker_ps(&self) -> Result<Output, std::io::Error>;
+    fn is_windows(&self) -> bool;
+    fn crate_dir(&self, dir: String) -> Result<(), fs_extra::error::Error>;
+}
+
+pub struct LumberStackSysCommands;
+
+impl SysCommands for LumberStackSysCommands {
+    fn app_version(&self, bin_name: &str) -> Result<Output, std::io::Error> {
+        Command::new(bin_name).arg("--version").output()
     }
 
-    fn check_docker() {
-        Self::has_required_bin("docker");
-        let output = Command::new("docker").arg("ps").output().unwrap();
+    fn docker_ps(&self) -> Result<Output, std::io::Error> {
+        Command::new("docker").arg("ps").output()
+    }
 
-        let err = String::from_utf8(output.stderr).unwrap();
+    fn is_windows(&self) -> bool {
+        cfg!(windows)
+    }
 
-        if err.contains("Error response") || err.contains("Cannot connect") {
-            error!("❌ Docker not running");
-            exit(exitcode::SOFTWARE);
+    fn crate_dir(&self, path: String) -> Result<(), fs_extra::error::Error> {
+        fs_extra::dir::create_all(path, false)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::os::unix::process::ExitStatusExt;
+    use std::process::ExitStatus;
+
+    struct FakeSysCommandsPass {
+        stdout_str: String,
+    }
+    struct FakeSysCommandsFail;
+
+    impl SysCommands for FakeSysCommandsPass {
+        fn app_version(&self, _: &str) -> Result<Output, std::io::Error> {
+            let output = Output {
+                status: ExitStatus::from_raw(0x007f),
+                stdout: Vec::from(self.stdout_str.as_bytes()),
+                stderr: Vec::new(),
+            };
+            return Ok(output);
         }
+
+        fn docker_ps(&self) -> Result<Output, std::io::Error> {
+            let output = Output {
+                status: ExitStatus::from_raw(0x007f),
+                stdout: Vec::from("docker".as_bytes()),
+                stderr: Vec::new(),
+            };
+            return Ok(output);
+        }
+
+        fn is_windows(&self) -> bool {
+            return false;
+        }
+
+        fn crate_dir(&self, _: String) -> Result<(), fs_extra::error::Error> {
+            Ok(())
+        }
+    }
+
+    impl SysCommands for FakeSysCommandsFail {
+        fn app_version(&self, _bin_name: &str) -> Result<Output, std::io::Error> {
+            let e = std::io::Error::new(std::io::ErrorKind::Other, "BOOM");
+            return Err(e);
+        }
+
+        fn docker_ps(&self) -> Result<Output, std::io::Error> {
+            let e = std::io::Error::new(std::io::ErrorKind::Other, "BOOM");
+            return Err(e);
+        }
+
+        fn is_windows(&self) -> bool {
+            true
+        }
+
+        fn crate_dir(&self, _: String) -> Result<(), fs_extra::error::Error> {
+            let e = fs_extra::error::Error::new(fs_extra::error::ErrorKind::Other, "BOOM");
+            return Err(e);
+        }
+    }
+
+    #[test]
+    fn has_required_bin_success() {
+        let commands = FakeSysCommandsPass {
+            stdout_str: String::from("yarn"),
+        };
+
+        let system = System::new(commands);
+        match system.has_required_bin("yarn") {
+            Ok(value) => assert_eq!(value, "yarn"),
+            Err(_) => assert!(false),
+        };
+    }
+
+    #[test]
+    fn has_required_bin_fail() {
+        let commands = FakeSysCommandsFail {};
+
+        let system = System::new(commands);
+        match system.has_required_bin("yarn") {
+            Ok(_) => assert!(false),
+            Err(_) => assert!(true),
+        };
+    }
+
+    #[test]
+    fn os_ok_success() {
+        let commands = FakeSysCommandsPass {
+            stdout_str: String::from(""),
+        };
+
+        let system = System::new(commands);
+        match system.os_ok() {
+            Ok(_) => assert!(true),
+            Err(_) => assert!(false),
+        };
+    }
+
+    #[test]
+    fn os_ok_fail() {
+        let commands = FakeSysCommandsFail {};
+
+        let system = System::new(commands);
+        match system.os_ok() {
+            Ok(_) => assert!(false),
+            Err(_) => assert!(true),
+        };
+    }
+
+    #[test]
+    fn check_docker_success() {
+        let commands = FakeSysCommandsPass {
+            stdout_str: String::from(""),
+        };
+
+        let system = System::new(commands);
+        match system.check_docker() {
+            Ok(_) => assert!(true),
+            Err(_) => assert!(false),
+        };
+    }
+
+    #[test]
+    fn check_docker_error_response() {
+        let commands = FakeSysCommandsPass {
+            stdout_str: String::from("Error response"),
+        };
+
+        let system = System::new(commands);
+        match system.check_docker() {
+            Ok(_) => assert!(true),
+            Err(err) => assert_eq!(err.to_string(), "❌ Docker not running"),
+        };
+    }
+
+    #[test]
+    fn check_docker_cannot_connect() {
+        let commands = FakeSysCommandsPass {
+            stdout_str: String::from("Cannot connect"),
+        };
+
+        let system = System::new(commands);
+        match system.check_docker() {
+            Ok(_) => assert!(true),
+            Err(err) => assert_eq!(err.to_string(), "❌ Docker not running"),
+        };
+    }
+
+    #[test]
+    fn check_docker_fail() {
+        let commands = FakeSysCommandsFail {};
+
+        let system = System::new(commands);
+        match system.check_docker() {
+            Ok(_) => assert!(false),
+            Err(_) => assert!(true),
+        };
+    }
+
+    #[test]
+    fn create_working_dir_success() {
+        let commands = FakeSysCommandsPass {
+            stdout_str: String::from(""),
+        };
+
+        let system = System::new(commands);
+        match system.create_working_dir(String::from("some/dir")) {
+            Ok(_) => assert!(true),
+            Err(_) => assert!(false),
+        };
+    }
+
+    #[test]
+    fn create_working_dir_fail() {
+        let commands = FakeSysCommandsFail {};
+
+        let system = System::new(commands);
+        match system.create_working_dir(String::from("some/dir")) {
+            Ok(_) => assert!(false),
+            Err(err) => assert_eq!(
+                err.to_string(),
+                "❌ Error creating / cleaning working dir"
+            ),
+        };
     }
 }

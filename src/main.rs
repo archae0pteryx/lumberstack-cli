@@ -12,18 +12,19 @@ mod task_definitions;
 
 use anyhow::Error;
 use lumberstack::Lumberstack;
-use system::checks::System;
+use system::checks::init_system;
 use task_definitions::{
+    heroku::create::Heroku,
     prisma::create::Prisma,
     redwood::{
         auth::RedwoodAuth, create::RedwoodApp, generate::RedwoodGenerate, playwright::Playwright,
         tailwind::Tailwind,
     },
-    templates::{copy::TemplateCopy, github::GithubTemplates, tags::TaskTag}, heroku::create::Heroku,
+    templates::{copy::TemplateCopy, github::GithubTemplates, tags::TaskTag},
 };
 
 fn main() -> anyhow::Result<(), Error> {
-    let app_config = System::init()?;
+    let app_config = init_system()?;
     let mut app = Lumberstack::new();
 
     let clone_task = GithubTemplates::clone_templates(TaskTag::Clone, &app_config);
