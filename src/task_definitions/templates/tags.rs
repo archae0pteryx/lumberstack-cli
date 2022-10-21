@@ -6,35 +6,35 @@ use crate::app_config::AppConfig;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum TaskTag {
-    Init,
+    Clone,
     Create,
     Auth,
     Prisma,
-    Docker,
     Pages,
-    Markdown,
     Github,
-    Parse,
     Templates,
     Layouts,
     Generate,
+    Tailwind,
+    Playwright,
+    Heroku,
 }
 
 impl Display for TaskTag {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            TaskTag::Init => write!(f, "init"),
+            TaskTag::Clone => write!(f, "init"),
             TaskTag::Create => write!(f, "create"),
             TaskTag::Auth => write!(f, "auth"),
             TaskTag::Prisma => write!(f, "prisma"),
-            TaskTag::Docker => write!(f, "docker"),
             TaskTag::Pages => write!(f, "pages"),
-            TaskTag::Markdown => write!(f, "markdown"),
             TaskTag::Github => write!(f, "github"),
-            TaskTag::Parse => write!(f, "parse"),
             TaskTag::Templates => write!(f, "templates"),
             TaskTag::Layouts => write!(f, "layouts"),
             TaskTag::Generate => write!(f, "generate"),
+            TaskTag::Tailwind => write!(f, "tailwind"),
+            TaskTag::Playwright => write!(f, "playwright"),
+            TaskTag::Heroku => write!(f, "heroku"),
         }
     }
 }

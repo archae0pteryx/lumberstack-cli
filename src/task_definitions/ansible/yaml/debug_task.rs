@@ -1,3 +1,4 @@
+use log::log_enabled;
 use serde::{Deserialize, Serialize};
 
 use crate::task_definitions::task_types::DefinedTask;
@@ -9,8 +10,11 @@ pub struct DebugTask {
 
 impl DebugTask {
     pub fn create(registered_label: &str) -> DefinedTask {
-        DefinedTask::Debug(DebugTask {
-            debug: format!("var={}", registered_label),
-        })
+        if log_enabled!(log::Level::Debug) {
+            return DefinedTask::Debug(DebugTask {
+                debug: format!("var={}", registered_label),
+            });
+        }
+        DefinedTask::None()
     }
 }

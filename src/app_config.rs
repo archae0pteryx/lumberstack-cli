@@ -12,7 +12,7 @@ pub static DEFAULT_TEMPLATE_REPO: &str = "https://github.com/codingzeal/redwood-
 pub static DEFAULT_WORKDIR: &str = "tmp";
 pub static DEFAULT_APP_NAME: &str = "myapp";
 pub static DEFAULT_TEMPLATE_DIR: &str = "templates";
-pub static DEFAULT_MANIFEST_FILE: &str = "lumberstack.yml";
+pub static DEFAULT_CONFIG_FILE: &str = "lumberstack.yml";
 pub static DEFAULT_TEMPLATE_PATHS_FILE: &str = "template_map.txt";
 pub static DEFAULT_PLAYBOOK_FILE: &str = "playbook.yml";
 pub static DEFAULT_ANSIBLE_TEMPLATE_REGEX: &str = r#"(\/\/|\/\/\*|#|\<!--) template!?.*"#;
@@ -54,10 +54,13 @@ pub fn load_app_config() -> Result<AppConfig> {
 }
 
 fn load_config_file(config: Option<String>) -> Result<ConfigFile> {
-    let config_file_str =
-        FileIO::read(&config.unwrap_or_else(|| DEFAULT_MANIFEST_FILE.to_string())).unwrap();
-    let config: ConfigFile = serde_yaml::from_str(config_file_str.as_str())?;
-    Ok(config)
+    let config_file_str = FileIO::read(&config.unwrap_or_else(|| DEFAULT_CONFIG_FILE.to_string()));
+    if let Some(c) = config_file_str {
+        let config_file: ConfigFile = serde_yaml::from_str(&c)?;
+        Ok(config_file)
+    } else {
+        Ok(ConfigFile::default())
+    }
 }
 
 fn process_config(args: ParsedArgs, config_file: ConfigFile) -> AppConfig {
@@ -83,6 +86,7 @@ fn process_config(args: ParsedArgs, config_file: ConfigFile) -> AppConfig {
     let layouts = layouts_to_generate(config_file.layouts);
     let clean = config_file.clean || args.clean;
     let save_playbook = config_file.save_playbook;
+
     AppConfig {
         app_name,
         template_version,
@@ -196,7 +200,7 @@ mod tests {
         assert_eq!(actual.tags, None);
         assert_eq!(actual.skip_tags, None);
         assert_eq!(
-            actual.replace_vars.get("$app_name").unwrap(),
+            actual.replace_vars.get("app_name").unwrap(),
             &DEFAULT_APP_NAME.to_string()
         );
 

@@ -24,7 +24,6 @@ impl System {
             Self::has_required_bin("yarn");
             Self::check_docker();
             Self::has_required_bin("node");
-            Self::check_node_version();
         }
 
         if app_config.clean && app_config.tags.is_none() && app_config.skip_tags.is_none() {
@@ -44,14 +43,6 @@ impl System {
     fn os_ok() {
         if cfg!(windows) {
             error!("❌ Windows is not supported at this time");
-            exit(exitcode::SOFTWARE);
-        }
-    }
-
-    fn check_node_version() {
-        let output = Self::has_required_bin("node");
-        if !output.contains("v14") {
-            error!("❌ node v14 required but found: {}", output);
             exit(exitcode::SOFTWARE);
         }
     }
