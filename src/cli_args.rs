@@ -21,6 +21,10 @@ pub struct CliArgs {
     #[clap(long, action)]
     pub clean: bool,
 
+    /// Run interactively
+    #[clap(short, long, action)]
+    pub interactive: bool,
+
     /// Specifiy a config from file
     #[clap(short, long, value_parser)]
     pub config: Option<String>,
@@ -53,6 +57,7 @@ pub struct ParsedArgs {
     pub log_file: Option<String>,
     pub skip_tags: Option<Vec<String>>,
     pub clean: bool,
+    pub interactive: bool,
 }
 
 impl Default for ParsedArgs {
@@ -67,6 +72,7 @@ impl Default for ParsedArgs {
             log_file: None,
             skip_tags: None,
             clean: false,
+            interactive: true
         }
     }
 }
@@ -84,6 +90,7 @@ impl ParsedArgs {
             log_file: args.log_file,
             skip_tags: args.skip_tags,
             clean: args.clean,
+            interactive: args.interactive,
         }
     }
 }

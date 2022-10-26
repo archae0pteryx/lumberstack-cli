@@ -1,4 +1,4 @@
-// #![allow(unused)]
+#![allow(unused)]
 extern crate fs_extra;
 extern crate log;
 
@@ -9,8 +9,10 @@ mod lumberstack;
 mod spinner;
 mod system;
 mod task_definitions;
+mod ui;
 
 use anyhow::Error;
+use app_config::AppConfig;
 use lumberstack::Lumberstack;
 use system::checks::init_system;
 use task_definitions::{
@@ -22,9 +24,21 @@ use task_definitions::{
     },
     templates::{copy::TemplateCopy, github::GithubTemplates, tags::TaskTag},
 };
+use ui::init::init_tui;
 
 fn main() -> anyhow::Result<(), Error> {
     let app_config = init_system()?;
+
+    if app_config.interactive {
+        init_tui();
+    } else {
+        execute_tasks(&app_config)?;
+    }
+
+    Ok(())
+}
+
+fn execute_tasks(app_config: &AppConfig) -> anyhow::Result<()> {
     let mut app = Lumberstack::new();
 
     let clone_task = GithubTemplates::clone_templates(TaskTag::Clone, &app_config);
@@ -56,6 +70,5 @@ fn main() -> anyhow::Result<(), Error> {
     app.queue(heroku_task);
 
     app.process();
-
     Ok(())
 }

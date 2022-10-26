@@ -5,3 +5,5 @@ myapp
 .cache
 .DS_Store
 lumberstack.yml
+tui
+tui-rs

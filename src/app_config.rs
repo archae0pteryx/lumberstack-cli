@@ -43,6 +43,7 @@ pub struct AppConfig {
     pub layouts: Vec<String>,
     pub clean: bool,
     pub save_playbook: bool,
+    pub interactive: bool,
 }
 
 pub fn load_app_config() -> Result<AppConfig> {
@@ -86,7 +87,8 @@ fn process_config(args: ParsedArgs, config_file: ConfigFile) -> AppConfig {
     let layouts = layouts_to_generate(config_file.layouts);
     let clean = config_file.clean || args.clean;
     let save_playbook = config_file.save_playbook;
-
+    // let interactive = args.interactive || config_file.interactive;
+    let interactive = true;
     AppConfig {
         app_name,
         template_version,
@@ -103,6 +105,7 @@ fn process_config(args: ParsedArgs, config_file: ConfigFile) -> AppConfig {
         layouts,
         clean,
         save_playbook,
+        interactive,
     }
 }
 
@@ -173,6 +176,8 @@ struct ConfigFile {
     clean: bool,
     #[serde(default = "bool::default")]
     save_playbook: bool,
+    #[serde(default = "bool::default")]
+    interactive: bool,
 }
 
 fn select_or_default_string(s1: Option<String>, s2: Option<String>, default: &str) -> String {
