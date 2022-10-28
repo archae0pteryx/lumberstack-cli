@@ -1,116 +1,20 @@
-use std::{
-    fmt::{self, Display},
-    io::Stdout,
-};
+use crate::app_config::AppConfig;
 
-use crate::{
-    app_config::{self, AppConfig},
-    task_definitions::templates::tags::TaskTag,
-};
-use anyhow::Result;
-use enum_iterator::{all, Sequence};
-use tui::{
-    backend::{Backend, CrosstermBackend},
-    layout::Rect,
-    style::Color,
-    text::Text,
-    widgets::ListState,
-    Frame, Terminal,
-};
+use tui::{layout::Rect, style::Color};
 
-use super::home_view::draw_home;
-
-pub struct StatefulList<T> {
-    pub state: ListState,
-    pub items: Vec<T>,
-}
-
-impl<T> StatefulList<T> {
-    pub fn with_items(items: Vec<T>) -> StatefulList<T> {
-        StatefulList {
-            state: ListState::default(),
-            items,
-        }
-    }
-
-    pub fn next(&mut self) {
-        let i = match self.state.selected() {
-            Some(i) => {
-                if i >= self.items.len() - 1 {
-                    0
-                } else {
-                    i + 1
-                }
-            }
-            None => 0,
-        };
-        self.state.select(Some(i));
-    }
-
-    pub fn previous(&mut self) {
-        let i = match self.state.selected() {
-            Some(i) => {
-                if i == 0 {
-                    self.items.len() - 1
-                } else {
-                    i - 1
-                }
-            }
-            None => 0,
-        };
-        self.state.select(Some(i));
-    }
-
-    pub fn unselect(&mut self) {
-        self.state.select(None);
-    }
-
-    pub fn handle_selection(&mut self) {
-        let selected = self.state.selected();
-        match selected {
-            Some(s) => {
-                dbg!(&self.state);
-            }
-            None => {
-                println!("None selected");
-            }
-        }
-    }
-}
-
-#[derive(Clone, Copy, PartialEq, Debug)]
-pub enum DialogContext {
-    PlaylistWindow,
-    PlaylistSearch,
-}
-
-#[derive(Clone, Copy, PartialEq, Debug)]
-pub enum ActiveBlock {
-    GenerateAll,
-    Empty,
-}
-
-#[derive(Clone, PartialEq, Debug)]
+#[derive(Clone, PartialEq, Eq, Debug)]
 pub enum RouteId {
     Home,
+    GenerateAll,
+    TagSelect,
+    Quit,
 }
-
-const DEFAULT_ROUTE: Route = Route {
-    id: RouteId::Home,
-    active_block: ActiveBlock::Empty,
-    hovered_block: ActiveBlock::GenerateAll,
-};
-
 #[derive(Debug)]
-pub struct Route {
+pub struct LinkItem {
     pub id: RouteId,
-    pub active_block: ActiveBlock,
-    pub hovered_block: ActiveBlock,
-}
-
-pub struct MainMenuItem {
-    pub id: usize,
     pub text: String,
+    pub index: usize,
+    pub to: RouteId,
 }
 
 #[derive(Copy, Clone, Debug)]
@@ -127,10 +31,10 @@ pub struct App {
     pub app_config: Box<AppConfig>,
     pub theme: Theme,
     pub should_quit: bool,
-    pub navigation_stack: Vec<Route>,
-    pub size: Rect,
-    pub main_menu: Vec<MainMenuItem>,
-    pub main_menu_list_index: usize,
+    pub navigation_stack: Vec<RouteId>,
+    pub term_size: Rect,
+    pub main_menu_items: Vec<LinkItem>,
+    pub main_menu_current_index: usize,
 }
 
 impl Default for App {
@@ -146,19 +50,29 @@ impl Default for App {
                 inactive: Color::Gray,
             },
             should_quit: false,
-            navigation_stack: vec![DEFAULT_ROUTE],
-            size: Rect::default(),
-            main_menu: vec![
-                MainMenuItem {
-                    id: 0,
+            navigation_stack: vec![RouteId::Home],
+            term_size: Rect::default(),
+            main_menu_items: vec![
+                LinkItem {
                     text: "Generate All".to_string(),
+                    index: 0,
+                    to: RouteId::GenerateAll,
+                    id: RouteId::GenerateAll,
                 },
-                MainMenuItem {
-                    id: 1,
+                LinkItem {
+                    text: "Select Tags".to_string(),
+                    index: 1,
+                    to: RouteId::TagSelect,
+                    id: RouteId::TagSelect,
+                },
+                LinkItem {
                     text: "Quit".to_string(),
+                    index: 2,
+                    to: RouteId::Quit,
+                    id: RouteId::Quit,
                 },
             ],
-            main_menu_list_index: 0,
+            main_menu_current_index: 0,
         }
     }
 }
@@ -171,8 +85,36 @@ impl App {
         }
     }
 
-    pub fn get_current_route(&self) -> &Route {
-        self.navigation_stack.last().unwrap_or(&DEFAULT_ROUTE)
+    pub fn get_current_route(&self) -> &RouteId {
+        self.navigation_stack.last().unwrap_or(&RouteId::Home)
+    }
+
+    pub fn next_item(&mut self) {
+        if self.get_current_route() == &RouteId::Home {
+            let menu_len = self.main_menu_items.len();
+            let next_index = self.main_menu_current_index + 1;
+            if next_index <= menu_len {
+                self.main_menu_current_index = next_index;
+            }
+        }
+    }
+
+    pub fn prev_item(&mut self) {
+        if self.get_current_route() == &RouteId::Home && self.main_menu_current_index > 0 {
+            self.main_menu_current_index -= 1;
+        }
+    }
+
+    pub fn handle_submit(&mut self) {
+        if self.get_current_route() == &RouteId::Home {
+            let idx = self.main_menu_current_index;
+            let link_to = &self.main_menu_items[idx].to;
+            if link_to.eq(&RouteId::Quit) {
+                self.should_quit = true;
+            } else {
+                self.navigation_stack.push(link_to.clone());
+            }
+        }
     }
 
     pub fn on_tick(&self) {

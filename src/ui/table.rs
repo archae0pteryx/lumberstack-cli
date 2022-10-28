@@ -1,41 +1,40 @@
+use tui::{
+    backend::Backend,
+    layout::{Constraint, Rect},
+    style::{Color, Modifier, Style},
+    widgets::{Block, Borders, Row, Table},
+    Frame,
+};
 
-pub enum TableId {
-  MainMenu,
-  TagSelect
-}
-
-#[derive(PartialEq)]
-pub enum ColumnId {
-  None,
-  Title,
-  Liked,
-}
-
-impl Default for ColumnId {
-  fn default() -> Self {
-    ColumnId::None
-  }
-}
-
-pub struct TableHeader<'a> {
-  pub id: TableId,
-  pub items: Vec<TableHeaderItem<'a>>,
-}
-
-impl TableHeader<'_> {
-  pub fn get_index(&self, id: ColumnId) -> Option<usize> {
-    self.items.iter().position(|item| item.id == id)
-  }
-}
-
-#[derive(Default)]
-pub struct TableHeaderItem<'a> {
-  pub id: ColumnId,
-  pub text: &'a str,
-  pub width: u16,
-}
+use super::app::App;
 
 pub struct TableItem {
-  pub id: usize,
-  pub value: String,
+    pub id: usize,
+    pub values: String,
+}
+
+pub fn draw_table<B>(f: &mut Frame<B>, app: &App, layout_chunk: Rect, items: &[TableItem])
+where
+    B: Backend,
+{
+    // let header = Row::new(vec!["Select", "Option"]);
+    let selected_style = Style::default()
+        .fg(app.theme.selected)
+        .add_modifier(Modifier::BOLD);
+    let rows = items.iter().enumerate().map(|(i, item)| {
+        let formatted_row = item.values.clone();
+        let mut style = Style::default().fg(app.theme.primary);
+        if app.main_menu_current_index == i {
+            style = selected_style;
+        }
+        Row::new(vec![formatted_row]).style(style)
+    });
+    let table = Table::new(rows)
+        .block(
+            Block::default()
+                .borders(Borders::ALL)
+                .style(Style::default().fg(Color::White)),
+        )
+        .widths([Constraint::Percentage(30), Constraint::Percentage(30)].as_ref());
+    f.render_widget(table, layout_chunk);
 }

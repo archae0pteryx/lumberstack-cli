@@ -12,7 +12,7 @@ use super::{file_io::FileIO, logger::Logger};
 
 pub fn init_system() -> Result<AppConfig> {
     let commands = LumberStackSysCommands {};
-    return System::new(commands).run();
+    System::new(commands).run()
 }
 
 pub struct System<T: SysCommands> {
@@ -93,7 +93,7 @@ impl<T: SysCommands> System<T> {
         match self.command_runner.crate_dir(dir) {
             Ok(_) => Ok(()),
             Err(_) => {
-                return Err(anyhow::format_err!("❌ Error creating / cleaning working dir"));
+                Err(anyhow::format_err!("❌ Error creating / cleaning working dir"))
             }
         }
     }

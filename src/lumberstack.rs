@@ -1,5 +1,7 @@
+use anyhow::Result;
+
 pub trait Runnable {
-    fn run_job(&self) -> anyhow::Result<()>;
+    fn run_job(&self) -> Result<()>;
 }
 
 pub struct Lumberstack {
@@ -23,7 +25,7 @@ impl Lumberstack {
     pub fn process(&mut self) {
         let run_items = &self.run_items;
         run_items.iter().for_each(|item| {
-            item.run_job();
+            item.run_job().unwrap();
         });
     }
 }

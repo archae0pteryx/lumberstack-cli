@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::task_definitions::task_types::DefinedTask;
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub struct FileTask {
     pub name: String,
     pub file: File,
@@ -11,7 +11,7 @@ pub struct FileTask {
     pub tags: Option<Vec<String>>,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub struct File {
     #[serde(skip_serializing_if = "String::is_empty")]
     pub path: String,

@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::task_definitions::task_types::DefinedTask;
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Default)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Default)]
 pub struct RegisterTask {
     pub name: String,
     pub stat: StatPath,
@@ -12,7 +12,7 @@ pub struct RegisterTask {
     tags: Option<Vec<String>>,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Default)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Default)]
 pub struct StatPath {
     #[serde(skip_serializing_if = "String::is_empty")]
     pub path: String,

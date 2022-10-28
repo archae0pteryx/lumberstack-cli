@@ -11,10 +11,7 @@ use crate::{
 pub struct RedwoodGenerate;
 
 impl RedwoodGenerate {
-    pub fn generate_pages(
-        tag: TaskTag,
-        app_config: &AppConfig,
-    ) -> Option<RunnableAnsibleTask> {
+    pub fn generate_pages(tag: TaskTag, app_config: &AppConfig) -> Option<RunnableAnsibleTask> {
         if !should_task_run(&tag, app_config) {
             log_task_skip(&tag.to_string());
             return None;
@@ -54,17 +51,17 @@ impl RedwoodGenerate {
 
     fn generate_page(app_name: &String, (name, path): (&String, &String)) -> DefinedTask {
         let command = format!("yarn redwood generate page {} {}", &name, &path);
-        return CommandTask::new(format!("Generating page: {}", &name))
+        CommandTask::new(format!("Generating page: {}", &name))
             .command(command)
             .chdir(app_name)
-            .build();
+            .build()
     }
 
     fn generate_layout(app_name: &String, layout_name: String) -> DefinedTask {
         let command = format!("yarn redwood generate layout {} --ts", layout_name);
-        return CommandTask::new(format!("Generating layout: {}", &layout_name))
+        CommandTask::new(format!("Generating layout: {}", &layout_name))
             .command(command)
             .chdir(app_name)
-            .build();
+            .build()
     }
 }

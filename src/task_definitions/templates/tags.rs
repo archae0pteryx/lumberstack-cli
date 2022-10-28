@@ -1,13 +1,13 @@
 use serde::{Deserialize, Serialize};
 
+use super::{symbols::Symbols, template_io::TemplateIO};
 use crate::{app_config::AppConfig, system::file_io::FileIO};
-use enum_iterator::{all, cardinality, first, last, next, previous, reverse_all, Sequence};
+use anyhow::Result;
+use enum_iterator::Sequence;
 use std::{
     fmt::{self, Display},
-    vec, path::PathBuf,
+    path::PathBuf,
 };
-use anyhow::Result;
-use super::{template_io::TemplateIO, symbols::Symbols};
 
 #[derive(Serialize, Deserialize, Debug, Clone, Sequence)]
 pub enum TaskTag {
@@ -68,12 +68,10 @@ pub fn extract_all_tags(map_file: &str) -> Result<Vec<String>> {
 fn extract_tags_from_paths(template_paths: Vec<PathBuf>) -> Vec<String> {
     template_paths
         .iter()
-        .map(|path| {
+        .flat_map(|path| {
             let file_str = FileIO::read_or_skip(&path)
-                .expect(format!("Error reading: {:?}", &path.display()).as_str());
-            let tags = Symbols::get_tags(&file_str);
-            return tags;
+                .unwrap_or_else(|| panic!("Error reading: {:?}", &path.display()));
+            Symbols::get_tags(&file_str)
         })
-        .flatten()
         .collect::<Vec<_>>()
 }

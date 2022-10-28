@@ -3,7 +3,7 @@ use serde_json::{Map, Value};
 
 use crate::task_definitions::task_types::DefinedTask;
 
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct FactTask {
     set_fact: Map<String, Value>,
     #[serde(skip_serializing_if = "Option::is_none")]

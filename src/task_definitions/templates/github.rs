@@ -1,8 +1,8 @@
-use std::{fs, path::Path};
+use std::path::Path;
 
 use crate::{
     app_config::{AppConfig, DEFAULT_ANSIBLE_TEMPLATE_REGEX},
-    system::{logger::log_task_skip, file_io::FileIO},
+    system::logger::log_task_skip,
     task_definitions::{
         ansible::{
             ansible_task::RunnableAnsibleTask,
@@ -21,10 +21,7 @@ use super::tags::{should_task_run, TaskTag};
 pub struct GithubTemplates;
 
 impl GithubTemplates {
-    pub fn clone_templates(
-        tag: TaskTag,
-        app_config: &AppConfig,
-    ) -> Option<RunnableAnsibleTask> {
+    pub fn clone_templates(tag: TaskTag, app_config: &AppConfig) -> Option<RunnableAnsibleTask> {
         let has_templates = Path::new(&app_config.template_dir).exists();
         if has_templates || !should_task_run(&tag, app_config) {
             log_task_skip(tag.to_string());

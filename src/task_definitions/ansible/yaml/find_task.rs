@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::task_definitions::task_types::DefinedTask;
 
-#[derive(Serialize, Deserialize, Debug, Clone, Default, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, Clone, Default, PartialEq, Eq)]
 
 pub struct FindTask {
     #[serde(skip_serializing_if = "String::is_empty")]
@@ -13,7 +13,7 @@ pub struct FindTask {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub tags: Option<Vec<String>>,
 }
-#[derive(Serialize, Deserialize, Debug, Clone, Default, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, Clone, Default, PartialEq, Eq)]
 
 pub struct Find {
     #[serde(skip_serializing_if = "String::is_empty")]

@@ -2,14 +2,14 @@ use serde::{Deserialize, Serialize};
 
 use crate::{lumberstack::Runnable, task_definitions::task_types::DefinedTask};
 use anyhow::Result;
-#[derive(Serialize, Deserialize, Debug, Clone, Default, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, Clone, Default, PartialEq, Eq)]
 pub struct CopyTask {
     pub name: String,
     pub copy: CopyArgs,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub tags: Option<Vec<String>>,
 }
-#[derive(Serialize, Deserialize, Debug, Clone, Default, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, Clone, Default, PartialEq, Eq)]
 pub struct CopyArgs {
     #[serde(skip_serializing_if = "String::is_empty")]
     pub src: String,
@@ -34,7 +34,7 @@ impl CopyTask {
         }
     }
 
-    // #[allow(dead_code)]
+    #[allow(dead_code)]
     pub fn src<S: AsRef<str>>(&self, src: S) -> CopyTask {
         let mut new_task = self.clone();
         new_task.copy.src = src.as_ref().to_string();

@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::task_definitions::task_types::DefinedTask;
 
-#[derive(Serialize, Deserialize, Debug, Clone, Default, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, Clone, Default, PartialEq, Eq)]
 pub struct GitTask {
     pub name: String,
     pub git: GitRemote,
@@ -12,7 +12,7 @@ pub struct GitTask {
     pub tags: Option<Vec<String>>,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, Default, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, Clone, Default, PartialEq, Eq)]
 pub struct GitRemote {
     pub repo: String,
     pub dest: String,
