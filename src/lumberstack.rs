@@ -1,5 +1,5 @@
 pub trait Runnable {
-    fn run_job(&self);
+    fn run_job(&self) -> anyhow::Result<()>;
 }
 
 pub struct Lumberstack {

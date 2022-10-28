@@ -3,7 +3,7 @@ use std::{
     env,
     time::{SystemTime, UNIX_EPOCH},
 };
-
+use anyhow::Result;
 use crate::{
     app_config::DEFAULT_PLAYBOOK_FILE, commands::ShellCommand, lumberstack::Runnable,
     spinner::create_spinner, task_definitions::task_types::DefinedTask,
@@ -21,7 +21,7 @@ pub struct RunnableAnsibleTask {
 }
 
 impl Runnable for RunnableAnsibleTask {
-    fn run_job(&self) {
+    fn run_job(&self) -> Result<()> {
         let spinner = create_spinner(&self.label);
         spinner.set_prefix("👟");
 
@@ -29,6 +29,7 @@ impl Runnable for RunnableAnsibleTask {
 
         ShellCommand::exec("./", "ansible-playbook", &[DEFAULT_PLAYBOOK_FILE], true);
         Self::save_playbook(self);
+        Ok(())
     }
 }
 

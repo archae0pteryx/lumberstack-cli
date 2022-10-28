@@ -2,7 +2,7 @@ use std::path::Path;
 
 use log::debug;
 use serde::{Deserialize, Serialize};
-
+use anyhow::Result;
 use crate::{
     app_config::AppConfig, lumberstack::Runnable, spinner::create_spinner, system::file_io::FileIO,
     system::logger::log_task_skip,
@@ -14,16 +14,17 @@ use super::{
 };
 
 impl Runnable for TemplateCopy {
-    fn run_job(&self) {
+    fn run_job(&self) -> Result<()> {
         let spinner = create_spinner("Copying templates");
         spinner.set_prefix("💾");
-        let templates = TemplateIO::processed_templates(self.tag.to_owned(), &self.app_config);
+        let templates = TemplateIO::processed_templates(self.tag.to_owned(), &self.app_config)?;
 
         templates.unwrap().into_iter().for_each(|template| {
             Self::copy_template(template);
         });
         debug!("Finished tag: {}", &self.tag.to_string());
         spinner.finish_and_clear();
+        Ok(())
     }
 }
 

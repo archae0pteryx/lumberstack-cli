@@ -37,7 +37,7 @@ impl RedwoodGenerate {
 
     fn gather_pages(app_config: &AppConfig) -> Vec<DefinedTask> {
         app_config
-            .pages
+            .generate_pages
             .iter()
             .map(|page| Self::generate_page(&app_config.app_name, page))
             .collect::<Vec<_>>()
@@ -45,7 +45,7 @@ impl RedwoodGenerate {
 
     fn gather_layouts(app_config: &AppConfig) -> Vec<DefinedTask> {
         app_config
-            .layouts
+            .generate_layouts
             .iter()
             .cloned()
             .map(|layout| Self::generate_layout(&app_config.app_name, layout))

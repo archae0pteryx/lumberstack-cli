@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 use crate::{lumberstack::Runnable, task_definitions::task_types::DefinedTask};
-
+use anyhow::Result;
 #[derive(Serialize, Deserialize, Debug, Clone, Default, PartialEq)]
 pub struct CopyTask {
     pub name: String,
@@ -20,7 +20,9 @@ pub struct CopyArgs {
 }
 
 impl Runnable for CopyTask {
-    fn run_job(&self) {}
+    fn run_job(&self) -> Result<()> {
+        Ok(())
+    }
 }
 
 impl CopyTask {
@@ -32,7 +34,7 @@ impl CopyTask {
         }
     }
 
-    #[allow(dead_code)]
+    // #[allow(dead_code)]
     pub fn src<S: AsRef<str>>(&self, src: S) -> CopyTask {
         let mut new_task = self.clone();
         new_task.copy.src = src.as_ref().to_string();

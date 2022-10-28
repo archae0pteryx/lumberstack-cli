@@ -14,6 +14,7 @@ mod ui;
 use anyhow::Error;
 use app_config::AppConfig;
 use lumberstack::Lumberstack;
+use std::sync::{Arc, Mutex};
 use system::checks::init_system;
 use task_definitions::{
     heroku::create::Heroku,
@@ -24,15 +25,15 @@ use task_definitions::{
     },
     templates::{copy::TemplateCopy, github::GithubTemplates, tags::TaskTag},
 };
-use ui::init::init_tui;
+use ui::start_ui::start_ui;
 
 fn main() -> anyhow::Result<(), Error> {
     let app_config = init_system()?;
-
+    let app_config = Box::new(app_config);
     if app_config.interactive {
-        init_tui();
+        start_ui(app_config);
     } else {
-        execute_tasks(&app_config)?;
+        // execute_tasks(&app_config)?;
     }
 
     Ok(())

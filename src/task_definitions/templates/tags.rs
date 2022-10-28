@@ -1,10 +1,15 @@
 use serde::{Deserialize, Serialize};
 
-use std::fmt::{self, Display};
+use crate::{app_config::AppConfig, system::file_io::FileIO};
+use enum_iterator::{all, cardinality, first, last, next, previous, reverse_all, Sequence};
+use std::{
+    fmt::{self, Display},
+    vec, path::PathBuf,
+};
+use anyhow::Result;
+use super::{template_io::TemplateIO, symbols::Symbols};
 
-use crate::app_config::AppConfig;
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, Sequence)]
 pub enum TaskTag {
     Clone,
     Create,
@@ -18,6 +23,7 @@ pub enum TaskTag {
     Tailwind,
     Playwright,
     Heroku,
+    Quit,
 }
 
 impl Display for TaskTag {
@@ -35,6 +41,7 @@ impl Display for TaskTag {
             TaskTag::Tailwind => write!(f, "tailwind"),
             TaskTag::Playwright => write!(f, "playwright"),
             TaskTag::Heroku => write!(f, "heroku"),
+            TaskTag::Quit => write!(f, "quit"),
         }
     }
 }
@@ -51,4 +58,22 @@ pub fn should_task_run(this_tag: &TaskTag, app_config: &AppConfig) -> bool {
     }
 
     true
+}
+
+pub fn extract_all_tags(map_file: &str) -> Result<Vec<String>> {
+    let combined_templates = TemplateIO::gather_all_template_paths(map_file)?;
+    Ok(extract_tags_from_paths(combined_templates))
+}
+
+fn extract_tags_from_paths(template_paths: Vec<PathBuf>) -> Vec<String> {
+    template_paths
+        .iter()
+        .map(|path| {
+            let file_str = FileIO::read_or_skip(&path)
+                .expect(format!("Error reading: {:?}", &path.display()).as_str());
+            let tags = Symbols::get_tags(&file_str);
+            return tags;
+        })
+        .flatten()
+        .collect::<Vec<_>>()
 }

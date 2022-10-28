@@ -1,5 +1,5 @@
 #![allow(dead_code)]
-use anyhow::{Context, Result};
+use anyhow::{anyhow, Context, Result};
 use fs_extra::dir::CopyOptions;
 use log::{debug, error, warn};
 use std::fs;
@@ -58,7 +58,7 @@ impl FileIO {
         }
     }
 
-    pub fn read(path: &impl AsRef<Path>) -> Option<String> {
+    pub fn read_or_skip(path: &impl AsRef<Path>) -> Option<String> {
         let file_str = fs_extra::file::read_to_string(path);
         if let Ok(fs) = file_str {
             return Some(fs);
@@ -68,6 +68,16 @@ impl FileIO {
             path.as_ref().to_str().unwrap()
         );
         None
+    }
+
+    pub fn read_or_fail(path: &impl AsRef<Path>) -> Result<String> {
+        let f = fs_extra::file::read_to_string(path).with_context(|| {
+            anyhow!(
+                "[system] Could not read file to string: {}. Skipping",
+                path.as_ref().display()
+            )
+        })?;
+        Ok(f)
     }
 
     pub fn is_not_contentful<P: AsRef<Path>>(path: P) -> bool {

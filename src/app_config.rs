@@ -3,8 +3,7 @@ use std::collections::HashMap;
 use anyhow::Result;
 use log::debug;
 use serde::{Deserialize, Serialize};
-
-use crate::{cli_args::ParsedArgs, system::file_io::FileIO};
+use crate::{cli_args::ParsedArgs, system::file_io::FileIO, task_definitions::templates::tags::extract_all_tags};
 use phf::phf_map;
 
 pub static DEFAULT_TEMPLATE_VERSION: &str = "v0.0.4";
@@ -39,23 +38,51 @@ pub struct AppConfig {
     pub log_file: Option<String>,
     pub workdir: String,
     pub skip_checks: bool,
-    pub pages: HashMap<String, String>,
-    pub layouts: Vec<String>,
+    pub generate_pages: HashMap<String, String>,
+    pub generate_layouts: Vec<String>,
     pub clean: bool,
     pub save_playbook: bool,
     pub interactive: bool,
+    pub avail_tags: Vec<String>
+}
+
+impl Default for AppConfig {
+    fn default() -> Self {
+        let workdir = DEFAULT_WORKDIR.to_string();
+        let template_dir = format!("{}/{}", workdir, DEFAULT_TEMPLATE_DIR);
+        let template_map = format!("{}/{}", workdir, DEFAULT_TEMPLATE_PATHS_FILE);
+        AppConfig {
+            app_name: DEFAULT_APP_NAME.to_string(),
+            template_version: DEFAULT_TEMPLATE_VERSION.to_string(),
+            tags: None,
+            skip_tags: None,
+            replace_vars: HashMap::new(),
+            template_repo: DEFAULT_TEMPLATE_REPO.to_string(),
+            template_dir,
+            template_map,
+            log_file: None,
+            workdir,
+            skip_checks: false,
+            clean: false,
+            save_playbook: false,
+            interactive: true,
+            avail_tags: Vec::new(),
+            generate_pages: HashMap::new(),
+            generate_layouts: Vec::new(),
+        }
+    }
 }
 
 pub fn load_app_config() -> Result<AppConfig> {
     let args = ParsedArgs::new();
     let config_file = load_config_file(args.config.clone())?;
-    let processed_config = process_config(args, config_file);
+    let processed_config = process_config(args, config_file).unwrap();
     debug!("AppConfig: {:#?}", processed_config);
     Ok(processed_config)
 }
 
 fn load_config_file(config: Option<String>) -> Result<ConfigFile> {
-    let config_file_str = FileIO::read(&config.unwrap_or_else(|| DEFAULT_CONFIG_FILE.to_string()));
+    let config_file_str = FileIO::read_or_skip(&config.unwrap_or_else(|| DEFAULT_CONFIG_FILE.to_string()));
     if let Some(c) = config_file_str {
         let config_file: ConfigFile = serde_yaml::from_str(&c)?;
         Ok(config_file)
@@ -64,7 +91,7 @@ fn load_config_file(config: Option<String>) -> Result<ConfigFile> {
     }
 }
 
-fn process_config(args: ParsedArgs, config_file: ConfigFile) -> AppConfig {
+fn process_config(args: ParsedArgs, config_file: ConfigFile) -> Result<AppConfig> {
     let app_name = select_or_default_string(args.name, config_file.name, DEFAULT_APP_NAME);
     let template_version = select_or_default_string(
         args.template_version,
@@ -78,9 +105,9 @@ fn process_config(args: ParsedArgs, config_file: ConfigFile) -> AppConfig {
     let skip_tags = args.skip_tags.or(config_file.skip_tags);
     let replace_vars = combine_replace_vars(&app_name, config_file.vars);
 
-    let workdir = DEFAULT_WORKDIR.to_string();
-    let template_dir = format!("{}/{}", workdir, DEFAULT_TEMPLATE_DIR);
-    let template_map = format!("{}/{}", workdir, DEFAULT_TEMPLATE_PATHS_FILE);
+    // let workdir = DEFAULT_WORKDIR.to_string();
+    // let template_dir = format!("{}/{}", workdir, DEFAULT_TEMPLATE_DIR);
+    // let template_map = format!("{}/{}", workdir, DEFAULT_TEMPLATE_PATHS_FILE);
     let log_file = select_or_none(args.log_file, config_file.log_file);
     let skip_checks = args.skip_checks || config_file.skip_checks;
     let pages = pages_to_generate(config_file.pages);
@@ -88,25 +115,27 @@ fn process_config(args: ParsedArgs, config_file: ConfigFile) -> AppConfig {
     let clean = config_file.clean || args.clean;
     let save_playbook = config_file.save_playbook;
     // let interactive = args.interactive || config_file.interactive;
-    let interactive = true;
-    AppConfig {
+    // let interactive = true;
+    let template_map = AppConfig::default().template_map;
+    let avail_tags = extract_all_tags(&template_map)?;
+
+    Ok(AppConfig {
         app_name,
         template_version,
         template_repo,
         tags,
         skip_tags,
         replace_vars,
-        template_dir,
         template_map,
         log_file,
-        workdir,
         skip_checks,
-        pages,
-        layouts,
+        generate_pages: pages,
+        generate_layouts: layouts,
         clean,
         save_playbook,
-        interactive,
-    }
+        avail_tags,
+        ..AppConfig::default()
+    })
 }
 
 fn pages_to_generate(config_pages: Option<HashMap<String, String>>) -> HashMap<String, String> {
@@ -194,7 +223,7 @@ mod tests {
 
         let config_file = ConfigFile::default();
 
-        let actual = process_config(args, config_file);
+        let actual = process_config(args, config_file).unwrap();
 
         assert_eq!(actual.app_name, DEFAULT_APP_NAME.to_string());
         assert_eq!(
