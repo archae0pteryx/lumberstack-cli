@@ -1,14 +1,17 @@
+use anyhow::Result;
+use crossterm::event::{self, Event, KeyCode};
+use std::time::Duration;
 use tui::{
     backend::Backend,
     layout::{Alignment, Constraint, Direction, Layout, Rect},
     style::{Color, Style},
-    widgets::{Block, BorderType, Borders, Paragraph, Wrap},
+    widgets::{Block, BorderType, Borders, List, ListItem, Paragraph, Wrap},
     Frame,
 };
 
-use crate::ui::{app::App, ascii_tree::ascii_tree, table::{TableItem, draw_table}};
+use crate::ui::{app::App, ascii_tree::ascii_tree, common::default_block};
 
-pub fn draw_home<B>(f: &mut Frame<B>, app: &App, layout_chunk: Rect)
+pub fn draw_home<B>(f: &mut Frame<B>, app: &mut App, layout_chunk: Rect) -> Result<()>
 where
     B: Backend,
 {
@@ -17,32 +20,78 @@ where
         .constraints([Constraint::Length(13), Constraint::Length(93)].as_ref())
         .split(layout_chunk);
 
-    let tree_p = generate_tree();
+    let tree_p = ascii_tree_block();
 
     f.render_widget(tree_p, chunks[0]);
 
-    let table_items = app
-        .main_menu_items
-        .iter()
-        .map(|item| TableItem {
-            id: item.index,
-            values: item.text.clone(),
-        })
-        .collect::<Vec<TableItem>>();
+    let l = vec!["Generate All", "Tag Select", "Quit"];
 
-    draw_table(f, app, chunks[1], &table_items);
+    let menu_items = l
+        .clone()
+        .into_iter()
+        .map(|i| ListItem::new(i).style(app.theme.list_item))
+        .collect::<Vec<_>>();
+
+    let list = List::new(menu_items)
+        .block(default_block())
+        .highlight_style(app.theme.list_highlight);
+
+    f.render_stateful_widget(list, chunks[1], &mut app.list_state);
+
+    if crossterm::event::poll(Duration::from_millis(50))? {
+        if let Event::Key(key) = event::read()? {
+            match key.code {
+                KeyCode::Down => {
+                    let i = match app.list_state.selected() {
+                        Some(i) => {
+                            if i >= l.len() - 1 {
+                                0
+                            } else {
+                                i + 1
+                            }
+                        }
+                        None => 0,
+                    };
+                    app.list_state.select(Some(i));
+                }
+                KeyCode::Up => {
+                    let i = match app.list_state.selected() {
+                        Some(i) => {
+                            if i == 0 {
+                                l.len() - 1
+                            } else {
+                                i - 1
+                            }
+                        }
+                        None => 0,
+                    };
+                    app.list_state.select(Some(i));
+                }
+                KeyCode::Enter => {}
+                KeyCode::Esc => {
+                    app.quit();
+                }
+                KeyCode::Char('q') => {
+                    app.quit();
+                }
+                _ => {}
+            }
+        }
+    }
+
+    Ok(())
 }
 
-fn generate_tree() -> Paragraph<'static> {
+fn ascii_tree_block() -> Paragraph<'static> {
     let tree = ascii_tree();
     Paragraph::new(tree)
-        .block(generate_block())
+        .block(tree_block())
         .style(Style::default().fg(Color::LightGreen))
         .alignment(Alignment::Center)
         .wrap(Wrap { trim: true })
 }
 
-fn generate_block() -> Block<'static> {
+fn tree_block() -> Block<'static> {
     let border_style = Style::default().fg(Color::LightGreen);
     let border_type = BorderType::Rounded;
     Block::default()

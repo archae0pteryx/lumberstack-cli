@@ -1,3 +1,4 @@
+#![allow(unused)]
 use tui::{
     backend::Backend,
     layout::{Constraint, Direction, Layout, Rect},
