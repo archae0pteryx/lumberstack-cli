@@ -1,8 +1,9 @@
-use crate::cli_args::CliArgs;
 use clap::Parser;
 use env_logger::fmt::Color;
 use log::{warn, Level};
 use std::{env, io::Write};
+
+use super::cli_args::CliArgs;
 
 pub fn log_task_skip<S: AsRef<str>>(tag: S) {
     warn!("[SKIPPING] {}", tag.as_ref());

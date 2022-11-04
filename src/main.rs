@@ -3,10 +3,7 @@ extern crate fs_extra;
 extern crate log;
 
 mod app_config;
-mod cli_args;
-mod commands;
 mod lumberstack;
-mod spinner;
 mod system;
 mod task_definitions;
 mod tasks;

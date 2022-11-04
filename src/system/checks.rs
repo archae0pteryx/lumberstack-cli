@@ -3,12 +3,9 @@ use std::process::{Command, Output};
 
 use log::debug;
 
-use crate::{
-    app_config::{load_app_config, AppConfig, DEFAULT_WORKDIR},
-    spinner::create_spinner,
-};
+use crate::app_config::{load_app_config, AppConfig, DEFAULT_WORKDIR};
 
-use super::{file_io::FileIO, logger::Logger};
+use super::{file_io::FileIO, logger::Logger, spinner::create_spinner};
 
 pub fn init_system() -> Result<Box<AppConfig>> {
     let commands = LumberStackSysCommands {};

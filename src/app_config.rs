@@ -1,10 +1,13 @@
 use std::collections::HashMap;
 
+use crate::{
+    system::{cli_args::ParsedArgs, file_io::FileIO},
+    task_definitions::templates::tags::extract_all_tags,
+};
 use anyhow::Result;
 use log::debug;
-use serde::{Deserialize, Serialize};
-use crate::{cli_args::ParsedArgs, system::file_io::FileIO, task_definitions::templates::tags::extract_all_tags};
 use phf::phf_map;
+use serde::{Deserialize, Serialize};
 
 pub static DEFAULT_TEMPLATE_VERSION: &str = "v0.0.4";
 pub static DEFAULT_TEMPLATE_REPO: &str = "https://github.com/codingzeal/redwood-template-app";
@@ -43,7 +46,7 @@ pub struct AppConfig {
     pub clean: bool,
     pub save_playbook: bool,
     pub interactive: bool,
-    pub avail_tags: Vec<String>
+    pub avail_tags: Vec<String>,
 }
 
 impl Default for AppConfig {
@@ -82,7 +85,8 @@ pub fn load_app_config() -> Result<AppConfig> {
 }
 
 fn load_config_file(config: Option<String>) -> Result<ConfigFile> {
-    let config_file_str = FileIO::read_or_skip(&config.unwrap_or_else(|| DEFAULT_CONFIG_FILE.to_string()));
+    let config_file_str =
+        FileIO::read_or_skip(&config.unwrap_or_else(|| DEFAULT_CONFIG_FILE.to_string()));
     if let Some(c) = config_file_str {
         let config_file: ConfigFile = serde_yaml::from_str(&c)?;
         Ok(config_file)
@@ -110,8 +114,8 @@ fn process_config(args: ParsedArgs, config_file: ConfigFile) -> Result<AppConfig
     // let template_map = format!("{}/{}", workdir, DEFAULT_TEMPLATE_PATHS_FILE);
     let log_file = select_or_none(args.log_file, config_file.log_file);
     let skip_checks = args.skip_checks || config_file.skip_checks;
-    let pages = pages_to_generate(config_file.pages);
-    let layouts = layouts_to_generate(config_file.layouts);
+    let pages = rw_pages_to_generate(config_file.pages);
+    let layouts = rw_layouts_to_generate(config_file.layouts);
     let clean = config_file.clean || args.clean;
     let save_playbook = config_file.save_playbook;
     // let interactive = args.interactive || config_file.interactive;
@@ -138,7 +142,7 @@ fn process_config(args: ParsedArgs, config_file: ConfigFile) -> Result<AppConfig
     })
 }
 
-fn pages_to_generate(config_pages: Option<HashMap<String, String>>) -> HashMap<String, String> {
+fn rw_pages_to_generate(config_pages: Option<HashMap<String, String>>) -> HashMap<String, String> {
     let mut pages = HashMap::new();
     for (name, path) in DEFAULT_PAGES.into_iter() {
         pages.insert(name.to_string(), path.to_string());
@@ -153,7 +157,7 @@ fn pages_to_generate(config_pages: Option<HashMap<String, String>>) -> HashMap<S
     pages
 }
 
-fn layouts_to_generate(config_layouts: Option<Vec<String>>) -> Vec<String> {
+fn rw_layouts_to_generate(config_layouts: Option<Vec<String>>) -> Vec<String> {
     let mut layouts = Vec::new();
     for default_layout in DEFAULT_LAYOUTS {
         layouts.push(default_layout.to_string());
@@ -182,10 +186,6 @@ fn combine_replace_vars(
     template_vars
 }
 
-fn select_or_none(opt_a: Option<String>, opt_b: Option<String>) -> Option<String> {
-    opt_a.or(opt_b)
-}
-
 #[derive(Serialize, Deserialize, Clone, Default)]
 struct ConfigFile {
     name: Option<String>,
@@ -211,6 +211,10 @@ struct ConfigFile {
 
 fn select_or_default_string(s1: Option<String>, s2: Option<String>, default: &str) -> String {
     s1.unwrap_or_else(|| s2.unwrap_or_else(|| default.to_string()))
+}
+
+fn select_or_none(opt_a: Option<String>, opt_b: Option<String>) -> Option<String> {
+    opt_a.or(opt_b)
 }
 
 #[cfg(test)]

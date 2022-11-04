@@ -5,8 +5,8 @@ use std::{
 };
 use anyhow::Result;
 use crate::{
-    app_config::DEFAULT_PLAYBOOK_FILE, commands::ShellCommand, lumberstack::Runnable,
-    spinner::create_spinner, task_definitions::task_types::DefinedTask,
+    app_config::DEFAULT_PLAYBOOK_FILE, lumberstack::Runnable,
+    task_definitions::task_types::DefinedTask, system::{spinner::create_spinner, commands::ShellCommand},
 };
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
