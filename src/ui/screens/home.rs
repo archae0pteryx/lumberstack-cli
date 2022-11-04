@@ -10,7 +10,8 @@ use tui::{
 use crate::ui::{
     app::{App, Screen},
     ascii_tree::ascii_tree,
-    common::default_block, events::menu_key_events,
+    events::menu_key_events,
+    layout::default_block,
 };
 
 pub fn draw_home<B>(f: &mut Frame<B>, app: &mut App, layout_chunk: Rect) -> Result<()>

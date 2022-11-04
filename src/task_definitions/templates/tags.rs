@@ -23,6 +23,7 @@ pub enum TaskTag {
     Tailwind,
     Playwright,
     Heroku,
+    None,
     Quit,
 }
 
@@ -42,6 +43,7 @@ impl Display for TaskTag {
             TaskTag::Playwright => write!(f, "playwright"),
             TaskTag::Heroku => write!(f, "heroku"),
             TaskTag::Quit => write!(f, "quit"),
+            TaskTag::None => write!(f, "none"),
         }
     }
 }

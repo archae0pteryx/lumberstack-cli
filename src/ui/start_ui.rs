@@ -1,8 +1,4 @@
-use crate::{
-    app_config::AppConfig,
-    lumberstack::Runnable,
-    task_definitions::templates::{github::GithubTemplates, tags::TaskTag},
-};
+use crate::{app_config::AppConfig, tasks::TaskEngine};
 use anyhow::Result;
 use crossterm::{
     event::{self, Event, KeyCode},
@@ -21,12 +17,9 @@ use super::{
     screens::{generate_all::draw_generate_all, home::draw_home, tag_select::draw_tag_select},
 };
 
-// pub const BASIC_VIEW_HEIGHT: u16 = 6;
-// pub const SMALL_TERMINAL_WIDTH: u16 = 150;
-// pub const SMALL_TERMINAL_HEIGHT: u16 = 45;
-
 pub fn start_ui(app_config: Box<AppConfig>) -> Result<()> {
-    setup_templates(&app_config)?;
+    TaskEngine::load_templates(&app_config)?;
+
     let mut app = App::new(app_config);
 
     let stdout = stdout();
@@ -82,8 +75,12 @@ where
         Screen::Home => {
             draw_home(f, app, parent_layout[0])?;
         }
-        Screen::GenerateAll => draw_generate_all(f, app, parent_layout[0]),
-        Screen::TagSelect => draw_tag_select(f, app, parent_layout[0]),
+        Screen::GenerateAll => {
+            draw_generate_all(f, app, parent_layout[0])?;
+        }
+        Screen::TagSelect => {
+            draw_tag_select(f, app, parent_layout[0])?;
+        }
         _ => {}
     }
     Ok(())
@@ -103,22 +100,5 @@ fn global_key_events(app: &mut App) -> Result<()> {
             }
         }
     }
-    Ok(())
-}
-
-// pub fn get_main_layout_margin(app: &App) -> u16 {
-//     if app.term_size.height > SMALL_TERMINAL_HEIGHT {
-//         1
-//     } else {
-//         0
-//     }
-// }
-
-fn setup_templates(app_config: &AppConfig) -> Result<()> {
-    let res = GithubTemplates::clone_templates(TaskTag::Clone, app_config);
-    if res.is_none() {
-        return Ok(());
-    }
-    res.unwrap().run_job()?;
     Ok(())
 }

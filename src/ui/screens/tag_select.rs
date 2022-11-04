@@ -1,13 +1,17 @@
-#![allow(unused)]
-use tui::{backend::Backend, layout::{Rect, Layout, Direction, Constraint}, Frame};
+use crate::ui::{
+    app::App,
+    layout::{default_block, default_layout},
+};
+use anyhow::Result;
+use tui::{backend::Backend, layout::Rect, Frame};
 
-use crate::ui::{app::App, common::{default_block, default_layout}, events::menu_key_events};
-
-pub fn draw_tag_select<B>(f: &mut Frame<B>, app: &App, layout_chunk: Rect)
+pub fn draw_tag_select<B>(f: &mut Frame<B>, _: &App, layout_chunk: Rect) -> Result<()>
 where
     B: Backend,
 {
     let chunks = default_layout(layout_chunk);
     let block = default_block().title("Tag Select");
     f.render_widget(block, chunks[0]);
+
+    Ok(())
 }

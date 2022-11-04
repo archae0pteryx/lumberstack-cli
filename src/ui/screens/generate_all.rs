@@ -1,18 +1,19 @@
-#![allow(unused)]
-use anyhow::Result;
-use crossterm::event::{self, Event, KeyCode};
-use std::time::Duration;
 use tui::{
     backend::Backend,
-    layout::{Constraint, Direction, Layout, Rect},
-    style::{Color, Style},
-    widgets::{Block, BorderType, Borders, List, ListItem},
+    layout::Rect,
+    widgets::{List, ListItem},
     Frame,
 };
 
-use crate::ui::{app::App, common::{default_block, default_layout}, events::menu_key_events};
+use crate::ui::{
+    app::App,
+    events::menu_key_events,
+    layout::{default_block, default_layout},
+};
 
-pub fn draw_generate_all<B>(f: &mut Frame<B>, app: &mut App, layout_chunk: Rect)
+use anyhow::Result;
+
+pub fn draw_generate_all<B>(f: &mut Frame<B>, app: &mut App, layout_chunk: Rect) -> Result<()>
 where
     B: Backend,
 {
@@ -42,5 +43,7 @@ where
 
     f.render_stateful_widget(list, chunks[1], &mut app.list_state);
 
-    menu_key_events(app, &mut menu_items);
+    menu_key_events(app, &mut menu_items)?;
+
+    Ok(())
 }
