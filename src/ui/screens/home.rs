@@ -1,5 +1,4 @@
 use anyhow::Result;
-use crossterm::event::{self, Event, KeyCode};
 use tui::{
     backend::Backend,
     layout::{Alignment, Constraint, Direction, Layout, Rect},
@@ -11,7 +10,7 @@ use tui::{
 use crate::ui::{
     app::{App, Screen},
     ascii_tree::ascii_tree,
-    common::{default_block, next_item, prev_item},
+    common::default_block, events::menu_key_events,
 };
 
 pub fn draw_home<B>(f: &mut Frame<B>, app: &mut App, layout_chunk: Rect) -> Result<()>
@@ -58,34 +57,7 @@ where
 
     f.render_stateful_widget(list, chunks[1], &mut app.list_state);
 
-    home_key_events(app, &mut menu_items)?;
-
-    Ok(())
-}
-
-fn home_key_events(
-    app: &mut App,
-    menu_items: &mut Vec<(String, Box<dyn FnMut(&mut App)>)>,
-) -> Result<()> {
-    if crossterm::event::poll(app.get_timeout())? {
-        if let Event::Key(key) = event::read()? {
-            match key.code {
-                KeyCode::Down => {
-                    next_item(app, menu_items.len());
-                }
-                KeyCode::Up => {
-                    prev_item(app, menu_items.len());
-                }
-                KeyCode::Enter => {
-                    if let Some(i) = app.list_state.selected() {
-                        app.list_state.select(None);
-                        menu_items[i].1(app);
-                    }
-                }
-                _ => {}
-            }
-        }
-    }
+    menu_key_events(app, &mut menu_items)?;
 
     Ok(())
 }

@@ -3,3 +3,4 @@ mod ascii_tree;
 mod app;
 mod screens;
 mod common;
+mod events;

@@ -84,6 +84,10 @@ impl App {
         self.navigation_stack.push(route);
     }
 
+    pub fn pop_route(&mut self) {
+        self.navigation_stack.pop();
+    }
+
     pub fn get_timeout(&self) -> Duration {
         self.clock
             .tick_rate

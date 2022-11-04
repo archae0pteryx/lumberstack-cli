@@ -38,7 +38,7 @@ fn main() -> Result<(), Error> {
     Ok(())
 }
 
-fn execute_tasks(app_config: &AppConfig) -> anyhow::Result<()> {
+pub fn execute_tasks(app_config: &AppConfig) -> Result<()> {
     let mut app = Lumberstack::new();
 
     let clone_task = GithubTemplates::clone_templates(TaskTag::Clone, app_config);
