@@ -6,54 +6,64 @@ use tui::{
 };
 
 use crate::{
-    task_definitions::templates::tags::TaskTag,
     ui::{
-        app::{App, Screen},
-        events::menu_key_events,
+        app::{App},
+        event::Key,
         layout::{default_block, default_layout},
     },
 };
 
 use anyhow::Result;
 
+pub fn generate_screen_menu() -> Vec<&'static str> {
+    vec!["Back", "Quit"]
+}
+
+pub fn key_handler(key: Key, app: &mut App) {
+    match key {
+        Key::Down => {
+            app.next_menu_item(app.home_screen_menu.len());
+        }
+        Key::Up => {
+            app.prev_menu_item(app.home_screen_menu.len());
+        }
+        Key::Enter => {
+            let selected = app.menu_list_state.selected();
+            match selected {
+                Some(s) => match s {
+                    0 => {
+                        app.pop_route();
+                    }
+                    1 => {
+                        app.quit();
+                    }
+                    _ => {}
+                },
+                None => {}
+            }
+        }
+        _ => {}
+    }
+}
+
 pub fn draw_generate_screen<B>(f: &mut Frame<B>, app: &mut App, layout_chunk: Rect) -> Result<()>
 where
     B: Backend,
 {
     let chunks = default_layout(layout_chunk);
-    let mut menu_items: Vec<(String, Box<dyn FnMut(&mut App)>)> = vec![
-        (
-            "Generate All".to_string(),
-            Box::new(|app| {
-                app.add_remove_task_to_run(TaskTag::All);
-                app.push_route(Screen::Progress);
-            }),
-        ),
-        (
-            "Back".to_string(),
-            Box::new(|app| {
-                app.pop_route();
-            }),
-        ),
-        (
-            "Quit".to_string(),
-            Box::new(|app| {
-                app.quit();
-            }),
-        ),
-    ];
-    let listified_items = &menu_items
+
+    let listified_items = app
+        .generate_screen_menu
         .iter()
-        .map(|i| ListItem::new(i.0.clone()).style(app.theme.list_item))
+        .cloned()
+        .map(|i| ListItem::new(i).style(app.theme.list_item))
         .collect::<Vec<_>>();
 
     let list = List::new(listified_items.clone())
         .block(default_block())
         .highlight_style(app.theme.list_highlight);
 
-    f.render_stateful_widget(list, chunks[1], &mut app.list_state);
-
-    menu_key_events(app, &mut menu_items)?;
+    f.render_stateful_widget(list, chunks[1], &mut app.menu_list_state);
 
     Ok(())
 }

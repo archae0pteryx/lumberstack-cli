@@ -7,6 +7,11 @@ use tui::{
     widgets::ListState,
 };
 
+use super::screens::{
+    generate_all::generate_screen_menu, home::home_screen_menu, progress::progress_menu,
+    tag_select::tag_select_menu,
+};
+
 #[allow(dead_code)]
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub enum Screen {
@@ -37,11 +42,15 @@ pub struct App {
     pub should_quit: bool,
     pub navigation_stack: Vec<Screen>,
     pub term_size: Rect,
-    pub list_state: ListState,
+    pub menu_list_state: ListState,
     pub is_first_render: bool,
     pub clock: EventClock,
     pub tasks_to_run: Vec<TaskTag>,
     pub ready_to_execute: bool,
+    pub home_screen_menu: Vec<&'static str>,
+    pub generate_screen_menu: Vec<&'static str>,
+    pub select_tag_screen_menu: Vec<&'static str>,
+    pub progress_screen_menu: Vec<&'static str>,
 }
 
 impl Default for App {
@@ -65,9 +74,13 @@ impl Default for App {
             should_quit: false,
             navigation_stack: vec![Screen::Home],
             term_size: Rect::default(),
-            list_state: ListState::default(),
             tasks_to_run: vec![],
             ready_to_execute: false,
+            menu_list_state: ListState::default(),
+            home_screen_menu: home_screen_menu(),
+            generate_screen_menu: generate_screen_menu(),
+            select_tag_screen_menu: tag_select_menu(),
+            progress_screen_menu: progress_menu(),
         }
     }
 }
@@ -85,36 +98,57 @@ impl App {
     }
 
     pub fn push_route(&mut self, route: Screen) {
+        self.menu_list_state.select(Some(0));
         self.navigation_stack.push(route);
     }
 
     pub fn pop_route(&mut self) {
+        self.menu_list_state.select(Some(0));
         self.navigation_stack.pop();
     }
 
-    pub fn get_timeout(&self) -> Duration {
-        self.clock
-            .tick_rate
-            .checked_sub(self.clock.last_tick.elapsed())
-            .unwrap_or_else(|| Duration::from_secs(0))
+    // pub fn add_remove_task_to_run(&mut self, task: TaskTag) {
+    //     let position = self.tasks_to_run.iter().position(|t| t == &task);
+    //     match position {
+    //         Some(_) => {
+    //             self.tasks_to_run.remove(position.unwrap());
+    //         }
+    //         None => {
+    //             self.tasks_to_run.push(task);
+    //         }
+    //     }
+    // }
+
+    pub fn next_menu_item(&mut self, len: usize) {
+        let i = match self.menu_list_state.selected() {
+            Some(i) => {
+                if i >= len - 1 {
+                    0
+                } else {
+                    i + 1
+                }
+            }
+            None => 0,
+        };
+        self.menu_list_state.select(Some(i));
     }
 
-    pub fn add_remove_task_to_run(&mut self, task: TaskTag) {
-        let position = self.tasks_to_run.iter().position(|t| t == &task);
-        match position {
-            Some(_) => {
-                self.tasks_to_run.remove(position.unwrap());
+    pub fn prev_menu_item(&mut self, len: usize) {
+        let i = match self.menu_list_state.selected() {
+            Some(i) => {
+                if i == 0 {
+                    len - 1
+                } else {
+                    i - 1
+                }
             }
-            None => {
-                self.tasks_to_run.push(task);
-            }
-        }
+            None => 0,
+        };
+        self.menu_list_state.select(Some(i));
     }
 
-    pub fn tick(&mut self) {
-        if self.clock.last_tick.elapsed() >= self.clock.tick_rate {
-            self.clock.last_tick = Instant::now();
-        }
+    pub fn update_on_tick(&self) {
+        //
     }
 
     pub fn quit(&mut self) {

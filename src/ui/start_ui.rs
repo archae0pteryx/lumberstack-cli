@@ -13,10 +13,11 @@ use tui::{
 
 use super::{
     app::{App, Screen},
-    events::exit_key_events,
+    event::{self, Key},
+    handlers,
     screens::{
-        generate_all::draw_generate_screen, home::draw_home_screen,
-        tag_select::draw_tag_select_screen, progress::draw_progress_screen,
+        generate_all::draw_generate_screen, home::draw_home_screen, progress::draw_progress_screen,
+        tag_select::draw_tag_select_screen,
     },
 };
 
@@ -31,6 +32,7 @@ pub fn start_ui(app_config: AppConfig) -> Result<()> {
     let mut terminal = Terminal::new(backend)?;
 
     terminal.hide_cursor()?;
+    let events = event::Events::new(250);
 
     loop {
         if let Ok(size) = terminal.backend().size() {
@@ -45,8 +47,6 @@ pub fn start_ui(app_config: AppConfig) -> Result<()> {
             draw_routes(f, &mut app).unwrap();
         })?;
 
-        exit_key_events(&mut app)?;
-
         if app.should_quit {
             terminal.show_cursor()?;
             disable_raw_mode()?;
@@ -56,8 +56,19 @@ pub fn start_ui(app_config: AppConfig) -> Result<()> {
             return Ok(());
         }
 
-        app.tick();
+        match events.next()? {
+            event::Event::Input(key) => {
+                if key == Key::Ctrl('c') {
+                    break;
+                }
+                handlers::handle_app(key, &mut app);
+            }
+            event::Event::Tick => {
+                app.update_on_tick();
+            }
+        }
     }
+    Ok(())
 }
 
 pub fn draw_routes<B>(f: &mut Frame<B>, app: &mut App) -> Result<()>
