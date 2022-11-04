@@ -22,7 +22,7 @@ impl Runnable for TemplateCopy {
         templates.unwrap().into_iter().for_each(|template| {
             Self::copy_template(template);
         });
-        debug!("Finished tag: {}", &self.tag.to_string());
+        debug!("Finished tag: {:?}", &self.tag);
         spinner.finish_and_clear();
         Ok(())
     }
@@ -37,7 +37,7 @@ pub struct TemplateCopy {
 impl TemplateCopy {
     pub fn inject_templates(tag: TaskTag, app_config: &AppConfig) -> Option<TemplateCopy> {
         if !should_task_run(&tag, app_config) {
-            log_task_skip(&tag.to_string());
+            log_task_skip(tag);
             return None;
         }
         Some(TemplateCopy {

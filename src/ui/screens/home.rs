@@ -14,7 +14,7 @@ use crate::ui::{
     layout::default_block,
 };
 
-pub fn draw_home<B>(f: &mut Frame<B>, app: &mut App, layout_chunk: Rect) -> Result<()>
+pub fn draw_home_screen<B>(f: &mut Frame<B>, app: &mut App, layout_chunk: Rect) -> Result<()>
 where
     B: Backend,
 {

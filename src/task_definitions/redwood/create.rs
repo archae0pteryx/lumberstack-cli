@@ -7,7 +7,7 @@ use crate::{
             yaml::{command_task::CommandTask, debug_task::DebugTask},
         },
         task_types::DefinedTask,
-        templates::tags::{should_task_run, TaskTag},
+        templates::tags::{should_task_run, TaskTag, tag_to_str},
     },
 };
 
@@ -19,7 +19,7 @@ impl RedwoodApp {
         let app_name = &app_config.app_name;
 
         if !should_task_run(&tag, app_config) {
-            log_task_skip(&tag.to_string());
+            log_task_skip(tag);
             return None;
         }
 
@@ -44,7 +44,7 @@ impl RedwoodApp {
             app_name
         );
         CommandTask::new("create redwood app")
-            .set_tags(Some(vec![tag.to_string()]))
+            .set_tags(&vec![tag_to_str(tag)])
             .command(command)
             .register("redwood_create")
             .build()
@@ -52,7 +52,7 @@ impl RedwoodApp {
 
     fn install_extra_modules_command(tag: &TaskTag, app_name: &str) -> DefinedTask {
         CommandTask::new("Extra modules")
-            .set_tags(Some(vec!["modules".to_string(), tag.to_string()]))
+            .set_tags(&vec!["modules".to_string(), tag_to_str(tag)])
             .command("yarn add -D chance")
             .chdir(app_name)
             .register("redwood_extra_modules")

@@ -1,7 +1,6 @@
-use crate::{app_config::AppConfig, tasks::TaskEngine};
+use crate::app_config::AppConfig;
 use anyhow::Result;
 use crossterm::{
-    event::{self, Event, KeyCode},
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
@@ -14,12 +13,14 @@ use tui::{
 
 use super::{
     app::{App, Screen},
-    screens::{generate_all::draw_generate_all, home::draw_home, tag_select::draw_tag_select},
+    events::exit_key_events,
+    screens::{
+        generate_all::draw_generate_screen, home::draw_home_screen,
+        tag_select::draw_tag_select_screen, progress::draw_progress_screen,
+    },
 };
 
 pub fn start_ui(app_config: Box<AppConfig>) -> Result<()> {
-    TaskEngine::load_templates(&app_config)?;
-
     let mut app = App::new(app_config);
 
     let stdout = stdout();
@@ -44,7 +45,7 @@ pub fn start_ui(app_config: Box<AppConfig>) -> Result<()> {
             draw_routes(f, &mut app).unwrap();
         })?;
 
-        global_key_events(&mut app)?;
+        exit_key_events(&mut app)?;
 
         if app.should_quit {
             terminal.show_cursor()?;
@@ -73,32 +74,18 @@ where
 
     match current_route {
         Screen::Home => {
-            draw_home(f, app, parent_layout[0])?;
+            draw_home_screen(f, app, parent_layout[0])?;
         }
         Screen::GenerateAll => {
-            draw_generate_all(f, app, parent_layout[0])?;
+            draw_generate_screen(f, app, parent_layout[0])?;
         }
         Screen::TagSelect => {
-            draw_tag_select(f, app, parent_layout[0])?;
+            draw_tag_select_screen(f, app, parent_layout[0])?;
+        }
+        Screen::Progress => {
+            draw_progress_screen(f, app, parent_layout[0])?;
         }
         _ => {}
-    }
-    Ok(())
-}
-
-fn global_key_events(app: &mut App) -> Result<()> {
-    if crossterm::event::poll(app.get_timeout())? {
-        if let Event::Key(key) = event::read()? {
-            match key.code {
-                KeyCode::Esc => {
-                    app.quit();
-                }
-                KeyCode::Char('q') => {
-                    app.quit();
-                }
-                _ => {}
-            }
-        }
     }
     Ok(())
 }

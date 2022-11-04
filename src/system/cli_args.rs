@@ -1,5 +1,8 @@
+
 use clap::Parser;
 use clap_verbosity_flag::Verbosity;
+
+use crate::task_definitions::templates::tags::{TaskTag, opt_tags_to_vec};
 
 /// Generator for Opinionated RedwoodJS Projects
 #[derive(Parser, Debug, Clone)]
@@ -53,9 +56,9 @@ pub struct ParsedArgs {
     pub skip_checks: bool,
     pub config: Option<String>,
     pub template_version: Option<String>,
-    pub tags: Option<Vec<String>>,
+    pub tags: Vec<TaskTag>,
     pub log_file: Option<String>,
-    pub skip_tags: Option<Vec<String>>,
+    pub skip_tags: Vec<TaskTag>,
     pub clean: bool,
     pub interactive: bool,
 }
@@ -68,11 +71,11 @@ impl Default for ParsedArgs {
             skip_checks: false,
             config: None,
             template_version: None,
-            tags: None,
+            tags: vec![],
             log_file: None,
-            skip_tags: None,
+            skip_tags: vec![],
             clean: false,
-            interactive: true
+            interactive: true,
         }
     }
 }
@@ -80,15 +83,17 @@ impl Default for ParsedArgs {
 impl ParsedArgs {
     pub fn new() -> Self {
         let args = CliArgs::parse();
+        let tags = opt_tags_to_vec(args.tags);
+        let skip_tags = opt_tags_to_vec(args.skip_tags);
         Self {
             name: args.name,
             verbose: args.verbose,
             skip_checks: args.skip_checks,
             config: args.config,
             template_version: args.template_version,
-            tags: args.tags,
+            tags,
             log_file: args.log_file,
-            skip_tags: args.skip_tags,
+            skip_tags,
             clean: args.clean,
             interactive: args.interactive,
         }

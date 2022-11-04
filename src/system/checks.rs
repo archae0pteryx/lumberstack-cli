@@ -23,11 +23,13 @@ impl<T: SysCommands> System<T> {
     }
 
     pub fn run(&self) -> Result<AppConfig> {
-        Logger::init();
+        let app_config = load_app_config()?;
+
+        Logger::init(&app_config);
+
         let spinner = create_spinner("Initializing...");
         spinner.set_prefix("🖥 ");
 
-        let app_config = load_app_config()?;
 
         if !app_config.skip_checks {
             self.os_ok()?;
@@ -36,7 +38,7 @@ impl<T: SysCommands> System<T> {
             self.has_required_bin("node")?;
         }
 
-        if app_config.clean && app_config.tags.is_none() && app_config.skip_tags.is_none() {
+        if app_config.clean && app_config.tags.is_empty() && app_config.skip_tags.is_empty() {
             debug!("Found clean flag");
             FileIO::remove(&app_config.app_name);
             FileIO::remove(&app_config.workdir);

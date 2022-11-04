@@ -8,8 +8,8 @@ pub struct GitTask {
     pub git: GitRemote,
     #[serde(skip_serializing_if = "String::is_empty")]
     pub when: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub tags: Option<Vec<String>>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub tags: Vec<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default, PartialEq, Eq)]
@@ -26,7 +26,7 @@ impl GitTask {
             name: name.to_string(),
             when: String::new(),
             git: GitRemote::default(),
-            tags: None,
+            tags: vec![],
         }
     }
 
@@ -54,9 +54,9 @@ impl GitTask {
         new_task
     }
 
-    pub fn tags(&self, tags: Option<Vec<String>>) -> GitTask {
+    pub fn tags(&self, tags: &[String]) -> GitTask {
         let mut new_task = self.clone();
-        new_task.tags = tags;
+        new_task.tags = tags.to_vec();
         new_task
     }
 

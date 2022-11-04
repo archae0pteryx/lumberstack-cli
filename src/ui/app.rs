@@ -1,6 +1,5 @@
+use crate::{app_config::AppConfig, task_definitions::templates::tags::TaskTag};
 use std::time::{Duration, Instant};
-
-use crate::app_config::AppConfig;
 
 use tui::{
     layout::Rect,
@@ -14,6 +13,7 @@ pub enum Screen {
     Home,
     GenerateAll,
     TagSelect,
+    Progress,
     Quit,
 }
 
@@ -40,6 +40,8 @@ pub struct App {
     pub list_state: ListState,
     pub is_first_render: bool,
     pub clock: EventClock,
+    pub tasks_to_run: Vec<TaskTag>,
+    pub ready_to_execute: bool,
 }
 
 impl Default for App {
@@ -64,6 +66,8 @@ impl Default for App {
             navigation_stack: vec![Screen::Home],
             term_size: Rect::default(),
             list_state: ListState::default(),
+            tasks_to_run: vec![],
+            ready_to_execute: false,
         }
     }
 }
@@ -93,6 +97,18 @@ impl App {
             .tick_rate
             .checked_sub(self.clock.last_tick.elapsed())
             .unwrap_or_else(|| Duration::from_secs(0))
+    }
+
+    pub fn add_remove_task_to_run(&mut self, task: TaskTag) {
+        let position = self.tasks_to_run.iter().position(|t| t == &task);
+        match position {
+            Some(_) => {
+                self.tasks_to_run.remove(position.unwrap());
+            }
+            None => {
+                self.tasks_to_run.push(task);
+            }
+        }
     }
 
     pub fn tick(&mut self) {

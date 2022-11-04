@@ -1,20 +1,33 @@
+use super::cli_args::CliArgs;
+use crate::{app_config::AppConfig, task_definitions::templates::tags::TaskTag};
 use clap::Parser;
 use env_logger::fmt::Color;
-use log::{warn, Level};
+use log::{debug, warn, Level};
 use std::{env, io::Write};
 
-use super::cli_args::CliArgs;
-
-pub fn log_task_skip<S: AsRef<str>>(tag: S) {
-    warn!("[SKIPPING] {}", tag.as_ref());
+pub fn log_task_skip(tag: TaskTag) {
+    warn!("[SKIPPING] {:?}", tag);
 }
 
 pub struct Logger;
 
 impl Logger {
-    pub fn init() {
+    pub fn init(app_config: &AppConfig) {
+        Self::set_ansible_log(&app_config.log_file);
+
+        if app_config.interactive {
+            // Disable when interactive UI
+            return;
+        }
+
+        Self::setup_logger();
+
+        debug!("AppConfig: {:#?}", app_config);
+    }
+
+    fn setup_logger() {
         let args = CliArgs::parse();
-        Self::set_ansible_log(&args.log_file);
+
         env_logger::Builder::new()
             .filter_level(args.verbose.log_level_filter())
             .format(|buf, record| {

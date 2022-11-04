@@ -1,7 +1,24 @@
 use super::app::App;
 
 use anyhow::Result;
-use crossterm::event::{Event, self, KeyCode};
+use crossterm::event::{self, Event, KeyCode};
+
+pub fn exit_key_events(app: &mut App) -> Result<()> {
+    if crossterm::event::poll(app.get_timeout())? {
+        if let Event::Key(key) = event::read()? {
+            match key.code {
+                KeyCode::Esc => {
+                    app.quit();
+                }
+                KeyCode::Char('q') => {
+                    app.quit();
+                }
+                _ => {}
+            }
+        }
+    }
+    Ok(())
+}
 
 pub fn menu_key_events(
     app: &mut App,
@@ -29,7 +46,6 @@ pub fn menu_key_events(
 
     Ok(())
 }
-
 
 fn next_item(app: &mut App, length: usize) {
     let i = match app.list_state.selected() {

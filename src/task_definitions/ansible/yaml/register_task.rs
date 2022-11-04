@@ -8,8 +8,8 @@ pub struct RegisterTask {
     pub stat: StatPath,
     #[serde(skip_serializing_if = "String::is_empty")]
     pub register: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    tags: Option<Vec<String>>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    tags: Vec<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Default)]
@@ -24,7 +24,7 @@ impl RegisterTask {
             name: name.as_ref().to_string(),
             stat: StatPath::default(),
             register: String::new(),
-            tags: None,
+            tags: vec![],
         }
     }
 
@@ -40,9 +40,11 @@ impl RegisterTask {
         new_task
     }
 
-    pub fn tags(&self, tags: Option<Vec<String>>) -> RegisterTask {
+    pub fn tags(&self, tags: &[String]) -> RegisterTask {
         let mut new_task = self.clone();
-        new_task.tags = tags;
+        if tags.is_empty() {
+            new_task.tags = tags.to_vec();
+        }
         new_task
     }
     pub fn build(&self) -> DefinedTask {

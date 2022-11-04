@@ -10,7 +10,7 @@ impl Docker {
         CommandTask::new("Docker Compose Up")
             .command("docker-compose up -d")
             .chdir(&app_config.app_name)
-            .set_tags(Some(vec!["docker".to_string(), "prisma".to_string()]))
+            .set_tags(&vec!["docker".to_string(), "prisma".to_string()])
             .register("docker_compose_start")
             .build()
     }
@@ -19,7 +19,7 @@ impl Docker {
         CommandTask::new("Removing old docker containers")
             .command("docker-compose down -v")
             .chdir(&app_config.app_name)
-            .set_tags(Some(vec!["docker".to_string(), "prisma".to_string()]))
+            .set_tags(&vec!["docker".to_string(), "prisma".to_string()])
             .register("docker_reset")
             .build()
     }

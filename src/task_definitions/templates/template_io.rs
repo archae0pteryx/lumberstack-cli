@@ -28,7 +28,7 @@ impl TemplateIO {
         app_config: &AppConfig,
     ) -> Result<Option<Vec<TemplateFile>>> {
         if !should_task_run(&tag, app_config) {
-            log_task_skip(tag.to_string());
+            log_task_skip(tag);
             return Ok(None);
         }
         let all_paths = Self::gather_all_template_paths(&app_config.template_map)?;

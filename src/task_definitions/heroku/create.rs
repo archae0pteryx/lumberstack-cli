@@ -9,7 +9,7 @@ use crate::{
             yaml::{command_task::CommandTask, debug_task::DebugTask},
         },
         task_types::DefinedTask,
-        templates::tags::{should_task_run, TaskTag},
+        templates::tags::{should_task_run, TaskTag, tag_to_str},
     },
 };
 
@@ -18,13 +18,13 @@ pub struct Heroku;
 impl Heroku {
     pub fn create_heroku(tag: TaskTag, app_config: &AppConfig) -> Option<RunnableAnsibleTask> {
         if !should_task_run(&tag, app_config) {
-            log_task_skip(tag.to_string());
+            log_task_skip(tag);
             return None;
         }
         let app_name = app_config.app_name.to_owned();
         let mut playbook = RunnableAnsibleTask::new("Heroku");
 
-        let heroku_task = Self::install_pm2(&tag, &app_name);
+        let heroku_task = Self::install_pm2(tag, &app_name);
         let heroku_debug_task = DebugTask::create("heroku_install");
 
         playbook.add_task(heroku_task);
@@ -35,10 +35,10 @@ impl Heroku {
         Some(playbook)
     }
 
-    fn install_pm2(tag: &TaskTag, app_name: &str) -> DefinedTask {
+    fn install_pm2(tag: TaskTag, app_name: &str) -> DefinedTask {
         CommandTask::new("Install PM2")
             .chdir(app_name)
-            .set_tags(Some(vec!["heroku".to_string(), tag.to_string()]))
+            .set_tags(&vec!["heroku".to_string(), tag_to_str(&tag)])
             .command("yarn add pm2")
             .register("heroku_install")
             .build()

@@ -8,7 +8,7 @@ use crate::{
             auth::RedwoodAuth, create::RedwoodApp, generate::RedwoodGenerate,
             playwright::Playwright, tailwind::Tailwind,
         },
-        templates::{copy::TemplateCopy, github::GithubTemplates, tags::TaskTag},
+        templates::{copy::TemplateCopy, github::GithubTemplates, tags::{TaskTag}},
     },
 };
 use anyhow::Result;
@@ -16,16 +16,16 @@ use anyhow::Result;
 pub struct TaskEngine;
 
 impl TaskEngine {
-    pub fn execute(app_config: &AppConfig) -> Result<()> {
+    pub fn execute(app_config: &AppConfig, task_tags: Vec<TaskTag>) -> Result<()> {
         let mut app = Lumberstack::new();
 
-        let clone_task = GithubTemplates::clone_templates(TaskTag::Clone, app_config);
+        dbg!(task_tags);
 
         let create_task = RedwoodApp::create_redwood_app(TaskTag::Create, app_config);
 
         let playwright_task = Playwright::create_playwright(TaskTag::Playwright, app_config);
 
-        let generate_pages_task = RedwoodGenerate::generate_pages(TaskTag::Generate, app_config);
+        let generate_pages_task = RedwoodGenerate::generate_pages(TaskTag::Pages, app_config);
 
         let auth_task = RedwoodAuth::generate_auth(TaskTag::Auth, app_config);
 
@@ -37,7 +37,6 @@ impl TaskEngine {
 
         let heroku_task = Heroku::create_heroku(TaskTag::Heroku, app_config);
 
-        app.queue(clone_task);
         app.queue(create_task);
         app.queue(tailwind_task);
         app.queue(playwright_task);

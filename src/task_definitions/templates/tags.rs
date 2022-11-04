@@ -1,15 +1,16 @@
-use serde::{Deserialize, Serialize};
-
 use super::{symbols::Symbols, template_io::TemplateIO};
 use crate::{app_config::AppConfig, system::file_io::FileIO};
 use anyhow::Result;
 use enum_iterator::Sequence;
-use std::{
-    fmt::{self, Display},
-    path::PathBuf,
-};
+use serde::{Deserialize, Serialize};
+use std::convert::AsRef;
+use std::path::PathBuf;
+use std::str::FromStr;
+use strum::{AsRefStr, EnumIter, EnumString};
 
-#[derive(Serialize, Deserialize, Debug, Clone, Sequence)]
+#[derive(
+    Serialize, Deserialize, Debug, Clone, Sequence, EnumString, AsRefStr, EnumIter, PartialEq,
+)]
 pub enum TaskTag {
     Clone,
     Create,
@@ -19,61 +20,61 @@ pub enum TaskTag {
     Github,
     Templates,
     Layouts,
-    Generate,
     Tailwind,
     Playwright,
     Heroku,
     None,
-    Quit,
+    All,
 }
 
-impl Display for TaskTag {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            TaskTag::Clone => write!(f, "init"),
-            TaskTag::Create => write!(f, "create"),
-            TaskTag::Auth => write!(f, "auth"),
-            TaskTag::Prisma => write!(f, "prisma"),
-            TaskTag::Pages => write!(f, "pages"),
-            TaskTag::Github => write!(f, "github"),
-            TaskTag::Templates => write!(f, "templates"),
-            TaskTag::Layouts => write!(f, "layouts"),
-            TaskTag::Generate => write!(f, "generate"),
-            TaskTag::Tailwind => write!(f, "tailwind"),
-            TaskTag::Playwright => write!(f, "playwright"),
-            TaskTag::Heroku => write!(f, "heroku"),
-            TaskTag::Quit => write!(f, "quit"),
-            TaskTag::None => write!(f, "none"),
-        }
-    }
+pub fn tag_to_str(tag: &TaskTag) -> String {
+    TaskTag::as_ref(tag).to_string()
+}
+
+pub fn opt_tags_to_vec(tags: Option<Vec<String>>) -> Vec<TaskTag> {
+    tags.unwrap_or_default()
+        .into_iter()
+        .map(|t| TaskTag::from_str(&t))
+        .filter_map(|t| t.ok())
+        .collect::<Vec<_>>()
 }
 
 pub fn should_task_run(this_tag: &TaskTag, app_config: &AppConfig) -> bool {
     let tags = app_config.tags.to_owned();
     let skip_tags = &app_config.skip_tags.to_owned();
-    if let Some(t) = tags {
-        return t.contains(&this_tag.to_string()) || t.is_empty();
+
+    if tags.contains(&TaskTag::All)
+        || tags.contains(this_tag)
+        || (tags.is_empty() && skip_tags.is_empty())
+    {
+        return true;
     }
-    if let Some(st) = skip_tags {
-        let has_skip_tag = st.contains(&this_tag.to_string());
-        return !has_skip_tag;
+
+    if skip_tags.contains(this_tag) {
+        return false;
     }
 
     true
 }
 
-pub fn extract_all_tags(map_file: &str) -> Result<Vec<String>> {
+pub fn get_all_tags(map_file: &str) -> Result<Vec<TaskTag>> {
     let combined_templates = TemplateIO::gather_all_template_paths(map_file)?;
-    Ok(extract_tags_from_paths(combined_templates))
+    let tag_strs = all_tags_from_files(combined_templates);
+    let tags = tag_strs
+        .iter()
+        .map(|t| TaskTag::from_str(t))
+        .filter(|t| t.is_ok())
+        .map(|t| t.unwrap())
+        .collect::<Vec<TaskTag>>();
+    Ok(tags)
 }
 
-fn extract_tags_from_paths(template_paths: Vec<PathBuf>) -> Vec<String> {
+fn all_tags_from_files(template_paths: Vec<PathBuf>) -> Vec<String> {
     template_paths
         .iter()
         .flat_map(|path| {
-            let file_str = FileIO::read_or_skip(&path)
-                .unwrap_or_else(|| panic!("Error reading: {:?}", &path.display()));
-            Symbols::get_tags(&file_str)
+            let file_str = FileIO::read_or_skip(&path);
+            Symbols::get_tags(&file_str.unwrap_or_default())
         })
         .collect::<Vec<_>>()
 }

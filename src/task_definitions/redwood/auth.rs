@@ -4,7 +4,7 @@ use crate::{
     task_definitions::{
         ansible::{ansible_task::RunnableAnsibleTask, yaml::command_task::CommandTask},
         task_types::DefinedTask,
-        templates::tags::{should_task_run, TaskTag},
+        templates::tags::{should_task_run, TaskTag, tag_to_str},
     },
 };
 
@@ -15,7 +15,7 @@ impl RedwoodAuth {
         let app_name = &app_config.app_name;
 
         if !should_task_run(&tag, app_config) {
-            log_task_skip(&tag.to_string());
+            log_task_skip(tag);
             return None;
         }
 
@@ -36,7 +36,7 @@ impl RedwoodAuth {
         CommandTask::new("Setting up auth")
             .chdir(app_name)
             .command("yarn rw setup auth dbAuth --force")
-            .set_tags(Some(vec![tag.to_string()]))
+            .set_tags(&vec![tag_to_str(tag)])
             .build()
     }
 
@@ -44,7 +44,7 @@ impl RedwoodAuth {
         CommandTask::new("Generating auth pages")
             .chdir(app_name)
             .command("yarn rw generate dbAuth --force")
-            .set_tags(Some(vec![tag.to_string()]))
+            .set_tags(&vec![tag_to_str(tag)])
             .build()
     }
 
@@ -52,7 +52,7 @@ impl RedwoodAuth {
         CommandTask::new("Generating session secret")
             .chdir(app_name)
             .command("yarn rw generate secret")
-            .set_tags(Some(vec![tag.to_string()]))
+            .set_tags(&vec![tag_to_str(tag)])
             .build()
     }
 }

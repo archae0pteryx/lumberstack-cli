@@ -15,7 +15,7 @@ use crate::{
     },
 };
 
-use super::tags::{should_task_run, TaskTag};
+use super::tags::{should_task_run, TaskTag, tag_to_str};
 
 #[derive(Clone)]
 pub struct GithubTemplates;
@@ -24,7 +24,7 @@ impl GithubTemplates {
     pub fn clone_templates(tag: TaskTag, app_config: &AppConfig) -> Option<RunnableAnsibleTask> {
         let has_templates = Path::new(&app_config.template_dir).exists();
         if has_templates || !should_task_run(&tag, app_config) {
-            log_task_skip(tag.to_string());
+            log_task_skip(tag);
             return None;
         }
         // Register a dir for ansible to manipulate
@@ -59,7 +59,7 @@ impl GithubTemplates {
         RegisterTask::new("Register template dir")
             .register("tmp_templates")
             .stat_path(&app_config.template_dir)
-            .tags(Some(vec![tag.to_string()]))
+            .tags(&vec![tag_to_str(&tag)])
             .build()
     }
 
@@ -73,7 +73,7 @@ impl GithubTemplates {
             .dest(template_path)
             .version(ver)
             .when("not tmp_templates.stat.exists")
-            .tags(Some(vec![tag.to_string()]))
+            .tags(&vec![tag_to_str(&tag)])
             .build()
     }
 
@@ -88,7 +88,7 @@ impl GithubTemplates {
             .exclude("node_modules")
             .exclude(".vscode")
             .register("filtered_dirs")
-            .tags(Some(vec![tag.to_string()]))
+            .tags(&vec![tag_to_str(&tag)])
             .build()
     }
 
@@ -97,7 +97,7 @@ impl GithubTemplates {
             "dirs",
             "{{ filtered_dirs | json_query(\"files[*].path\") }}",
         )
-        .tags(Some(vec![tag.to_string()]))
+        .tags(&vec![tag_to_str(&tag)])
         .build()
     }
 
@@ -109,7 +109,7 @@ impl GithubTemplates {
             .contains(DEFAULT_ANSIBLE_TEMPLATE_REGEX)
             .register("found_templates")
             .file_type("file")
-            .tags(Some(vec![tag.to_string()]))
+            .tags(&vec![tag_to_str(&tag)])
             .build()
     }
 
@@ -118,7 +118,7 @@ impl GithubTemplates {
             "template_paths",
             "{{ found_templates | json_query(\"files[*].path\") }}",
         )
-        .tags(Some(vec![tag.to_string()]))
+        .tags(&vec![tag_to_str(&tag)])
         .build()
     }
 
@@ -127,7 +127,7 @@ impl GithubTemplates {
         CopyTask::new("Write template map")
             .content("{{ template_paths }}")
             .dest(paths_file.as_str())
-            .set_tags(Some(vec![tag.to_string()]))
+            .set_tags(&vec![tag_to_str(&tag)])
             .build()
     }
 }

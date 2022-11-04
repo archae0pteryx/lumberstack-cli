@@ -6,8 +6,8 @@ use anyhow::Result;
 pub struct CopyTask {
     pub name: String,
     pub copy: CopyArgs,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub tags: Option<Vec<String>>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub tags: Vec<String>,
 }
 #[derive(Serialize, Deserialize, Debug, Clone, Default, PartialEq, Eq)]
 pub struct CopyArgs {
@@ -30,7 +30,7 @@ impl CopyTask {
         CopyTask {
             name: name.as_ref().to_string(),
             copy: CopyArgs::default(),
-            tags: None,
+            tags: vec![],
         }
     }
 
@@ -53,9 +53,9 @@ impl CopyTask {
         new_task
     }
 
-    pub fn set_tags(&self, tags: Option<Vec<String>>) -> CopyTask {
+    pub fn set_tags(&self, tags: &[String]) -> CopyTask {
         let mut new_task = self.clone();
-        new_task.tags = tags;
+        new_task.tags = tags.to_vec();
         new_task
     }
 

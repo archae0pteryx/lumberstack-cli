@@ -1,4 +1,3 @@
-#![allow(unused)]
 use serde::{Deserialize, Serialize};
 
 use crate::task_definitions::task_types::DefinedTask;
@@ -11,8 +10,8 @@ pub struct CommandTask {
     pub register: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub args: Option<CommandArgs>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    tags: Option<Vec<String>>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub tags: Vec<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
@@ -56,15 +55,16 @@ impl CommandTask {
         new_task
     }
 
+    #[allow(dead_code)]
     pub fn creates<S: AsRef<str>>(&self, creates: S) -> CommandTask {
         let mut new_task = self.clone();
         new_task.command.creates = creates.as_ref().to_string();
         new_task
     }
 
-    pub fn set_tags(&self, tags: Option<Vec<String>>) -> CommandTask {
+    pub fn set_tags(&self, tags: &[String]) -> CommandTask {
         let mut new_task = self.clone();
-        new_task.tags = tags;
+        new_task.tags = tags.to_vec();
         new_task
     }
 

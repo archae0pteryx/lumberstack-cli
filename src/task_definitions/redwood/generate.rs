@@ -13,7 +13,7 @@ pub struct RedwoodGenerate;
 impl RedwoodGenerate {
     pub fn generate_pages(tag: TaskTag, app_config: &AppConfig) -> Option<RunnableAnsibleTask> {
         if !should_task_run(&tag, app_config) {
-            log_task_skip(&tag.to_string());
+            log_task_skip(tag);
             return None;
         }
 

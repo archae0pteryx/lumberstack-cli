@@ -9,9 +9,8 @@ mod task_definitions;
 mod tasks;
 mod ui;
 
+use crate::system::checks::init_system;
 use anyhow::{Error, Result};
-use system::checks::init_system;
-
 use tasks::TaskEngine;
 use ui::start_ui::start_ui;
 
@@ -21,7 +20,7 @@ fn main() -> Result<(), Error> {
     if app_config.interactive {
         start_ui(app_config)?;
     } else {
-        TaskEngine::execute(&app_config)?;
+        TaskEngine::execute(&app_config, vec![])?;
     }
 
     Ok(())

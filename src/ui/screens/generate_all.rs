@@ -5,20 +5,30 @@ use tui::{
     Frame,
 };
 
-use crate::ui::{
-    app::App,
-    events::menu_key_events,
-    layout::{default_block, default_layout},
+use crate::{
+    task_definitions::templates::tags::TaskTag,
+    ui::{
+        app::{App, Screen},
+        events::menu_key_events,
+        layout::{default_block, default_layout},
+    },
 };
 
 use anyhow::Result;
 
-pub fn draw_generate_all<B>(f: &mut Frame<B>, app: &mut App, layout_chunk: Rect) -> Result<()>
+pub fn draw_generate_screen<B>(f: &mut Frame<B>, app: &mut App, layout_chunk: Rect) -> Result<()>
 where
     B: Backend,
 {
     let chunks = default_layout(layout_chunk);
     let mut menu_items: Vec<(String, Box<dyn FnMut(&mut App)>)> = vec![
+        (
+            "Generate All".to_string(),
+            Box::new(|app| {
+                app.add_remove_task_to_run(TaskTag::All);
+                app.push_route(Screen::Progress);
+            }),
+        ),
         (
             "Back".to_string(),
             Box::new(|app| {

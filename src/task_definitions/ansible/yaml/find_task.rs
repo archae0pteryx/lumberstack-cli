@@ -10,8 +10,8 @@ pub struct FindTask {
     pub find: Find,
     #[serde(skip_serializing_if = "String::is_empty")]
     pub register: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub tags: Option<Vec<String>>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub tags: Vec<String>,
 }
 #[derive(Serialize, Deserialize, Debug, Clone, Default, PartialEq, Eq)]
 
@@ -36,7 +36,7 @@ impl FindTask {
             name: name.as_ref().to_string(),
             find: Find::default(),
             register: String::new(),
-            tags: None,
+            tags: vec![],
         }
     }
 
@@ -87,9 +87,9 @@ impl FindTask {
         new_task
     }
 
-    pub fn tags(&self, tags: Option<Vec<String>>) -> FindTask {
+    pub fn tags(&self, tags: &[String]) -> FindTask {
         let mut new_task = self.clone();
-        new_task.tags = tags;
+        new_task.tags = tags.to_vec();
         new_task
     }
 

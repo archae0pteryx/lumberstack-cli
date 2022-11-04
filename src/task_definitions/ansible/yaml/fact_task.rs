@@ -6,8 +6,8 @@ use crate::task_definitions::task_types::DefinedTask;
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct FactTask {
     set_fact: Map<String, Value>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    tags: Option<Vec<String>>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    tags: Vec<String>,
 }
 
 impl FactTask {
@@ -19,7 +19,7 @@ impl FactTask {
         );
         FactTask {
             set_fact: map,
-            tags: None,
+            tags: vec![],
         }
     }
 
@@ -33,11 +33,11 @@ impl FactTask {
         new_fact
     }
 
-    pub fn tags(&self, tags: Option<Vec<String>>) -> FactTask {
+    pub fn tags(&self, tags: &[String]) -> FactTask {
         let new_task = self.clone();
         FactTask {
             set_fact: new_task.set_fact,
-            tags,
+            tags: tags.to_vec(),
         }
     }
 

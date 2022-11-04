@@ -7,7 +7,7 @@ use crate::{
             yaml::{command_task::CommandTask, debug_task::DebugTask},
         },
         task_types::DefinedTask,
-        templates::tags::{should_task_run, TaskTag},
+        templates::tags::{should_task_run, TaskTag, tag_to_str},
     },
 };
 
@@ -16,7 +16,7 @@ pub struct Playwright;
 impl Playwright {
     pub fn create_playwright(tag: TaskTag, app_config: &AppConfig) -> Option<RunnableAnsibleTask> {
         if !should_task_run(&tag, app_config) {
-            log_task_skip(tag.to_string());
+            log_task_skip(tag);
             return None;
         }
         let app_name = app_config.app_name.to_owned();
@@ -35,7 +35,7 @@ impl Playwright {
         let web_dir = format!("{}/web", app_name);
         CommandTask::new("Setup playwright")
             .chdir(web_dir)
-            .set_tags(Some(vec!["playwright".to_string(), tag.to_string()]))
+            .set_tags(&vec!["playwright".to_string(), tag_to_str(tag)])
             .command("yarn create playwright --quiet --lang=ts")
             .register("playwright_install")
             .build()
