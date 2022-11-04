@@ -32,7 +32,7 @@ pub struct EventClock {
 }
 
 pub struct App {
-    pub app_config: Box<AppConfig>,
+    pub app_config: AppConfig,
     pub theme: Theme,
     pub should_quit: bool,
     pub navigation_stack: Vec<Screen>,
@@ -47,10 +47,10 @@ pub struct App {
 impl Default for App {
     fn default() -> Self {
         App {
-            app_config: Box::new(AppConfig::default()),
+            app_config: AppConfig::default(),
             is_first_render: true,
             clock: EventClock {
-                tick_rate: Duration::from_millis(50),
+                tick_rate: Duration::from_millis(10),
                 last_tick: Instant::now(),
             },
             theme: Theme {
@@ -73,7 +73,7 @@ impl Default for App {
 }
 
 impl App {
-    pub fn new(app_config: Box<AppConfig>) -> App {
+    pub fn new(app_config: AppConfig) -> App {
         App {
             app_config,
             ..App::default()

@@ -20,7 +20,7 @@ use super::{
     },
 };
 
-pub fn start_ui(app_config: Box<AppConfig>) -> Result<()> {
+pub fn start_ui(app_config: AppConfig) -> Result<()> {
     let mut app = App::new(app_config);
 
     let stdout = stdout();

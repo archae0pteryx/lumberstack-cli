@@ -16,10 +16,8 @@ use anyhow::Result;
 pub struct TaskEngine;
 
 impl TaskEngine {
-    pub fn execute(app_config: &AppConfig, task_tags: Vec<TaskTag>) -> Result<()> {
+    pub fn execute(app_config: &AppConfig) -> Result<()> {
         let mut app = Lumberstack::new();
-
-        dbg!(task_tags);
 
         let create_task = RedwoodApp::create_redwood_app(TaskTag::Create, app_config);
 
@@ -51,7 +49,7 @@ impl TaskEngine {
     }
 
     pub fn load_templates(app_config: &AppConfig) -> Result<()> {
-        let gh_task = GithubTemplates::clone_templates(TaskTag::None, app_config);
+        let gh_task = GithubTemplates::clone_templates(TaskTag::All, app_config);
 
         if let Some(task) = gh_task {
             task.run_job()?;

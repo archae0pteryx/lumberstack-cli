@@ -27,6 +27,14 @@ pub enum TaskTag {
     All,
 }
 
+pub fn title_case(s: &str) -> String {
+    let mut c = s.chars();
+    match c.next() {
+        None => String::new(),
+        Some(f) => f.to_uppercase().collect::<String>() + c.as_str(),
+    }
+}
+
 pub fn tag_to_str(tag: &TaskTag) -> String {
     TaskTag::as_ref(tag).to_string()
 }
@@ -57,15 +65,20 @@ pub fn should_task_run(this_tag: &TaskTag, app_config: &AppConfig) -> bool {
     true
 }
 
-pub fn get_all_tags(map_file: &str) -> Result<Vec<TaskTag>> {
+pub fn get_all_tags(map_file: &str) -> Result<Vec<(Option<TaskTag>, String)>> {
     let combined_templates = TemplateIO::gather_all_template_paths(map_file)?;
     let tag_strs = all_tags_from_files(combined_templates);
     let tags = tag_strs
-        .iter()
-        .map(|t| TaskTag::from_str(t))
-        .filter(|t| t.is_ok())
-        .map(|t| t.unwrap())
-        .collect::<Vec<TaskTag>>();
+        .into_iter()
+        .map(|t| {
+            let tc_string = title_case(&t);
+            let tag_match = TaskTag::from_str(tc_string.as_str());
+            if let Ok(tag_match) = tag_match {
+                return (Some(tag_match), tc_string);
+            }
+            return (None, tc_string);
+        })
+        .collect::<Vec<_>>();
     Ok(tags)
 }
 

@@ -48,7 +48,7 @@ pub struct AppConfig {
     pub clean: bool,
     pub save_playbook: bool,
     pub interactive: bool,
-    pub all_found_tags: Vec<TaskTag>,
+    pub all_found_tags: Vec<(Option<TaskTag>, String)>,
 }
 
 impl Default for AppConfig {
