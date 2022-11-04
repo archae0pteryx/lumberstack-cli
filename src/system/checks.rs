@@ -10,9 +10,10 @@ use crate::{
 
 use super::{file_io::FileIO, logger::Logger};
 
-pub fn init_system() -> Result<AppConfig> {
+pub fn init_system() -> Result<Box<AppConfig>> {
     let commands = LumberStackSysCommands {};
-    System::new(commands).run()
+    let config = System::new(commands).run()?;
+    Ok(Box::from(config))
 }
 
 pub struct System<T: SysCommands> {
@@ -63,12 +64,10 @@ impl<T: SysCommands> System<T> {
     fn has_required_bin(&self, bin_name: &str) -> Result<String> {
         match self.command_runner.app_version(bin_name) {
             Ok(output) => Ok(String::from_utf8(output.stdout).unwrap()),
-            Err(_) => {
-                Err(anyhow::format_err!(
-                    "❌ {} not found but required",
-                    bin_name
-                ))
-            }
+            Err(_) => Err(anyhow::format_err!(
+                "❌ {} not found but required",
+                bin_name
+            )),
         }
     }
 
@@ -92,9 +91,9 @@ impl<T: SysCommands> System<T> {
     fn create_working_dir(&self, dir: String) -> Result<()> {
         match self.command_runner.crate_dir(dir) {
             Ok(_) => Ok(()),
-            Err(_) => {
-                Err(anyhow::format_err!("❌ Error creating / cleaning working dir"))
-            }
+            Err(_) => Err(anyhow::format_err!(
+                "❌ Error creating / cleaning working dir"
+            )),
         }
     }
 }
@@ -304,10 +303,7 @@ mod tests {
         let system = System::new(commands);
         match system.create_working_dir(String::from("some/dir")) {
             Ok(_) => assert!(false),
-            Err(err) => assert_eq!(
-                err.to_string(),
-                "❌ Error creating / cleaning working dir"
-            ),
+            Err(err) => assert_eq!(err.to_string(), "❌ Error creating / cleaning working dir"),
         };
     }
 }
