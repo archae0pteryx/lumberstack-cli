@@ -15,7 +15,7 @@ use crate::{
     },
 };
 
-use super::tags::{should_task_run, TaskTag, tag_to_str};
+use super::tags::{should_task_run, tag_to_str, TaskTag};
 
 #[derive(Clone)]
 pub struct GithubTemplates;
@@ -59,7 +59,7 @@ impl GithubTemplates {
         RegisterTask::new("Register template dir")
             .register("tmp_templates")
             .stat_path(&app_config.template_dir)
-            .tags(&vec![tag_to_str(&tag)])
+            .tags(&[tag_to_str(&tag)])
             .build()
     }
 
@@ -73,7 +73,7 @@ impl GithubTemplates {
             .dest(template_path)
             .version(ver)
             .when("not tmp_templates.stat.exists")
-            .tags(&vec![tag_to_str(&tag)])
+            .tags(&[tag_to_str(&tag)])
             .build()
     }
 
@@ -88,7 +88,7 @@ impl GithubTemplates {
             .exclude("node_modules")
             .exclude(".vscode")
             .register("filtered_dirs")
-            .tags(&vec![tag_to_str(&tag)])
+            .tags(&[tag_to_str(&tag)])
             .build()
     }
 
@@ -97,7 +97,7 @@ impl GithubTemplates {
             "dirs",
             "{{ filtered_dirs | json_query(\"files[*].path\") }}",
         )
-        .tags(&vec![tag_to_str(&tag)])
+        .tags(&[tag_to_str(&tag)])
         .build()
     }
 
@@ -109,7 +109,7 @@ impl GithubTemplates {
             .contains(DEFAULT_ANSIBLE_TEMPLATE_REGEX)
             .register("found_templates")
             .file_type("file")
-            .tags(&vec![tag_to_str(&tag)])
+            .tags(&[tag_to_str(&tag)])
             .build()
     }
 
@@ -118,7 +118,7 @@ impl GithubTemplates {
             "template_paths",
             "{{ found_templates | json_query(\"files[*].path\") }}",
         )
-        .tags(&vec![tag_to_str(&tag)])
+        .tags(&[tag_to_str(&tag)])
         .build()
     }
 
@@ -127,7 +127,7 @@ impl GithubTemplates {
         CopyTask::new("Write template map")
             .content("{{ template_paths }}")
             .dest(paths_file.as_str())
-            .set_tags(&vec![tag_to_str(&tag)])
+            .set_tags(&[tag_to_str(&tag)])
             .build()
     }
 }

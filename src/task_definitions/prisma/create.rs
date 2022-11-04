@@ -2,9 +2,12 @@ use crate::{
     app_config::AppConfig,
     system::logger::log_task_skip,
     task_definitions::{
-        ansible::{ansible_task::RunnableAnsibleTask, yaml::{command_task::CommandTask, debug_task::DebugTask}},
+        ansible::{
+            ansible_task::RunnableAnsibleTask,
+            yaml::{command_task::CommandTask, debug_task::DebugTask},
+        },
         task_types::DefinedTask,
-        templates::tags::{should_task_run, TaskTag, tag_to_str},
+        templates::tags::{should_task_run, tag_to_str, TaskTag},
     },
 };
 
@@ -13,10 +16,7 @@ use super::docker::Docker;
 pub struct Prisma;
 
 impl Prisma {
-    pub fn setup_prisma(
-        tag: TaskTag,
-        app_config: &AppConfig,
-    ) -> Option<RunnableAnsibleTask> {
+    pub fn setup_prisma(tag: TaskTag, app_config: &AppConfig) -> Option<RunnableAnsibleTask> {
         if !should_task_run(&tag, app_config) {
             log_task_skip(tag);
             return None;
@@ -50,7 +50,7 @@ impl Prisma {
         CommandTask::new("Migrate Prisma")
             .command("yarn redwood prisma migrate dev")
             .chdir(&app_config.app_name)
-            .set_tags(&vec![tag_to_str(&TaskTag::Prisma)])
+            .set_tags(&[tag_to_str(&TaskTag::Prisma)])
             .register("prisma_migrate")
             .build()
     }
@@ -58,7 +58,7 @@ impl Prisma {
         CommandTask::new("Seed Prisma")
             .command("yarn redwood prisma db seed")
             .chdir(&app_config.app_name)
-            .set_tags(&vec!["prisma".to_string()])
+            .set_tags(&["prisma".to_string()])
             .register("prisma_seed")
             .build()
     }

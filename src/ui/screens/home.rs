@@ -28,8 +28,8 @@ pub fn key_handler(key: Key, app: &mut App) {
         }
         Key::Enter => {
             let selected = app.menu_list_state.selected();
-            match selected {
-                Some(s) => match s {
+            if let Some(s) = selected {
+                match s {
                     0 => {
                         app.push_route(Screen::GenerateAll);
                     }
@@ -40,10 +40,8 @@ pub fn key_handler(key: Key, app: &mut App) {
                         app.quit();
                     }
                     _ => {}
-                },
-                None => {}
+                }
             }
-
         }
         _ => {}
     }
@@ -61,7 +59,8 @@ where
     let tree_p = ascii_tree_block();
     f.render_widget(tree_p, chunks[0]);
 
-    let listified_items = app.home_screen_menu
+    let listified_items = app
+        .home_screen_menu
         .iter()
         .cloned()
         .map(|i| ListItem::new(i).style(app.theme.list_item))

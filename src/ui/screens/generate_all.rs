@@ -5,12 +5,10 @@ use tui::{
     Frame,
 };
 
-use crate::{
-    ui::{
-        app::{App},
-        event::Key,
-        layout::{default_block, default_layout},
-    },
+use crate::ui::{
+    app::App,
+    event::Key,
+    layout::{default_block, default_layout},
 };
 
 use anyhow::Result;
@@ -29,8 +27,8 @@ pub fn key_handler(key: Key, app: &mut App) {
         }
         Key::Enter => {
             let selected = app.menu_list_state.selected();
-            match selected {
-                Some(s) => match s {
+            if let Some(s) = selected {
+                match s {
                     0 => {
                         app.pop_route();
                     }
@@ -38,8 +36,7 @@ pub fn key_handler(key: Key, app: &mut App) {
                         app.quit();
                     }
                     _ => {}
-                },
-                None => {}
+                }
             }
         }
         _ => {}

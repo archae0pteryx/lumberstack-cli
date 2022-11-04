@@ -7,7 +7,7 @@ use crate::{
             yaml::{command_task::CommandTask, debug_task::DebugTask},
         },
         task_types::DefinedTask,
-        templates::tags::{should_task_run, TaskTag, tag_to_str},
+        templates::tags::{should_task_run, tag_to_str, TaskTag},
     },
 };
 
@@ -35,7 +35,7 @@ impl Playwright {
         let web_dir = format!("{}/web", app_name);
         CommandTask::new("Setup playwright")
             .chdir(web_dir)
-            .set_tags(&vec!["playwright".to_string(), tag_to_str(tag)])
+            .set_tags(&["playwright".to_string(), tag_to_str(tag)])
             .command("yarn create playwright --quiet --lang=ts")
             .register("playwright_install")
             .build()

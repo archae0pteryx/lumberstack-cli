@@ -1,5 +1,5 @@
 use crate::{
-    app_config::{AppConfig},
+    app_config::AppConfig,
     system::logger::log_task_skip,
     task_definitions::{
         ansible::{
@@ -7,7 +7,7 @@ use crate::{
             yaml::{command_task::CommandTask, debug_task::DebugTask},
         },
         task_types::DefinedTask,
-        templates::tags::{should_task_run, TaskTag, tag_to_str},
+        templates::tags::{should_task_run, tag_to_str, TaskTag},
     },
 };
 
@@ -33,7 +33,7 @@ impl Tailwind {
 
     fn install_command(tag: &TaskTag, app_name: &str) -> DefinedTask {
         CommandTask::new("Setup tailwind")
-            .set_tags(&vec![tag_to_str(&TaskTag::Tailwind), tag_to_str(tag)])
+            .set_tags(&[tag_to_str(&TaskTag::Tailwind), tag_to_str(tag)])
             .command("yarn rw setup ui tailwind")
             .chdir(app_name)
             .register("tailwind_install")

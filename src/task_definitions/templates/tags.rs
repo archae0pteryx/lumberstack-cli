@@ -9,7 +9,7 @@ use std::str::FromStr;
 use strum::{AsRefStr, EnumIter, EnumString};
 
 #[derive(
-    Serialize, Deserialize, Debug, Clone, Sequence, EnumString, AsRefStr, EnumIter, PartialEq,
+    Serialize, Deserialize, Debug, Clone, Sequence, EnumString, AsRefStr, EnumIter, PartialEq, Eq,
 )]
 pub enum TaskTag {
     Clone,
@@ -76,7 +76,7 @@ pub fn get_all_tags(map_file: &str) -> Result<Vec<(Option<TaskTag>, String)>> {
             if let Ok(tag_match) = tag_match {
                 return (Some(tag_match), tc_string);
             }
-            return (None, tc_string);
+            (None, tc_string)
         })
         .collect::<Vec<_>>();
     Ok(tags)

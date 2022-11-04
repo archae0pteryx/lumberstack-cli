@@ -38,7 +38,7 @@ impl Heroku {
     fn install_pm2(tag: TaskTag, app_name: &str) -> DefinedTask {
         CommandTask::new("Install PM2")
             .chdir(app_name)
-            .set_tags(&vec!["heroku".to_string(), tag_to_str(&tag)])
+            .set_tags(&["heroku".to_string(), tag_to_str(&tag)])
             .command("yarn add pm2")
             .register("heroku_install")
             .build()
