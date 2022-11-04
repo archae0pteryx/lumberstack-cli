@@ -4,7 +4,7 @@ use crossterm::{
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
-use std::io::stdout;
+use std::io::{stdout, Stdout};
 use tui::{
     backend::{Backend, CrosstermBackend},
     layout::{Constraint, Direction, Layout},
@@ -35,6 +35,10 @@ pub fn start_ui(app_config: AppConfig) -> Result<()> {
     let events = event::Events::new(250);
 
     loop {
+        if app.should_quit {
+            break;
+        }
+
         if let Ok(size) = terminal.backend().size() {
             if app.is_first_render || size != app.term_size {
                 terminal.clear()?;
@@ -46,15 +50,6 @@ pub fn start_ui(app_config: AppConfig) -> Result<()> {
         terminal.draw(|f| {
             draw_routes(f, &mut app).unwrap();
         })?;
-
-        if app.should_quit {
-            terminal.show_cursor()?;
-            disable_raw_mode()?;
-            let mut stdout = std::io::stdout();
-            execute!(stdout, LeaveAlternateScreen)?;
-            terminal.clear()?;
-            return Ok(());
-        }
 
         match events.next()? {
             event::Event::Input(key) => {
@@ -68,6 +63,16 @@ pub fn start_ui(app_config: AppConfig) -> Result<()> {
             }
         }
     }
+    quit_terminal(&mut terminal)?;
+    Ok(())
+}
+
+fn quit_terminal(terminal: &mut Terminal<CrosstermBackend<Stdout>>) -> Result<()> {
+    terminal.show_cursor()?;
+    disable_raw_mode()?;
+    let mut stdout = std::io::stdout();
+    execute!(stdout, LeaveAlternateScreen)?;
+    terminal.clear()?;
     Ok(())
 }
 
