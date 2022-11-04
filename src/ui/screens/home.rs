@@ -1,6 +1,5 @@
 use anyhow::Result;
 use crossterm::event::{self, Event, KeyCode};
-use std::time::Duration;
 use tui::{
     backend::Backend,
     layout::{Alignment, Constraint, Direction, Layout, Rect},
@@ -9,7 +8,11 @@ use tui::{
     Frame,
 };
 
-use crate::ui::{app::App, ascii_tree::ascii_tree, common::default_block};
+use crate::ui::{
+    app::{App, Screen},
+    ascii_tree::ascii_tree,
+    common::{default_block, next_item, prev_item},
+};
 
 pub fn draw_home<B>(f: &mut Frame<B>, app: &mut App, layout_chunk: Rect) -> Result<()>
 where
@@ -21,58 +24,63 @@ where
         .split(layout_chunk);
 
     let tree_p = ascii_tree_block();
-
     f.render_widget(tree_p, chunks[0]);
 
-    let l = vec!["Generate All", "Tag Select", "Quit"];
+    let mut menu_items: Vec<(String, Box<dyn FnMut(&mut App)>)> = vec![
+        (
+            "Generate All".to_string(),
+            Box::new(|app| {
+                app.push_route(Screen::GenerateAll);
+            }),
+        ),
+        (
+            "Select Tags".to_string(),
+            Box::new(|app| {
+                app.push_route(Screen::TagSelect);
+            }),
+        ),
+        (
+            "Quit".to_string(),
+            Box::new(|app| {
+                app.quit();
+            }),
+        ),
+    ];
 
-    let menu_items = l
-        .clone()
-        .into_iter()
-        .map(|i| ListItem::new(i).style(app.theme.list_item))
+    let listified_items = &menu_items
+        .iter()
+        .map(|i| ListItem::new(i.0.clone()).style(app.theme.list_item))
         .collect::<Vec<_>>();
 
-    let list = List::new(menu_items)
+    let list = List::new(listified_items.clone())
         .block(default_block())
         .highlight_style(app.theme.list_highlight);
 
     f.render_stateful_widget(list, chunks[1], &mut app.list_state);
 
-    if crossterm::event::poll(Duration::from_millis(50))? {
+    home_key_events(app, &mut menu_items)?;
+
+    Ok(())
+}
+
+fn home_key_events(
+    app: &mut App,
+    menu_items: &mut Vec<(String, Box<dyn FnMut(&mut App)>)>,
+) -> Result<()> {
+    if crossterm::event::poll(app.get_timeout())? {
         if let Event::Key(key) = event::read()? {
             match key.code {
                 KeyCode::Down => {
-                    let i = match app.list_state.selected() {
-                        Some(i) => {
-                            if i >= l.len() - 1 {
-                                0
-                            } else {
-                                i + 1
-                            }
-                        }
-                        None => 0,
-                    };
-                    app.list_state.select(Some(i));
+                    next_item(app, menu_items.len());
                 }
                 KeyCode::Up => {
-                    let i = match app.list_state.selected() {
-                        Some(i) => {
-                            if i == 0 {
-                                l.len() - 1
-                            } else {
-                                i - 1
-                            }
-                        }
-                        None => 0,
-                    };
-                    app.list_state.select(Some(i));
+                    prev_item(app, menu_items.len());
                 }
-                KeyCode::Enter => {}
-                KeyCode::Esc => {
-                    app.quit();
-                }
-                KeyCode::Char('q') => {
-                    app.quit();
+                KeyCode::Enter => {
+                    if let Some(i) = app.list_state.selected() {
+                        app.list_state.select(None);
+                        menu_items[i].1(app);
+                    }
                 }
                 _ => {}
             }
