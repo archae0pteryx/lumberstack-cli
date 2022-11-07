@@ -15,7 +15,7 @@ use crate::ui::{
 };
 
 pub fn home_screen_menu() -> Vec<&'static str> {
-    vec!["Generate All", "Select Tags", "Quit"]
+    vec!["New Project", "Generate All", "Select Tags", "Quit"]
 }
 
 pub fn key_handler(key: Key, app: &mut App) {
@@ -31,12 +31,15 @@ pub fn key_handler(key: Key, app: &mut App) {
             if let Some(s) = selected {
                 match s {
                     0 => {
-                        app.push_route(Screen::GenerateAll);
+                        app.push_route(Screen::Setup);
                     }
                     1 => {
-                        app.push_route(Screen::TagSelect);
+                        app.push_route(Screen::GenerateAll);
                     }
                     2 => {
+                        app.push_route(Screen::TagSelect);
+                    }
+                    3 => {
                         app.quit();
                     }
                     _ => {}
