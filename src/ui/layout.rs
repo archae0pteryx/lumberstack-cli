@@ -31,7 +31,6 @@ pub fn default_layout(layout_chunk: Rect) -> Vec<Rect> {
         )
         .split(layout_chunk)
 }
-
 // pub fn get_main_layout_margin(app: &App) -> u16 {
 //     if app.term_size.height > SMALL_TERMINAL_HEIGHT {
 //         1

@@ -3,7 +3,7 @@ use crate::{
         cli_args::ParsedArgs,
         config_file::{load_config_from_file, ParsedConfigFile},
     },
-    task_definitions::templates::tags::{get_all_tags, TaskTag},
+    task_definitions::templates::tags::{get_all_tags, TaskTag, TagData},
     tasks::TaskEngine,
 };
 use anyhow::Result;
@@ -30,7 +30,7 @@ pub static DEFAULT_PAGES: phf::Map<&str, &str> = phf_map! {
 
 pub static DEFAULT_LAYOUTS: &[&str] = &["admin"];
 
-#[derive(Debug, Deserialize, Serialize, Clone)]
+#[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Eq)]
 pub struct AppConfig {
     pub app_name: String,
     pub template_version: String,
@@ -48,7 +48,7 @@ pub struct AppConfig {
     pub clean: bool,
     pub save_playbook: bool,
     pub interactive: bool,
-    pub all_found_tags: Vec<(Option<TaskTag>, String)>,
+    pub all_found_tags: Vec<TagData>,
 }
 
 impl Default for AppConfig {

@@ -2,6 +2,7 @@ use super::{symbols::Symbols, template_io::TemplateIO};
 use crate::{app_config::AppConfig, system::file_io::FileIO};
 use anyhow::Result;
 use enum_iterator::Sequence;
+use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use std::convert::AsRef;
 use std::path::PathBuf;
@@ -65,18 +66,29 @@ pub fn should_task_run(this_tag: &TaskTag, app_config: &AppConfig) -> bool {
     true
 }
 
-pub fn get_all_tags(map_file: &str) -> Result<Vec<(Option<TaskTag>, String)>> {
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
+pub struct TagData {
+    pub tag: TaskTag,
+    pub name: String,
+}
+
+pub fn get_all_tags(map_file: &str) -> Result<Vec<TagData>> {
     let combined_templates = TemplateIO::gather_all_template_paths(map_file)?;
     let tag_strs = all_tags_from_files(combined_templates);
+
     let tags = tag_strs
         .into_iter()
+        .unique()
         .map(|t| {
             let tc_string = title_case(&t);
             let tag_match = TaskTag::from_str(tc_string.as_str());
-            if let Ok(tag_match) = tag_match {
-                return (Some(tag_match), tc_string);
+            match tag_match {
+                Ok(tag) => TagData { tag, name: t },
+                Err(_) => TagData {
+                    tag: TaskTag::None,
+                    name: t,
+                },
             }
-            (None, tc_string)
         })
         .collect::<Vec<_>>();
     Ok(tags)
