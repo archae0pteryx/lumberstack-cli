@@ -327,9 +327,13 @@ impl TagSelectData {
     }
 
     pub fn toggle_selected(&mut self) {
-        let cur_state_selected = self.state.selected();
+        let cur_col = self.cur_column;
+        let cur_state = &self.tag_columns[cur_col].state;
+        let cur_state_selected = cur_state.selected();
+        let cur_items = &mut self.tag_columns[cur_col].items;
+
         if let Some(idx) = cur_state_selected {
-            let item = self.list_items.get_mut(idx).unwrap();
+            let item = &mut cur_items[idx];
             item.is_selected = !item.is_selected;
         }
     }
