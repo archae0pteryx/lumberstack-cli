@@ -6,39 +6,28 @@ use super::{
     },
 };
 use anyhow::Result;
-use tui::{
-    backend::Backend,
-    layout::{Constraint, Direction, Layout},
-    Frame,
-};
+use tui::{backend::Backend, Frame};
 
 pub fn draw_routes<B>(f: &mut Frame<B>, app: &mut App) -> Result<()>
 where
     B: Backend,
 {
-    let parent_layout = Layout::default()
-        .direction(Direction::Vertical)
-        .constraints([Constraint::Length(13), Constraint::Max(12)].as_ref())
-        .margin(2)
-        .split(f.size());
-
     let current_route = app.current_route();
-
     match current_route {
         Screen::Home => {
-            draw_home_screen(f, app, parent_layout[0])?;
+            draw_home_screen(f, app)?;
         }
         Screen::Setup => {
-            draw_setup_screen(f, app, parent_layout[0])?;
+            draw_setup_screen(f, app)?;
         }
         Screen::GenerateAll => {
-            draw_generate_screen(f, app, parent_layout[0])?;
+            draw_generate_screen(f, app)?;
         }
         Screen::TagSelect => {
-            draw_tag_select_screen(f, app, parent_layout[0])?;
+            draw_tag_select_screen(f, app)?;
         }
         Screen::Progress => {
-            draw_progress_screen(f, app, parent_layout[0])?;
+            draw_progress_screen(f, app)?;
         }
         _ => {}
     }

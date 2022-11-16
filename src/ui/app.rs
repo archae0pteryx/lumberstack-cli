@@ -6,13 +6,12 @@ use std::time::{Duration, Instant};
 
 use tui::{
     layout::Rect,
-    style::{Color, Modifier, Style},
-    widgets::ListState,
+    widgets::{ListState},
 };
 
-use super::screens::{
+use super::{screens::{
     generate_all::generate_screen_menu, home::home_screen_menu, progress::progress_menu,
-};
+}, layout::get_layout_chunks};
 
 #[allow(dead_code)]
 #[derive(Clone, PartialEq, Eq, Debug)]
@@ -25,16 +24,6 @@ pub enum Screen {
     Quit,
 }
 
-#[derive(Copy, Clone, Debug)]
-pub struct Theme {
-    pub primary_color: Color,
-    pub secondary_color: Color,
-    pub tertiary_color: Color,
-    pub list_highlight: Style,
-    pub list_item: Style,
-    pub paragraph_style: Style,
-    pub input_selected: Style,
-}
 
 pub struct EventClock {
     pub tick_rate: Duration,
@@ -55,9 +44,9 @@ pub struct FormInput {
 
 pub struct App {
     pub app_config: AppConfig,
-    pub theme: Theme,
     pub should_quit: bool,
     pub navigation_stack: Vec<Screen>,
+    pub layout_chunks: Vec<Rect>,
     pub term_size: Rect,
     pub menu_list_state: ListState,
     pub is_first_render: bool,
@@ -76,6 +65,7 @@ pub struct App {
 
 impl Default for App {
     fn default() -> Self {
+        let home_screen = Screen::TagSelect;
         App {
             app_config: AppConfig::default(),
             is_first_render: true,
@@ -83,19 +73,10 @@ impl Default for App {
                 tick_rate: Duration::from_millis(10),
                 last_tick: Instant::now(),
             },
-            theme: Theme {
-                primary_color: Color::White,
-                secondary_color: Color::LightYellow,
-                tertiary_color: Color::LightGreen,
-                list_highlight: Style::default()
-                    .fg(Color::Yellow)
-                    .add_modifier(Modifier::BOLD),
-                list_item: Style::default().fg(Color::Red),
-                paragraph_style: Style::default().fg(Color::White),
-                input_selected: Style::default().fg(Color::Yellow),
-            },
+
             should_quit: false,
-            navigation_stack: vec![Screen::TagSelect],
+            navigation_stack: vec![home_screen],
+            layout_chunks: vec![Rect::default()],
             term_size: Rect::default(),
             tasks_to_run: vec![],
             ready_to_execute: false,
@@ -174,8 +155,10 @@ impl App {
         self.menu_list_state.select(Some(i));
     }
 
-    pub fn update_on_tick(&self) {
-        //
+    pub fn update_on_tick(&mut self, size: Rect) {
+        let layout_chunks = get_layout_chunks(size);
+        self.layout_chunks = layout_chunks;
+        self.term_size = size;
     }
 
     pub fn quit(&mut self) {
@@ -351,7 +334,7 @@ impl TagSelectData {
                 name: tag.name,
                 is_selected: true,
             });
-            if col.items.len() == 10 {
+            if col.items.len() == 7 {
                 tag_columns.push(col);
                 col = TagColumn {
                     state: ListState::default(),

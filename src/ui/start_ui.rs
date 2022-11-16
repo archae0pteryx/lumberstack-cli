@@ -6,7 +6,7 @@ use crossterm::{
 };
 use std::io::{stdout, Stdout};
 use tui::{
-    backend::{Backend, CrosstermBackend},
+    backend::{CrosstermBackend},
     Terminal,
 };
 
@@ -29,18 +29,15 @@ pub fn start_ui(app_config: AppConfig) -> Result<()> {
 
     terminal.hide_cursor()?;
     let events = event::Events::new(250);
-
     loop {
         if app.should_quit {
             break;
         }
 
-        if let Ok(size) = terminal.backend().size() {
-            if app.is_first_render || size != app.term_size {
-                terminal.clear()?;
-                app.is_first_render = false;
-                app.term_size = size;
-            }
+        if app.is_first_render {
+            terminal.clear()?;
+            app.is_first_render = false;
+            app.update_on_tick(terminal.size().unwrap());
         }
 
         terminal.draw(|f| {
@@ -48,14 +45,22 @@ pub fn start_ui(app_config: AppConfig) -> Result<()> {
         })?;
 
         match events.next()? {
-            event::Event::Input(key) => {
-                if key == Key::Ctrl('c') {
-                    break;
+            event::Event::Input(key) => match key {
+                Key::Ctrl('c') => {
+                    app.quit();
                 }
-                handlers::handle_app(key, &mut app);
-            }
+                Key::Char('q') => {
+                    app.quit();
+                }
+                Key::Esc => {
+                    app.quit();
+                }
+                _ => {
+                    handlers::handle_app(key, &mut app);
+                }
+            },
             event::Event::Tick => {
-                app.update_on_tick();
+                app.update_on_tick(terminal.size().unwrap());
             }
         }
     }

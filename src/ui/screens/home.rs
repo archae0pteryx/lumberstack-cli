@@ -1,18 +1,19 @@
 use anyhow::Result;
 use tui::{
     backend::Backend,
-    layout::{Alignment, Constraint, Direction, Layout, Rect},
-    style::{Color, Style},
-    widgets::{Block, BorderType, Borders, List, ListItem, Paragraph, Wrap},
+    layout::Alignment,
+    widgets::{List, ListItem},
     Frame,
 };
 
 use crate::ui::{
     app::{App, Screen},
-    ascii_tree::ascii_tree,
     event::Key,
-    layout::default_block,
+    layout::{centered_vertical_chunk, default_block},
+    theme::Theme,
 };
+
+use super::common::left_tree_block::render_tree_block;
 
 pub fn home_screen_menu() -> Vec<&'static str> {
     vec!["New Project", "Generate All", "Select Tags", "Quit"]
@@ -50,49 +51,32 @@ pub fn key_handler(key: Key, app: &mut App) {
     }
 }
 
-pub fn draw_home_screen<B>(f: &mut Frame<B>, app: &mut App, layout_chunk: Rect) -> Result<()>
+pub fn draw_home_screen<B>(f: &mut Frame<B>, app: &mut App) -> Result<()>
 where
     B: Backend,
 {
-    let chunks = Layout::default()
-        .direction(Direction::Horizontal)
-        .constraints([Constraint::Length(13), Constraint::Length(93)].as_ref())
-        .split(layout_chunk);
+    let theme = Theme::new();
+    let main_layout_chunks = &app.layout_chunks;
+    render_tree_block(f, main_layout_chunks[0]);
 
-    let tree_p = ascii_tree_block();
-    f.render_widget(tree_p, chunks[0]);
+    let right_layout_chunk = centered_vertical_chunk(main_layout_chunks[1]);
 
     let listified_items = app
         .home_screen_menu
         .iter()
         .cloned()
-        .map(|i| ListItem::new(i).style(app.theme.list_item))
+        .map(|i| ListItem::new(i).style(theme.list_item_style))
         .collect::<Vec<_>>();
 
     let list = List::new(listified_items.clone())
-        .block(default_block())
-        .highlight_style(app.theme.list_highlight);
+        .block(
+            default_block()
+                .title("Lumberstack")
+                .title_alignment(Alignment::Center),
+        )
+        .highlight_style(theme.list_item_highlight);
 
-    f.render_stateful_widget(list, chunks[1], &mut app.menu_list_state);
+    f.render_stateful_widget(list, right_layout_chunk, &mut app.menu_list_state);
 
     Ok(())
-}
-
-fn ascii_tree_block() -> Paragraph<'static> {
-    let tree = ascii_tree();
-    Paragraph::new(tree)
-        .block(tree_block())
-        .style(Style::default().fg(Color::LightGreen))
-        .alignment(Alignment::Center)
-        .wrap(Wrap { trim: true })
-}
-
-fn tree_block() -> Block<'static> {
-    let border_style = Style::default().fg(Color::LightGreen);
-    let border_type = BorderType::Rounded;
-    Block::default()
-        .style(Style::default())
-        .border_style(border_style)
-        .borders(Borders::ALL)
-        .border_type(border_type)
 }

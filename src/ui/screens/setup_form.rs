@@ -1,17 +1,18 @@
 use anyhow::Result;
 use tui::{
     backend::Backend,
-    layout::{Alignment, Constraint, Direction, Layout, Rect},
-    style::{Color, Style},
-    widgets::{Block, BorderType, Borders, Paragraph, Wrap},
+    layout::{Constraint, Direction, Layout, Rect},
+    widgets::{Block, Borders, Paragraph},
     Frame,
 };
 
 use crate::ui::{
     app::{App, FormInput},
-    ascii_tree::ascii_tree,
     event::Key,
+    theme::Theme,
 };
+
+use super::common::left_tree_block::render_tree_block;
 
 pub fn key_handler(key: Key, app: &mut App) {
     match key {
@@ -29,17 +30,17 @@ pub fn key_handler(key: Key, app: &mut App) {
     }
 }
 
-pub fn draw_setup_screen<B>(f: &mut Frame<B>, app: &mut App, layout_chunk: Rect) -> Result<()>
+pub fn draw_setup_screen<B>(f: &mut Frame<B>, app: &mut App) -> Result<()>
 where
     B: Backend,
 {
+    let layout_chunks = &app.layout_chunks;
+    render_tree_block(f, layout_chunks[0]);
+
     let chunks = Layout::default()
         .direction(Direction::Horizontal)
         .constraints([Constraint::Length(13), Constraint::Length(93)].as_ref())
-        .split(layout_chunk);
-
-    let tree_p = ascii_tree_block();
-    f.render_widget(tree_p, chunks[0]);
+        .split(layout_chunks[1]);
 
     form_block(f, app, chunks[1]);
 
@@ -73,35 +74,17 @@ where
 }
 
 fn create_input<'a>(app: &'a App, form_input: &'a FormInput) -> Paragraph<'a> {
-    let mut block_style = app.theme.paragraph_style;
+    let theme = Theme::new();
+    let mut block_style = theme.paragraph_style;
     if app.active_form_element == form_input.element {
-        block_style = app.theme.input_selected;
+        block_style = theme.input_selected;
     }
     Paragraph::new(form_input.value.clone())
-        .style(app.theme.paragraph_style)
+        .style(theme.paragraph_style)
         .block(
             Block::default()
                 .borders(Borders::ALL)
                 .style(block_style)
                 .title(form_input.label.as_str()),
         )
-}
-
-fn ascii_tree_block() -> Paragraph<'static> {
-    let tree = ascii_tree();
-    Paragraph::new(tree)
-        .block(tree_block())
-        .style(Style::default().fg(Color::LightGreen))
-        .alignment(Alignment::Center)
-        .wrap(Wrap { trim: true })
-}
-
-fn tree_block() -> Block<'static> {
-    let border_style = Style::default().fg(Color::LightGreen);
-    let border_type = BorderType::Rounded;
-    Block::default()
-        .style(Style::default())
-        .border_style(border_style)
-        .borders(Borders::ALL)
-        .border_type(border_type)
 }

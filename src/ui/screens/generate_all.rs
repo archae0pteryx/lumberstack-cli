@@ -1,6 +1,5 @@
 use tui::{
     backend::Backend,
-    layout::Rect,
     widgets::{List, ListItem},
     Frame,
 };
@@ -8,7 +7,7 @@ use tui::{
 use crate::ui::{
     app::App,
     event::Key,
-    layout::{default_block, default_layout},
+    layout::{default_block, centered_vertical_chunk}, theme::Theme,
 };
 
 use anyhow::Result;
@@ -43,24 +42,26 @@ pub fn key_handler(key: Key, app: &mut App) {
     }
 }
 
-pub fn draw_generate_screen<B>(f: &mut Frame<B>, app: &mut App, layout_chunk: Rect) -> Result<()>
+pub fn draw_generate_screen<B>(f: &mut Frame<B>, app: &mut App) -> Result<()>
 where
     B: Backend,
 {
-    let chunks = default_layout(layout_chunk);
+    let theme = Theme::new();
+    let layout_chunk = &app.layout_chunks;
+    let chunks = centered_vertical_chunk(layout_chunk[1]);
 
     let listified_items = app
         .generate_screen_menu
         .iter()
         .cloned()
-        .map(|i| ListItem::new(i).style(app.theme.list_item))
+        .map(|i| ListItem::new(i).style(theme.list_item_style))
         .collect::<Vec<_>>();
 
     let list = List::new(listified_items.clone())
         .block(default_block())
-        .highlight_style(app.theme.list_highlight);
+        .highlight_style(theme.list_item_highlight);
 
-    f.render_stateful_widget(list, chunks[1], &mut app.menu_list_state);
+    f.render_stateful_widget(list, chunks, &mut app.menu_list_state);
 
     Ok(())
 }
