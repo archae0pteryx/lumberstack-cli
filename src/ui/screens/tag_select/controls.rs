@@ -1,6 +1,6 @@
 use crate::ui::{
     app::{App, Selectable},
-    event::Key,
+    event::Key, screens::Screen,
 };
 
 pub fn key_handler(key: Key, app: &mut App) {
@@ -20,7 +20,11 @@ pub fn key_handler(key: Key, app: &mut App) {
         Key::Char(' ') => {
             app.tag_select_data.toggle_selected();
         }
-        Key::Enter => {}
-        _ => {}
+        Key::Enter => {
+            app.pop_route();
+        }
+        _ => {
+            app.push_route(Screen::Progress);
+        }
     }
 }

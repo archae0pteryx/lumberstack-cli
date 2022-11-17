@@ -30,7 +30,7 @@ pub fn key_handler(key: Key, app: &mut App) {
     }
 }
 
-pub fn draw_setup_screen<B>(f: &mut Frame<B>, app: &mut App) -> Result<()>
+pub fn draw_new_project_form<B>(f: &mut Frame<B>, app: &mut App) -> Result<()>
 where
     B: Backend,
 {

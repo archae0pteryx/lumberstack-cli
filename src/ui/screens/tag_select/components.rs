@@ -1,6 +1,7 @@
 use crate::ui::{
-    app::{App, TagListItem},
-    layout::default_block, theme::{ThemedText, Theme},
+    app::App,
+    layout::default_block,
+    theme::{Theme, ThemedText},
 };
 use tui::{
     backend::Backend,
@@ -10,6 +11,8 @@ use tui::{
     widgets::{Block, Borders, List, ListItem, Paragraph},
     Frame,
 };
+
+use super::tag_menu::TagListItem;
 
 pub fn main_list(f: &mut Frame<impl Backend>, app: &mut App, layout_chunk: Rect) {
     let theme = Theme::new();
@@ -64,7 +67,7 @@ fn list_item(tag_item: &TagListItem) -> ListItem<'static> {
     let text = ThemedText::new();
 
     let tag_name_deselected = text.light_red(&tag_item.name.to_string());
-    let tag_name_selected = text.light_green( &tag_item.name.to_string());
+    let tag_name_selected = text.light_green(&tag_item.name.to_string());
 
     if tag_item.is_selected {
         ListItem::new(Spans::from(vec![text.success("✓ "), tag_name_selected]))

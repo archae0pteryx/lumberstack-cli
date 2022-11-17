@@ -6,32 +6,11 @@ use crate::ui::{
 use anyhow::Result;
 use tui::{backend::Backend, Frame};
 
-pub fn progress_menu() -> Vec<&'static str> {
-    vec!["Back", "Quit"]
-}
-
-pub fn key_handler(key: Key, app: &mut App) {
+pub fn key_handler(key: Key, _: &mut App) {
     match key {
-        Key::Down => {
-            app.next_menu_item(app.home_screen_menu.len());
-        }
-        Key::Up => {
-            app.prev_menu_item(app.home_screen_menu.len());
-        }
-        Key::Enter => {
-            let selected = app.menu_list_state.selected();
-            if let Some(s) = selected {
-                match s {
-                    0 => {
-                        app.pop_route();
-                    }
-                    1 => {
-                        app.quit();
-                    }
-                    _ => {}
-                }
-            }
-        }
+        Key::Down => {}
+        Key::Up => {}
+        Key::Enter => {}
         _ => {}
     }
 }

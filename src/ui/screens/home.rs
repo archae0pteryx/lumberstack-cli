@@ -7,49 +7,15 @@ use tui::{
 };
 
 use crate::ui::{
-    app::{App, Screen},
-    event::Key,
+    app::App,
     layout::{centered_vertical_chunk, default_block},
     theme::Theme,
 };
 
 use super::common::left_tree_block::render_tree_block;
 
-pub fn home_screen_menu() -> Vec<&'static str> {
-    vec!["New Project", "Generate All", "Select Tags", "Quit"]
-}
-
-pub fn key_handler(key: Key, app: &mut App) {
-    match key {
-        Key::Down => {
-            app.next_menu_item(app.home_screen_menu.len());
-        }
-        Key::Up => {
-            app.prev_menu_item(app.home_screen_menu.len());
-        }
-        Key::Enter => {
-            let selected = app.menu_list_state.selected();
-            if let Some(s) = selected {
-                match s {
-                    0 => {
-                        app.push_route(Screen::Setup);
-                    }
-                    1 => {
-                        app.push_route(Screen::GenerateAll);
-                    }
-                    2 => {
-                        app.push_route(Screen::TagSelect);
-                    }
-                    3 => {
-                        app.quit();
-                    }
-                    _ => {}
-                }
-            }
-        }
-        _ => {}
-    }
-}
+pub(crate) mod controls;
+pub(crate) mod home_menu;
 
 pub fn draw_home_screen<B>(f: &mut Frame<B>, app: &mut App) -> Result<()>
 where
@@ -62,10 +28,11 @@ where
     let right_layout_chunk = centered_vertical_chunk(main_layout_chunks[1]);
 
     let listified_items = app
-        .home_screen_menu
+        .home_menu_data
+        .items
         .iter()
         .cloned()
-        .map(|i| ListItem::new(i).style(theme.list_item_style))
+        .map(|i| ListItem::new(i.0).style(theme.list_item_style))
         .collect::<Vec<_>>();
 
     let list = List::new(listified_items.clone())
@@ -76,7 +43,7 @@ where
         )
         .highlight_style(theme.list_item_highlight);
 
-    f.render_stateful_widget(list, right_layout_chunk, &mut app.menu_list_state);
+    f.render_stateful_widget(list, right_layout_chunk, &mut app.home_menu_data.state);
 
     Ok(())
 }

@@ -1,6 +1,5 @@
 use crate::ui::{
-    app::App, layout::generate_basic_1_3_layout,
-    screens::common::left_tree_block::render_tree_block,
+    app::App, layout::generate_basic_1_3_layout, screens::common::left_tree_block::render_tree_block,
 };
 use anyhow::Result;
 use tui::{

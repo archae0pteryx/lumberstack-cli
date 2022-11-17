@@ -1,3 +1,11 @@
+mod app;
+mod event;
+mod inputs;
+mod layout;
+mod router;
+mod screens;
+mod theme;
+
 use crate::app_config::AppConfig;
 use anyhow::Result;
 use crossterm::{
@@ -10,12 +18,7 @@ use tui::{
     Terminal,
 };
 
-use super::{
-    app::App,
-    event::{self, Key},
-    handlers,
-    router::draw_routes,
-};
+use self::{app::App, router::draw_routes, event::Key, screens::Screen};
 
 pub fn start_ui(app_config: AppConfig) -> Result<()> {
     let mut app = App::new(app_config);
@@ -30,7 +33,7 @@ pub fn start_ui(app_config: AppConfig) -> Result<()> {
     terminal.hide_cursor()?;
     let events = event::Events::new(250);
     loop {
-        if app.should_quit {
+        if app.should_quit || app.current_route() == Screen::Quit {
             break;
         }
 
@@ -56,7 +59,7 @@ pub fn start_ui(app_config: AppConfig) -> Result<()> {
                     app.quit();
                 }
                 _ => {
-                    handlers::handle_app(key, &mut app);
+                    inputs::handle_app(key, &mut app);
                 }
             },
             event::Event::Tick => {

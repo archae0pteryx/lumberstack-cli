@@ -1,3 +1,4 @@
-pub mod components;
-pub mod controls;
-pub mod view;
+pub(crate) mod components;
+pub(crate) mod controls;
+pub(crate) mod view;
+pub(crate) mod tag_menu;
