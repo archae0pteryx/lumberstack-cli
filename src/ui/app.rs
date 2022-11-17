@@ -65,7 +65,7 @@ pub struct App {
 
 impl Default for App {
     fn default() -> Self {
-        let home_screen = Screen::TagSelect;
+        let home_screen = Screen::Home;
         App {
             app_config: AppConfig::default(),
             is_first_render: true,

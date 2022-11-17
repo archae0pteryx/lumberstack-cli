@@ -1,4 +1,4 @@
-// #![allow(unused)]
+#![allow(unused)]
 extern crate fs_extra;
 extern crate log;
 

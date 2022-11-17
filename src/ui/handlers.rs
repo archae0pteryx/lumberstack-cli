@@ -17,7 +17,7 @@ pub fn handle_app(key: Key, app: &mut App) {
             screens::generate_all::key_handler(key, app);
         }
         Screen::TagSelect => {
-            screens::tag_select::key_handler(key, app);
+            screens::tag_select::controls::key_handler(key, app);
         }
         Screen::Progress => {
             screens::progress::key_handler(key, app);

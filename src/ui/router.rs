@@ -2,7 +2,7 @@ use super::{
     app::{App, Screen},
     screens::{
         generate_all::draw_generate_screen, home::draw_home_screen, progress::draw_progress_screen,
-        setup_form::draw_setup_screen, tag_select::draw_tag_select_screen,
+        setup_form::draw_setup_screen, tag_select::view::draw_tag_select_screen,
     },
 };
 use anyhow::Result;
